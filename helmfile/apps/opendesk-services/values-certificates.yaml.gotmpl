@@ -75,12 +75,26 @@ global:
 issuerRef:
   name: {{ .Values.certificate.issuerRef.name | quote }}
   kind: {{ .Values.certificate.issuerRef.kind | quote }}
+  group: {{ .Values.certificate.issuerRef.group | quote }}
 
 cleanup:
   keepRessourceOnDelete: {{ .Values.debug.cleanup.keepRessourceOnDelete }}
 
 selfSigned:
   enabled: {{ .Values.certificate.selfSigned }}
+  issuer:
+    create: {{ .Values.certificate.selfSignedOverrides.issuer.create }}
+  caCertificate:
+    create: {{ .Values.certificate.selfSignedOverrides.caCertificate.create }}
+    secret:
+      value:
+        certificate: {{ .Values.certificate.selfSignedOverrides.caCertificate.secret.value.certificate | default "" | quote }}
+        key: {{ .Values.certificate.selfSignedOverrides.caCertificate.secret.value.key | default "" | quote }}
+        truststore: {{ .Values.certificate.selfSignedOverrides.caCertificate.secret.value.truststore | default "" | quote }}
+        keystore: {{ .Values.certificate.selfSignedOverrides.caCertificate.secret.value.keystore | default "" | quote }}
+      name: {{ .Values.certificate.selfSignedOverrides.caCertificate.secret.name | default "" | quote }}
+  organizations: {{ .Values.certificate.selfSignedOverrides.organizations | toYaml | nindent 4 }}
+  organizationalUnits: {{ .Values.certificate.selfSignedOverrides.organizationalUnits | toYaml | nindent 4 }}
   keystores:
     jks:
       enabled: true
@@ -88,6 +102,11 @@ selfSigned:
         secret:
           name: {{ .Values.secrets.certificates.password.name | quote }}
           key: {{ .Values.secrets.certificates.password.key | quote }}
+  privateKey:
+    algorithm: {{ .Values.certificate.selfSignedOverrides.privateKey.algorithm | quote }}
+    {{- if .Values.certificate.selfSignedOverrides.privateKey.size }}
+    size: {{ .Values.certificate.selfSignedOverrides.privateKey.size | int }}
+    {{- end }}
 
 wildcard: {{ .Values.certificate.wildcard }}
 ...

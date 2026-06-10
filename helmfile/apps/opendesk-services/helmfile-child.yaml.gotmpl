@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 repositories:
@@ -32,7 +32,17 @@ repositories:
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.certificates.registry }}/{{ .Values.charts.certificates.repository }}"
 
-    # openDesk Alerts
+  # openDesk Trust
+  # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-certificates
+  - name: "opendesk-trust-repo"
+    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    verify: {{ .Values.charts.opendeskTrust.verify }}
+    username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
+    password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
+    oci: true
+    url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.opendeskTrust.registry }}/{{ .Values.charts.opendeskTrust.repository }}"
+
+  # openDesk Alerts
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-alerts
   - name: "opendesk-alerts-repo"
     keyring: "../../files/gpg-pubkeys/opencode.gpg"
@@ -42,8 +52,8 @@ repositories:
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.opendeskAlerts.registry }}/{{ .Values.charts.opendeskAlerts.repository }}"
 
-    # openDesk Grafana Dashboards
-    # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-dashboards
+  # openDesk Grafana Dashboards
+  # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-dashboards
   - name: "opendesk-dashboards-repo"
     keyring: "../../files/gpg-pubkeys/opencode.gpg"
     verify: {{ .Values.charts.opendeskDashboards.verify }}
@@ -52,7 +62,7 @@ repositories:
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.opendeskDashboards.registry }}/{{ .Values.charts.opendeskDashboards.repository }}"
 
-    # openDesk Static Files
+  # openDesk Static Files
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-static-files
   - name: "opendesk-static-files-repo"
     keyring: "../../files/gpg-pubkeys/opencode.gpg"
@@ -92,7 +102,20 @@ releases:
       {{- range .Values.customization.release.opendeskCertificates }}
       - {{ . }}
       {{- end }}
-    installed: {{ .Values.apps.certificates.enabled }}
+    installed: {{ and .Values.apps.certificates.enabled .Values.certificate.create }}
+    timeout: 900
+
+  - name: "opendesk-trust"
+    chart: "opendesk-trust-repo/{{ .Values.charts.opendeskTrust.name }}"
+    version: "{{ .Values.charts.opendeskTrust.version }}"
+    values:
+      - "values-opendesk-trust.yaml.gotmpl"
+      {{- range .Values.customization.release.opendeskTrust }}
+      - {{ . }}
+      {{- end }}
+    installed: {{ and .Values.apps.certificates.enabled .Values.trust.create }}
+    waitForJobs: true
+    wait: true
     timeout: 900
 
   - name: "opendesk-alerts"

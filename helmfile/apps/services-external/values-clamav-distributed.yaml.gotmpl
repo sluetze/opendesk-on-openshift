@@ -78,6 +78,19 @@ freshclam:
     runAsNonRoot: true
     seLinuxOptions:
       {{ .Values.seLinuxOptions.freshclam | toYaml | nindent 6 }}
+  {{- if .Values.trust.secret.mount }}
+  extraVolumes:
+    - name: "trusted-cert-secret-volume"
+      secret:
+        secretName: {{ .Values.trust.secret.name | quote }}
+        items:
+          - key: "ca.crt"
+            path: "ca-certificates.crt"
+  extraVolumeMounts:
+    - name: "trusted-cert-secret-volume"
+      mountPath: "/etc/ssl/certs/ca-certificates.crt"
+      subPath: "ca-certificates.crt"
+  {{- end }}
   image:
     registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.freshclam.registry | quote }}
     repository: {{ .Values.images.freshclam.repository | quote }}

@@ -71,14 +71,14 @@ ingress:
   enabled: {{ .Values.ingress.enabled }}
   tls:
     secretName: {{ .Values.ingress.tls.secretName | quote }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "NODE_EXTRA_CA_CERTS"
     value: "/etc/ssl/certs/ca-certificates.crt"
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

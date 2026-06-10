@@ -237,17 +237,17 @@ keycloak:
   serviceAccount:
     annotations:
       {{ .Values.annotations.nubusKeycloak.serviceAccount | toYaml | nindent 6 }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-crt-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
     - name: "trusted-cert-jks-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "truststore.jks"
             path: "truststore.jks"
@@ -265,7 +265,7 @@ keycloak:
     - name: "KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL"
       value: "info"
   {{- end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
     - name: "KC_HTTPS_TRUST_STORE_FILE"
       value: "/etc/ssl/certs/truststore.jks"
     - name: "KC_TRUSTSTORE_PATHS"
@@ -622,8 +622,7 @@ nubusPortalConsumer:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
       repository: {{ .Values.images.nubusWaitForDependency.repository }}
       tag: {{ .Values.images.nubusWaitForDependency.tag }}
-    extraEnvVars: []
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     extraVolumeMounts:
       - name: "trusted-cert-secret-volume"
         readOnly: true
@@ -634,12 +633,12 @@ nubusPortalConsumer:
         mountPath: "/usr/local/lib/python3.11/dist-packages/certifi/cacert.pem"
         subPath: "cacert.pem"
     extraEnvVars:
-      - name: "REQUESTS_CA_BUNDLE"
-        value: "/etc/ssl/certs/ca-certificates.crt"
       - name: "DEFAULT_CA_BUNDLE_PATH"
         value: "/etc/ssl/certs/ca-certificates.crt"
       - name: "SSL_CERT_FILE"
         value: "/etc/ssl/certs/ca-certificates.crt"
+    {{- else }}
+    extraEnvVars: []
     {{- end }}
   extraEnvVars:
     - name: AWS_DEFAULT_REGION
@@ -650,11 +649,11 @@ nubusPortalConsumer:
       value: "when_required"
     - name: "AWS_RESPONSE_CHECKSUM_VALIDATION"
       value: "when_required"
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
@@ -775,11 +774,11 @@ nubusPortalServer:
     annotations:
       {{ .Values.annotations.nubusPortalServer.serviceAccount | toYaml | nindent 6 }}
     create: true
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-crt-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"

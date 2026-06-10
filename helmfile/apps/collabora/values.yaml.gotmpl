@@ -61,6 +61,20 @@ collabora:
     secretName: {{ .Values.secrets.collabora.adminPassword.name | quote }}
     passwordKey: {{ .Values.secrets.collabora.adminPassword.key | quote }}
 
+{{- if .Values.trust.secret.mount }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
+{{- end }}
+
 fullnameOverride: "collabora"
 
 image:

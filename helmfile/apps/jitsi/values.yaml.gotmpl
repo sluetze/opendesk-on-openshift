@@ -29,7 +29,7 @@ containerSecurityContext:
     {{ .Values.seLinuxOptions.jitsiKeycloakAdapter | toYaml | nindent 4 }}
 
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "DENO_CERT"
     value: "/etc/ssl/certs/ca-certificates.crt"
@@ -37,7 +37,7 @@ extraEnvVars:
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

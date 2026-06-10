@@ -117,15 +117,15 @@ environment:
   OPENPROJECT_SEED_DESIGN_EXPORT__FONT__BOLD__ITALIC: {{ .Values.theme.imagery.projects.pdfExportFontBoldItalicUrl | quote }}
   {{- end }}
 
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   SSL_CERT_FILE: "/etc/ssl/certs/ca-certificates.crt"
   {{- end }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

@@ -33,13 +33,13 @@ extraEnvVars:
   - name: "UVS_LOG_LEVEL"
     value: "debug"
 {{- end }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   - name: "NODE_EXTRA_CA_CERTS"
     value: "/etc/ssl/certs/ca-certificates.crt"
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

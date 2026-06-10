@@ -27,6 +27,9 @@ SPDX-License-Identifier: Apache-2.0
   * [Deprecation warnings](#deprecation-warnings)
   * [Overview and mandatory upgrade path](#overview-and-mandatory-upgrade-path)
   * [Manual checks/actions](#manual-checksactions)
+    * [Versions ≥ v1.19.0](#versions--v1190)
+      * [Pre-upgrade to versions ≥ v1.19.0](#pre-upgrade-to-versions--v1190)
+        * [Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates)
     * [Versions ≥ v1.18.0](#versions--v1180)
       * [Pre-upgrade to versions ≥ v1.18.0](#pre-upgrade-to-versions--v1180)
         * [New persistence requirement: OX Connector requires its own PostgreSQL database](#new-persistence-requirement-ox-connector-requires-its-own-postgresql-database)
@@ -149,6 +152,60 @@ matching that constraint, though our links always point to the newest patch rele
 > patch) starting from 1.7.0, e.g. 1.7.0, 1.7.1, 1.8.0, etc. Furthermore, if a version is not explicitly
 > listed no extra manual steps are required when upgrading to that version, e.g. in the case of an update from
 > version 1.7.0 to version 1.7.1.
+
+### Versions ≥ v1.19.0
+
+#### Pre-upgrade to versions ≥ v1.19.0
+
+##### Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates
+
+**Target group:** Deployments that set `certificate.selfSigned`.
+
+**Context:**
+
+Version 1.19.0 reworks the self-signed certificate support (see
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)). Two
+behaviors that were automatic before are now opt-in:
+
+* The `opendesk-certificates` chart no longer creates the root CA certificate and its issuer on its own when
+  `certificate.selfSigned` is set. Both are now controlled through `certificate.selfSignedOverrides` and default to
+  off, so a deployment that keeps only `certificate.selfSigned: true` no longer gets a CA-signed certificate chain.
+* The Kubernetes secret containing the trusted certificates is no longer mounted into the containers automatically;
+  the mount has to be enabled through `trust.secret.mount`.
+
+**Required action**
+
+To retain the previous behavior - a chart-managed root CA signing the certificate, and its secret mounted into all
+relevant containers - both have to be enabled explicitly:
+
+```yaml
+certificate:
+  selfSigned: true
+  selfSignedOverrides:
+    issuer:
+      create: true
+    caCertificate:
+      create: true
+trust:
+  secret:
+    mount: true
+```
+
+Optionally, additionally set `trust.create: true` to mount a trust bundle composed of the public Mozilla CAs and your
+root CA instead of the root CA alone, so that the components keep trusting publicly signed endpoints as well. This
+requires naming the CA source and a *different* secret for the composed bundle:
+
+```yaml
+trust:
+  create: true
+  certificateAuthorities:
+    secret: "opendesk-certificates-ca-tls"
+  secret:
+    mount: true
+    name: "opendesk-certificates-ca-bundle-tls"
+```
+
+See the [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section for details.
 
 ### Versions ≥ v1.18.0
 

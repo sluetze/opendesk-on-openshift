@@ -172,10 +172,10 @@ backend:
     - name: "customization-volume"
       configMap:
         name: "impress-customization"
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
@@ -184,7 +184,7 @@ backend:
     - name: "customization-volume"
       mountPath: "/app/impress/configuration/theme/default.json"
       subPath: "theme.json"
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
     - name: "trusted-cert-secret-volume"
       mountPath: "/cert/cacert.pem"
       subPath: "ca-certificates.crt"
@@ -247,14 +247,14 @@ y-provider:
     tag: {{ .Values.images.notesYProvider.tag }}
   replicaCount: 1
   debug: true
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraEnvVars:
     - name: "NODE_EXTRA_CA_CERTS"
       value: "/etc/ssl/certs/cacert.pem"
   extraVolumes:
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"

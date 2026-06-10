@@ -150,16 +150,16 @@ aio:
     successfulJobsHistoryLimit: {{ if .Values.debug.enabled }}"3"{{ else }}"1"{{ end }}
   debug:
     loglevel: {{ if .Values.debug.enabled }}"0"{{ else }}"2"{{ end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraEnvVars:
     - name: "FS_IMPORT_CA_CERTIFICATES"
       value: "true"
   {{- end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"

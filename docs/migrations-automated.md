@@ -165,38 +165,6 @@ something while the old release is still there and act on it once the new one is
 first leaves what it worked out as an object for the second to pick up - see
 [`ox_functional_accounts_export`](#ox_functional_accounts_export), which is what needed it first.
 
-It is declared once, below `migrations`, and not per action: which object store a deployment has is a fact about
-the deployment and the same answer for every action, so declaring it per action would repeat it and make it
-possible to tell two actions different things about the same store. What stays with an action is *what* it puts
-there, its object key.
-
-openDesk provisions the `migrations` bucket and its identity for exactly this (`objectstores.migrations`), and the
-values below are derived from it; the identity's secret key is not declared here but mounted through
-[`secretFiles`](#secretfiles) as `objectstore-migrations-secret-key`. Only actions that hand work over read any of
-it, and they fail naming what is missing, so a deployment running none of them needs none of it.
-
-```yaml
-objectStore:
-  endpoint: "<the deployment's object store>"
-  bucket: "migrations"
-  username: "migration_user"
-  region: "eu-west-1"
-  port: 443
-  useSSL: true
-  pathStyle: true
-  requestTimeoutSeconds: 30
-  # The store is reached under the endpoint its other consumers use, which is the deployment's
-  # public one. Both are configurable in `migrations.objectStore` of your environment.
-  verifySSL: true
-  caBundle: ""
-```
-
-Two of these are yours to set, in `migrations.objectStore`: `caBundle` is the path of a mounted CA certificate, for
-a deployment whose object store certificate is issued by a CA the migrations image does not know (mount it through
-the migration releases' `extraVolumes`/`extraVolumeMounts`), and `verifySSL` exists for test deployments with a
-self-signed certificate - switching it off means the handover between the two stages travels over a connection
-nothing authenticates.
-
 ## Automated migrations overview
 
 The following table lists the actions the openDesk releases declare, in the order they are executed.

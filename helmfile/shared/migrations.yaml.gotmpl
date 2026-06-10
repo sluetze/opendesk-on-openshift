@@ -52,14 +52,10 @@ migrations:
     port: {{ .Values.objectstores.migrations.port }}
     useSSL: {{ .Values.objectstores.migrations.useSSL }}
     pathStyle: {{ .Values.objectstores.migrations.pathStyle }}
-    requestTimeoutSeconds: {{ .Values.migrations.objectStore.requestTimeoutSeconds }}
-    # The store is reached under the endpoint its other consumers use, which is the deployment's
-    # public one. A deployment whose certificate is issued by a CA the migrations image does not
-    # know sets `caBundle` to a mounted certificate; `verifySSL` is for test deployments with a
-    # self-signed one and belongs nowhere else.
-    verifySSL: {{ .Values.migrations.objectStore.verifySSL }}
-    {{- with .Values.migrations.objectStore.caBundle }}
-    caBundle: {{ . | quote }}
+    requestTimeoutSeconds: 30
+    verifySSL: true
+    {{- if .Values.trust.secret.mount }}
+    caBundle: "/etc/opendesk/trust/ca-certificates.crt"
     {{- end }}
 
   # `actions` defines the migration itself: which actions the image runs, in which stage and in
@@ -262,10 +258,23 @@ migrations:
     post:
       {{ .Values.migrations.actionsSkip.post | toYaml | nindent 6 }}
   # `secretFiles` is not defined here but per stage, in the values file of the `migrations-pre` and
-  # the `migrations-post` release. A Secret named there has to exist when that Job starts, and the
-  # two stages do not see the same ones: `migrations-pre` is the very first app of a deployment, so
-  # it can only mount Secrets that exist before any component was deployed, while `migrations-post`
-  # runs last and can mount every Secret the deployment creates.
+  # the `migrations-post` release.
+
+{{- if .Values.trust.secret.mount }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+      optional: true
+
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/opendesk/trust"
+    readOnly: true
+{{- end }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false

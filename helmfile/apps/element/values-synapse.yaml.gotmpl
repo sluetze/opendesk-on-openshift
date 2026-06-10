@@ -196,18 +196,16 @@ containerSecurityContext:
   seLinuxOptions:
     {{ .Values.seLinuxOptions.synapse | toYaml | nindent 4 }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "REQUESTS_CA_BUNDLE"
     value: "/etc/ssl/certs/ca-certificates.crt"
   - name: "SSL_CERT_FILE"
     value: "/etc/ssl/certs/ca-certificates.crt"
-  - name: "SSL_CERT_DIR"
-    value: "/etc/ssl/certs"
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

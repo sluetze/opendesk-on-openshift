@@ -1016,7 +1016,7 @@ appsuite:
       {{- end }}
       # Other
       com.openexchange.secret.secretSource: "\"<user-id> + '@' + <context-id> + '/' + <random>\""
-      {{- if .Values.certificate.selfSigned }}
+      {{- if .Values.trust.secret.mount }}
       # Selfsigned
       com.openexchange.net.ssl.default.truststore.enabled: "false"
       com.openexchange.net.ssl.custom.truststore.enabled: "true"
@@ -1028,14 +1028,14 @@ appsuite:
       com.openexchange.authentication.application.storage.rdb.loginNameSource: "mail"
       com.openexchange.authentication.application.storage.rdb.contextLookupNamePart: "full"
       {{- end }}
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     extraEnv:
     - name: "JAVA_OPTS_APPEND"
       value: {{ printf "%s %s=%s" "-Djavax.net.ssl.trustStore=/etc/ssl/certs/truststore.jks -Djavax.net.ssl.trustStoreType=jks" "-Djavax.net.ssl.trustStorePassword" .Values.secrets.certificates.password.value | quote }}
     extraVolumes:
       - name: "trusted-cert-secret-volume"
         secret:
-          secretName: "opendesk-certificates-ca-tls"
+          secretName: {{ .Values.trust.secret.name | quote }}
           items:
             - key: "truststore.jks"
               path: "truststore.jks"
@@ -1056,7 +1056,7 @@ appsuite:
       com.openexchange.guard.guestSMTPPassword: {{ .Values.secrets.postfix.opendeskSystemPassword.value | quote }}
       com.openexchange.guard.guestSMTPUsername: {{ printf "%s@%s" "opendesk-system" ( .Values.global.mailDomain | default .Values.global.domain ) }}
       {{- end }}
-      {{- if .Values.certificate.selfSigned }}
+      {{- if .Values.trust.secret.mount }}
       com.openexchange.net.ssl.custom.truststore.password: {{ .Values.secrets.certificates.password.value | quote }}
       {{- end }}
     secretPropertiesFiles:

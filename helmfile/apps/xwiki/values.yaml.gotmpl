@@ -23,7 +23,7 @@ javaOpts:
 {{- if and (eq (env "OPENDESK_ENTERPRISE") "true") .Values.enterpriseKeys.xwiki.opendeskEnterpriseLicense .Values.enterpriseKeys.xwiki.proApplicationslicense }}
   - "-Dlicenses={{ .Values.enterpriseKeys.xwiki.opendeskEnterpriseLicense }},{{ .Values.enterpriseKeys.xwiki.proApplicationslicense }}"
 {{- end }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   - "-Djavax.net.ssl.trustStore=/etc/ssl/certs/truststore.jks"
   - "-Djavax.net.ssl.trustStoreType=jks"
 {{- end }}
@@ -34,7 +34,7 @@ javaOptsSecrets:
     secret:
       name: {{ .Values.secrets.postfix.opendeskSystemPassword.name | quote }}
       key: {{ .Values.secrets.postfix.opendeskSystemPassword.key | quote }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   trustStorePassword:
     option: "-Djavax.net.ssl.trustStorePassword="
     secret:
@@ -266,11 +266,11 @@ serviceAccount:
 volumePermissions:
   enabled: true
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "truststore.jks"
           path: "truststore.jks"

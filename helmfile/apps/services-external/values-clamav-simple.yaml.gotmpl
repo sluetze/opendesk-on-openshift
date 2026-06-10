@@ -21,6 +21,21 @@ containerSecurityContext:
   seLinuxOptions:
     {{ .Values.seLinuxOptions.clamavSimple | toYaml | nindent 4 }}
 
+
+{{- if .Values.trust.secret.mount }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
+{{- end }}
+
 global:
   imagePullSecrets:
     {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}

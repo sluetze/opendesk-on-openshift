@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 controller:
@@ -19,6 +19,20 @@ controller:
 
   leaderElection:
     enabled: {{ if gt .Values.replicas.collaboraController 1 }}true{{ else }}false{{ end }}
+
+{{- if .Values.trust.secret.mount }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
+{{- end }}
 
 image:
   repository: "{{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.collaboraController.registry }}/{{ .Values.images.collaboraController.repository }}"

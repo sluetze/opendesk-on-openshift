@@ -21,11 +21,11 @@ containerSecurityContext:
   seLinuxOptions:
     {{ .Values.seLinuxOptions.intercom | toYaml | nindent 4 }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -143,7 +143,7 @@ provisioning:
   extraEnvVars:
     - name: "REDIS_USER"
       value: {{ .Values.cache.intercomService.username }}
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     - name: "NODE_EXTRA_CA_CERTS"
       value: "/etc/ssl/certs/ca-certificates.crt"
     {{- end }}

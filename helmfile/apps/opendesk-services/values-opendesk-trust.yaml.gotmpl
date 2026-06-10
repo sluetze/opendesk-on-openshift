@@ -1,0 +1,42 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+{{- /* The Job writes the composed bundle into `trust.secret.name` and is RBAC-authorized to
+overwrite whatever Secret carries that name, so the name must not point at anything else:
+not at the CA secret of the opendesk-certificates chart - which is what the default name,
+kept for the `trust.create: false` compatibility path, refers to - and not at the Secret the
+CAs are read from. Refused here, at template time, rather than overwriting a Secret another
+controller owns. */}}
+{{- if and .Values.trust.create .Values.trust.certificateAuthorities.secret (eq .Values.trust.certificateAuthorities.secret .Values.trust.secret.name) }}
+{{- fail "`trust.certificateAuthorities.secret` is the input the trust bundle is composed from and `trust.secret.name` the output it is written to - under one name the Job would overwrite its own input. Choose different names." }}
+{{- end }}
+configuration:
+  secret:
+    name: {{ .Values.trust.secret.name | quote }}
+    keystorePassword: {{ .Values.secrets.certificates.password.value | quote }}
+  certificateAuthorities:
+    values: {{ .Values.trust.certificateAuthorities.values | toYaml | nindent 6 }}
+    secret: {{ .Values.trust.certificateAuthorities.secret }}
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  enabled: true
+  privileged: false
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  seLinuxOptions:
+    {{ .Values.seLinuxOptions.opendeskTrust | toYaml | nindent 4 }}
+
+image:
+  registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.opendeskTrust.registry | quote }}
+  repository: {{ .Values.images.opendeskTrust.repository | quote }}
+  imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+  tag: {{ .Values.images.opendeskTrust.tag | quote }}
+...

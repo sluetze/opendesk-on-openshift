@@ -12,6 +12,12 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
 
 <!-- TOC -->
 * [Updates and features](#updates-and-features)
+  * [1.19.0](#1190)
+    * [`certificate.yaml.gotmpl`](#certificateyamlgotmpl)
+      * [Upgrade to `opendesk-certificates` v4](#upgrade-to-opendesk-certificates-v4)
+      * [Template `group` in `issuerRef`](#template-group-in-issuerref)
+      * [Allow overriding of `opendesk-certificates` chart options](#allow-overriding-of-opendesk-certificates-chart-options)
+      * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
   * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
@@ -60,6 +66,78 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Proxy protocol support for Postfix](#proxy-protocol-support-for-postfix)
       * [Set limitation on maximum number of objects (for tasks, contacts, attachments)](#set-limitation-on-maximum-number-of-objects-for-tasks-contacts-attachments)
 <!-- TOC -->
+
+## 1.19.0
+
+### `certificate.yaml.gotmpl`
+
+#### Upgrade to `opendesk-certificates` v4
+
+Reworking the certificates helm chart to support most of the community requested TLS certificate use-cases.
+
+Read more in [Certificates](./enhanced-configuration/self-signed-certificates.md#certificates) section of
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
+
+#### Template `group` in `issuerRef`
+
+Supporting `cert-manager.io` extensions, the `group` can now be modified and defaults to `group: "cert-manager.io"`.
+
+```yaml
+certificate:
+  issuerRef:
+    name: "letsencrypt-prod"
+    kind: "ClusterIssuer"
+    group: "cert-manager.io"
+```
+
+#### Allow overriding of `opendesk-certificates` chart options
+
+To support the most common TLS certificate use-cases, most options in the `opendesk-certificates` helm chart can now be
+overridden.
+
+```yaml
+certificate:
+  selfSignedOverrides:
+    issuer:
+      create: false
+    caCertificate:
+      create: false
+      secret:
+        value:
+          certificate: ~
+          key: ~
+          truststore: ~
+          keystore: ~
+        name: ""
+    organizations:
+      - "European Company that Makes Everything (ECME) Inc."
+    organizationalUnits:
+      - "Datacenter Operations"
+    privateKey:
+      algorithm: "ECDSA"
+      size: ~
+```
+
+#### Certificate Trust chain/build support
+
+openDesk now has built-in eval support for generating a certificate trust bundle. It composes the public default CA
+bundle with self-signed or organization-signed certificates, so that clients reach the applications through the
+deployment's own certificate while the applications keep trusting endpoints protected by publicly signed
+certificates.
+
+```yaml
+trust:
+  create: false
+  certificateAuthorities:
+    values: {}
+    secret: ""
+  secret:
+    mount: false
+    name: "opendesk-certificates-ca-tls"
+```
+
+Read more in [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section of
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
 
 ## 1.18.0
 

@@ -35,25 +35,7 @@ migrations:
     # Anything you need beyond that has to be collected from the Pod, e.g. by your log aggregation.
     keepOutputSeconds: 604800
 
-  # Where the two migration stages hand work over. They are separate jobs, so an action that has to
-  # read something before your release is applied and act on it afterwards is two actions, and the
-  # first leaves what it worked out in an object store - not in a ConfigMap, which holds 1 MiB and
-  # would fail exactly in the installations that have the most to migrate.
-  #
-  # Which store, bucket and identity that is comes from `objectstores.migrations`, the bucket
-  # openDesk provisions for this; the migration jobs reach it under the endpoint its other
-  # consumers use, which is your deployment's public one. What is settable here is how they trust
-  # and address it, once for every action rather than per action:
-  objectStore:
-    # Set to the path of a mounted CA certificate when your object store's certificate is issued by
-    # a CA the migrations image does not know. Mount it through the migration releases'
-    # `extraVolumes`/`extraVolumeMounts`.
-    caBundle: ""
-    # Only for test deployments with a self-signed certificate. Switching this off means the
-    # handover between the two stages travels over a connection nothing authenticates.
-    verifySSL: true
-    # Seconds a single request to the object store may take.
-    requestTimeoutSeconds: 30
+
 
   # `actionsSkip` opts out of single migration actions, e.g. when a migration is considered too
   # complex or too risky for this environment.
