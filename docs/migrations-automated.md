@@ -38,6 +38,7 @@ SPDX-License-Identifier: Apache-2.0
     * [`ox_connector_restart`](#ox_connector_restart)
     * [`ox_shared_accounts_import`](#ox_shared_accounts_import)
     * [`flush_intercom_sessions`](#flush_intercom_sessions)
+    * [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)
   * [Development](#development)
 <!-- TOC -->
 
@@ -178,19 +179,20 @@ removed it again.
 `Always` (on every migration run, an action declared without a `tag`). Every action applies its change.
 - *Upgrades covered*: The action's `versions` window, so the range of installed releases the call is executed for.
 
-| Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered |
-| ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ---------------- |
-| [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_names_to_object_identifier`](#ox_names_to_object_identifier)             | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`provisioning_drop_subscriptions`](#provisioning_drop_subscriptions)         | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_shared_accounts_import`](#ox_shared_accounts_import)                     | -                | `migrations-post` | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`flush_intercom_sessions`](#flush_intercom_sessions)                         | -                | `migrations-post` | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_connector_restart`](#ox_connector_restart)                               | -                | `migrations-post` | v1.17.0       | v1.18.0      | Once | v1.15 - v1.16    |
+| Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered  |
+| ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ----------------- |
+| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x    |
+| [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_names_to_object_identifier`](#ox_names_to_object_identifier)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`provisioning_drop_subscriptions`](#provisioning_drop_subscriptions)         | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_shared_accounts_import`](#ox_shared_accounts_import)                     | -                | `migrations-post` | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`flush_intercom_sessions`](#flush_intercom_sessions)                         | -                | `migrations-post` | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_connector_restart`](#ox_connector_restart)                               | -                | `migrations-post` | v1.17.0       | v1.18.0      | Once | v1.15.x - v1.16.x |
 
 > [!note]
-> Action are gated by their respective component prerequiste(s), e.g. the `ox_connector_restart` should only fire when:
+> Actions are gated by their respective component prerequisite(s), e.g. the `ox_connector_restart` should only fire when:
 > - Nubus and
 > - OX App Suite
 > are installed.
@@ -591,6 +593,53 @@ secretFiles:
     secret:
       name: "cache-intercom-service-password"
       key: "password"
+```
+
+### `synapse_deactivate_orphaned_users`
+
+Reconciles Matrix accounts against the LDAP directory and deactivates any Matrix account that no longer has a counterpart there.
+
+The action only affects Matrix accounts that are no longer backed by a leading IAM object in the LDAP. All other accounts that live in the LDAP are reconciled by the openDesk Provisioning Connector introduced with openDesk 1.19.0.
+
+Whether the data is erased along with the deactivation can be set using `functional.dataProtection.matrixAccountErasure.enabled` in [`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl). This is a shared setting also used by the openDesk Provisioning Connector.
+
+Set it to `false` to only deactivate the accounts and keep their data.
+
+```yaml
+- id: "synapse_deactivate_orphaned_users"
+  config:
+    ldap:
+      pod: "ums-ldap-server-primary-0"
+      container: "main"
+    synapse:
+      connection:
+        url: "http://opendesk-synapse.<namespace>.svc.cluster.local:8008"
+      dryRun: true
+      erase: true
+      postgres:
+        host: "postgresql"
+        port: 5432
+        name: "matrix"
+        user: "matrix_user"
+        sslMode: "prefer"
+    safety:
+      maxOrphanPercent: 25
+```
+
+Its credentials are mounted through the stage's [`secretFiles`](#secretfiles). The admin token is the Synapse
+access token of the `provisioning-admin` account the provisioning connector already uses, created by the
+`opendesk-provisioning-admin-bootstrap` release, so the migration needs no admin account of its own:
+
+```yaml
+secretFiles:
+  - name: "synapse-db-password"
+    secret:
+      name: "database-synapse-password"
+      key: "password"
+  - name: "synapse-admin-token"
+    secret:
+      name: "provisioning-admin-account"
+      key: "access_token"
 ```
 
 ## Development

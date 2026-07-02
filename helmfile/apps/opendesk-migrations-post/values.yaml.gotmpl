@@ -22,33 +22,12 @@ migrations:
       secret:
         name: {{ .Values.databases.synapse.password.name | quote }}
         key: {{ .Values.databases.synapse.password.key | quote }}
-  {{- end }}
-  {{- if and .Values.apps.oxAppSuite.enabled .Values.apps.nubus.enabled }}
-    - name: "udm-admin-password"
+    # The Synapse access token of the provisioning admin, created by the
+    # `opendesk-provisioning-admin-bootstrap` release. The same account the provisioning
+    # connector uses, so no second admin account is needed for the migration.
+    - name: "synapse-admin-token"
       secret:
-        name: "ums-ldap-server-admin"
-        key: "password"
-    # The identity of the `migrations` bucket, which `ox_shared_accounts_import` reads the handover
-    # `ox_functional_accounts_export` left in `migrations-pre` from - see
-    # ../../../docs/migrations-automated.md.
-    - name: "objectstore-migrations-secret-key"
-      secret:
-        name: {{ .Values.objectstores.migrations.secretKey.name | quote }}
-        key: {{ .Values.objectstores.migrations.secretKey.key | quote }}
-        optional: true
-  {{- end }}
-  {{- if .Values.apps.nubus.enabled }}
-    # The password `flush_intercom_sessions` authenticates with - the same fallback every consumer
-    # of `cache.yaml.gotmpl` applies, expressed as a choice of Secret: an empty component entry
-    # means "the bundled server's password", so the server's Secret is mounted then.
-    - name: "redis-password"
-      secret:
-      {{- if .Values.cache.intercomService.password.value }}
-        name: {{ .Values.cache.intercomService.password.name | quote }}
-        key: {{ .Values.cache.intercomService.password.key | quote }}
-      {{- else }}
-        name: {{ .Values.cache.redis.password.name | quote }}
-        key: {{ .Values.cache.redis.password.key | quote }}
-      {{- end }}
+        name: "provisioning-admin-account"
+        key: "access_token"
   {{- end }}
 ...

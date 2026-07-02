@@ -1,0 +1,52 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+cleanup:
+  deletePodsOnSuccess: {{ .Values.debug.cleanup.deletePodsOnSuccess }}
+  deletePodsOnSuccessTimeout: {{ .Values.debug.cleanup.deletePodsOnSuccessTimeout }}
+
+configuration:
+  username: "provisioning-admin"
+  admin: true
+  pod: "opendesk-synapse-0"
+  secretName: "provisioning-admin-account"
+  passwordExistingSecret:
+    name: {{ .Values.secrets.synapse.provisioningAdminPassword.name | quote }}
+    key: {{ .Values.secrets.synapse.provisioningAdminPassword.key | quote }}
+
+global:
+  imagePullSecrets:
+    {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
+
+image:
+  registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.synapseCreateUser.registry | quote }}
+  url: {{ .Values.images.synapseCreateUser.repository | quote }}
+  tag: {{ .Values.images.synapseCreateUser.tag | quote }}
+  imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+
+fullnameOverride: "opendesk-provisioning-admin-bootstrap"
+
+podAnnotations:
+  intents.otterize.com/service-name: "opendesk-provisioning-admin-bootstrap"
+  {{- with .Values.annotations.elementProvisioningAdminBootstrap.pod }}
+  {{ . | toYaml | nindent 2 }}
+  {{- end }}
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 101
+  runAsNonRoot: true
+  runAsUser: 101
+  seccompProfile:
+    type: "RuntimeDefault"
+  seLinuxOptions:
+    {{ .Values.seLinuxOptions.synapseCreateUser | toYaml | nindent 4 }}
+
+serviceAccount:
+  annotations:
+    {{ .Values.annotations.elementProvisioningAdminBootstrap.serviceAccount | toYaml | nindent 4 }}

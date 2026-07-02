@@ -18,8 +18,10 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Template `group` in `issuerRef`](#template-group-in-issuerref)
       * [Allow overriding of `opendesk-certificates` chart options](#allow-overriding-of-opendesk-certificates-chart-options)
       * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
-  * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
+      * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
+  * [1.18.0](#1180)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
       * [Identity a user schedules under in a Shared Account's calendar](#identity-a-user-schedules-under-in-a-shared-accounts-calendar)
     * [`migrations.yaml.gotmpl`](#migrationsyamlgotmpl)
@@ -30,7 +32,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Dedicated mobile logo and touch icon for OpenProject](#dedicated-mobile-logo-and-touch-icon-for-openproject)
       * [Custom fonts for OpenProject's PDF export](#custom-fonts-for-openprojects-pdf-export)
   * [1.17.0](#1170)
-    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-2)
       * [Enable the "Send later" (scheduled mail) feature for OX App Suite](#enable-the-send-later-scheduled-mail-feature-for-ox-app-suite)
       * [Configurable "Remember Me" SSO session timeouts](#configurable-remember-me-sso-session-timeouts)
     * [`helmfile-defaults.yaml.gotmpl`](#helmfile-defaultsyamlgotmpl)
@@ -59,7 +61,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
     * [`cache.yaml.gotmpl`](#cacheyamlgotmpl)
       * [Options to enable SSL/TLS Redis connection for the Intercom Service, Notes, and OX App Suite](#options-to-enable-ssltls-redis-connection-for-the-intercom-service-notes-and-ox-app-suite)
   * [1.15.0](#1150)
-    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-2)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-3)
       * [Per user-quota for external sharing](#per-user-quota-for-external-sharing)
       * [Virtual alias limits](#virtual-alias-limits)
     * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-3)
@@ -138,6 +140,21 @@ trust:
 
 Read more in [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section of
 [enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
+
+### `functional.yaml.gotmpl`
+
+#### Erasure of the Matrix account data of deleted users
+
+With openDesk 1.19.0 the Matrix accounts follow the central identity management: A user deleted there has their Matrix account revoked. Whether the account's data is erased along with the deactivation can now be configured:
+
+```yaml
+functional:
+  dataProtection:
+    matrixAccountErasure:
+      enabled: true
+```
+
+`true`, the default, erases the data (GDPR erasure): The profile is dropped and the user's events are marked for redaction, which cannot be undone. `false` only deactivates the account and keeps its data.
 
 ## 1.18.0
 

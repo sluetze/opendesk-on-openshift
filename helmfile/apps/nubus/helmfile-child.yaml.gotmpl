@@ -26,6 +26,14 @@ repositories:
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.opendeskKeycloakBootstrap.registry }}/{{ .Values.charts.opendeskKeycloakBootstrap.repository }}"
+  # openDesk Provisioning Connector Chart (generic; one release per module)
+  - name: "provisioning-connector-repo"
+    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    verify: {{ .Values.charts.provisioningConnector.verify }}
+    username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
+    password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
+    oci: true
+    url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.provisioningConnector.registry }}/{{ .Values.charts.provisioningConnector.repository }}"
 
 releases:
   # Univention Management Stack Umbrella Chart
@@ -66,6 +74,20 @@ releases:
     needs:
       - "ums"
     installed: {{ .Values.apps.nubus.enabled }}
+    timeout: 900
+
+  # openDesk Provisioning Connector, running the "synapse" module
+  - name: "opendesk-provisioning-synapse"
+    chart: "provisioning-connector-repo/{{ .Values.charts.provisioningConnector.name }}"
+    version: "{{ .Values.charts.provisioningConnector.version }}"
+    values:
+      - "values-opendesk-provisioning-synapse.yaml.gotmpl"
+      {{- range .Values.customization.release.provisioningSynapse }}
+      - {{ . }}
+      {{- end }}
+    needs:
+      - "ums"
+    installed: {{ and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
     timeout: 900
 
 commonLabels:

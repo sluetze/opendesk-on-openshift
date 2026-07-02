@@ -177,15 +177,21 @@ functional:
       profile:
         # Once connected with a user that user's Matrix ID is rarely checked by their communication partners, as the
         # display name is used to see whom they are communicating with. Not allowing users to change their
-        # own display name reduces the risk of identity fraud.
-        # To get the display name updated from the central identity and access management you have to have the Synapse
-        # enterprise feature "groupsync" configured.
+        # own display name reduces the risk of identity fraud. On the other hand, some users may want to change their
+        # display name to inform e.g. about availability.
+        # The setting below allows to toggle this option.
         allowUsersToUpdateDisplayname: true
 
         # If the LDAP entryUUID should be used for the localpart of user's Matrix IDs following setting must be `true`.
         useImmutableIdentifierForLocalpart: false
 
   dataProtection:
+    matrixAccountErasure:
+      # When a user is deleted from the central identity management their Matrix account is
+      # revoked. Enabled, the account's data is erased along with it (GDPR erasure): The profile
+      # is dropped and the user's events are marked for redaction. This cannot be undone.
+      # Disable to only deactivate the account and keep its data.
+      enabled: true
     matrixPresence:
       # Enable to allow information about the user presence status to be shared.
       # Ref.: https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#presence

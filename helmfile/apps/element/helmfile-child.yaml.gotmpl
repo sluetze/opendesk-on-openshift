@@ -222,6 +222,19 @@ releases:
     installed: {{ .Values.apps.element.enabled }}
     timeout: 900
 
+  - name: "opendesk-provisioning-admin-bootstrap"
+    chart: "synapse-create-account-repo/{{ .Values.charts.synapseCreateAccount.name }}"
+    version: "{{ .Values.charts.synapseCreateAccount.version }}"
+    values:
+      - "values-provisioning-admin-bootstrap.yaml.gotmpl"
+      {{- range .Values.customization.release.opendeskProvisioningAdminBootstrap }}
+      - {{ . }}
+      {{- end }}
+    needs:
+      - "opendesk-synapse"
+    installed: {{ and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
+    timeout: 900
+
   - name: "matrix-neodatefix-bot"
     chart: "matrix-neodatefix-bot-repo/{{ .Values.charts.matrixNeodatefixBot.name }}"
     version: "{{ .Values.charts.matrixNeodatefixBot.version }}"

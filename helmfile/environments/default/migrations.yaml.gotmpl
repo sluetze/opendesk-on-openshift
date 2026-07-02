@@ -61,12 +61,9 @@ migrations:
   # ```
   # migrations:
   #   actionsSkip:
-  #     pre:
-  #       - id: "ox_functional_accounts_export"
-  #         tag: "v1.18.0"
   #     post:
-  #       - id: "ox_shared_accounts_import"
-  #         tag: "v1.18.0"
+  #       - id: "synapse_deactivate_orphaned_users"
+  #         tag: "v1.19.0"
   # ```
   actionsSkip:
     # Actions to be skipped in the stage `migrations-pre`.
@@ -83,18 +80,27 @@ migrations:
   # What each action does is documented in `docs/migrations-automated.md`. To take the
   # responsibility for a migration yourself, opt out of its actions through `actionsSkip` above.
   actionOptions:
-    # The migration of the OX App Suite Functional Accounts still in your IAM to the Shared
-    # Accounts that replace them, in two halves: `ox_functional_accounts_export` records and
-    # deletes them in `migrations-pre`, `ox_shared_accounts_import` creates the Shared Accounts in
-    # `migrations-post`.
-    #
-    # To migrate them yourself instead, opt out through `actionsSkip` above - of *both* actions, so
-    # in `pre` *and* in `post`, as opting out of only one leaves the migration half applied.
-    oxFunctionalToSharedAccounts:
-      # The permission every user of a migrated account is linked with, given as the `name` of the
-      # `oxmail/shared_account_permission` object - not its display name, which is a label that may
-      # be reworded. Defaults to openDesk's "Mail: Full access, Calendar: Full access", which comes
-      # closest to what a Functional Account granted its users; `ox_shared_accounts_import` reports
-      # the permissions your deployment provides should this one not exist.
-      permission: "opendesk_mail_author_calendar_author"
+    # Settings for `synapse_deactivate_orphaned_users`, which deactivates the Matrix accounts of
+    # users that were deleted from the directory before the openDesk Provisioning Connector
+    # existed to react to it.
+    synapseDeactivateOrphanedUsers:
+      # Whether to only report the affected accounts instead of deactivating them.
+      #
+      # Defaults to `true` - the one exception to "every action applies its change" above - because
+      # this action cannot be undone: it deactivates the accounts *and* erases their data. A dry
+      # run logs every account it would touch, with its user name, Matrix ID, display name, OIDC
+      # subject and the account's creation date, and modifies nothing.
+      #
+      # Review that list in the log of the `migrations-post` job, and only then set this to `false`
+      # and deploy again to apply it.
+      dryRun: true
+      # The share (in percent) of the active OIDC bound Matrix accounts the action may
+      # deactivate at most - accounts that are already deactivated are no candidates and are
+      # counted on neither side. This is a safety limit: an LDAP that was only read in part
+      # would make live users look orphaned, and exceeding this limit makes the action refuse
+      # to deactivate anything rather than act on a comparison it cannot trust.
+      #
+      # Raise it if your deployment legitimately has to deactivate a larger share of its users at
+      # once - the actual share is reported by the dry run.
+      maxOrphanPercent: 25
 ...

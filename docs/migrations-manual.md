@@ -30,6 +30,9 @@ SPDX-License-Identifier: Apache-2.0
     * [Versions ≥ v1.19.0](#versions--v1190)
       * [Pre-upgrade to versions ≥ v1.19.0](#pre-upgrade-to-versions--v1190)
         * [Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates)
+        * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
+      * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
+        * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
     * [Versions ≥ v1.18.0](#versions--v1180)
       * [Pre-upgrade to versions ≥ v1.18.0](#pre-upgrade-to-versions--v1180)
         * [New persistence requirement: OX Connector requires its own PostgreSQL database](#new-persistence-requirement-ox-connector-requires-its-own-postgresql-database)
@@ -123,6 +126,7 @@ matching that constraint, though our links always point to the newest patch rele
 <!-- IMPORTANT: Make sure to mark mandatory releases if an automatic migration requires a previous update to be installed -->
 | Version                                                                                   | Mandatory | Pre-Upgrade                                                          | Post-Upgrade                                                           | Minimum Required Previous Version                                                     |
 | ----------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| v1.19.0 (unreleased)                                                                      | --        | [Pre](#pre-upgrade-to-versions--v1190)                               | [Post](#post-upgrade-to-versions--v1190)                               | ⬇ Install v1.18.x first                                                              |
 | [v1.18.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.18.0) | **yes**   | [Pre](#pre-upgrade-to-versions--v1180)                               | [Post](#post-upgrade-to-versions--v1180)                               | ⬇ Install v1.15.x first                                                              |
 | [v1.17.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.17.0) | --        | [Pre](#pre-upgrade-to-versions--v1170)                               | [Post](#post-upgrade-to-versions--v1170)                               | ⬇ Install v1.15.x first                                                              |
 | [v1.16.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.16.1) | --        | [Pre](#pre-upgrade-to-versions--v1160)                               | --                                                                     | [⚠ Install v1.15.x first](#pre-upgrade-to-versions--v1160)                           |
@@ -206,6 +210,57 @@ trust:
 ```
 
 See the [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section for details.
+
+##### Matrix: Decide whether the data of a deleted user is erased
+
+**Target group:** All deployments with the chat component (Element/Matrix) enabled.
+
+**Context:**
+
+openDesk 1.19.0 introduces the openDesk Provisioning Connector for the chat component. From this release on the Matrix accounts follow the IAM: A user disabled there can no longer use their account, and a user deleted there has their account revoked. Revoking the account of a deleted user always deactivates it; whether the account's data is erased along with it is a decision of your deployment.
+
+**Required action:**
+
+Take that decision before you upgrade, in `functional.dataProtection.matrixAccountErasure.enabled` ([`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl)):
+
+- `true` (default): The account is deactivated **and its data erased**. The profile is dropped and the user's events are marked for redaction. This cannot be undone.
+- `false`: The account is only deactivated, its data is kept.
+
+This setting affects both use cases:
+
+- The ongoing provisioning from this release on
+- The one-time catch-up for the users that were deleted before it existed, which is the [post-upgrade step below](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated).
+
+#### Post-upgrade to versions ≥ v1.19.0
+
+##### Matrix: Review the orphaned Matrix accounts before they are deactivated
+
+**Target group:** All deployments with the chat component (Element/Matrix) enabled.
+
+**Context:**
+
+To reconcile the Matrix accounts against the IAM, the automated migration action [`synapse_deactivate_orphaned_users`](./migrations-automated.md#synapse_deactivate_orphaned_users) is configured. It compares the Matrix accounts against the IAM and deactivates the ones that no IAM object accounts for any more. Only deleted users are its subject: The account of a user that still exists in the IAMis not touched by the migration action but will be reconciled and kept in sync by the openDesk Provisioning Connector introduced with v1.19.0.
+
+> [!warning]
+> Deactivating an account cannot be undone, and unless you turned the erasure off in the
+> [pre-upgrade step above](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased), the account's data is
+> erased along with it.
+
+The default runmode of the migration action is **dry run**  that reports every account it would deactivate and modifies nothing, so that the deactivation is a decision you take after reviewing that list, and not a side effect of the upgrade.
+
+**Required action:**
+
+1. Upgrade, then read the log of the `migrations-post` Job, starting below the line saying `DRY RUN - would deactivate [..] of [..] active OIDC bound account(s)`. If at least one account would be deactivated, you will find an entry for each account with its:
+   - user name
+   - Matrix ID
+   - display name
+   - OIDC subject (`external_id`)
+   - creation date
+2. Review that list. Every account on it should belong to a user that really was deleted from the IAM. An account whose user still exists means the IAM was not read completely, and that has to be investigated before anything is applied. The action guards against this itself: It re-reads every account it classified as orphaned from the IAM and fails should the directory still know one of them, and the apply run refuses to deactivate anything when the reported accounts exceed `migrations.actionOptions.synapseDeactivateOrphanedUsers.maxOrphanPercent` (25% by default) of the active Matrix accounts. You should adapt the limit after you have reviewed the reported accounts to an integer value slightly above the value shown in the log for `would deactivate [..], 20.0% of them (erase=True)`.
+3. Execute the actual cleanup by setting `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` to `false` in [`migrations.yaml.gotmpl`](../helmfile/environments/default/migrations.yaml.gotmpl) and deploy again - at least the `opendesk-migrations-post` release. The action then runs once more, in apply mode.
+
+> [!note]
+> In case you want to handle the accounts yourself: Leave `dryRun` at `true`, so nothing else happens. To also drop the action from the migration, opt out of it through `migrations.actionsSkip`, see [Skip single actions of the automated migrations](./updates.md#skip-single-actions-of-the-automated-migrations).
 
 ### Versions ≥ v1.18.0
 

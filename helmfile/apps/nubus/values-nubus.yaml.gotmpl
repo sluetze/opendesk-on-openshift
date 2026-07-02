@@ -1177,14 +1177,21 @@ nubusProvisioning:
       {{- with .Values.annotations.nubusProvisioning.registerConsumersAdditional }}
       {{ . | toYaml | nindent 6 }}
       {{- end }}
-    {{- if .Values.apps.oxAppSuite.enabled }}
     createUsers:
+      {{- if .Values.apps.oxAppSuite.enabled }}
       oxConsumer:
         existingSecret:
           name: "ums-ox-connector-provisioning-api"
           keyMapping:
             registration: "registration"
-    {{- end }}
+      {{- end }}
+      {{- if .Values.apps.element.enabled }}
+      provisioningSynapse:
+        existingSecret:
+          name: "opendesk-provisioning-synapse-provisioning"
+          keyMapping:
+            registration: "registration"
+      {{- end }}
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
       repository: {{ .Values.images.nubusWaitForDependency.repository }}
@@ -1411,6 +1418,8 @@ nubusStackDataUms:
     portalHeaderLogo: {{ toYaml .Values.theme.imagery.logoHeaderSvg | quote }}
     portalTiles: {{ toYaml .Values.theme.imagery.portalTiles | nindent 6 }}
     portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.element .Values.global.domain }}
+    # {-- printf "https://%s.%s" .Values.global.hosts.elementAdmin .Values.global.domain --}}
+    portalRealtimeCollaborationAdminLinkBase: ~
     portalRealtimeVideoconferenceLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.jitsi .Values.global.domain }}
     portalManagementProjectLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.openproject .Values.global.domain }}
     portalManagementKnowledgeLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.xwiki .Values.global.domain }}
@@ -1456,6 +1465,8 @@ nubusStackDataUms:
       - "cn=managed-by-attribute-Learnmanagement,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupLiveCollaboration:
       - "cn=managed-by-attribute-Livecollaboration,cn=groups,{{ .Values.ldap.baseDn }}"
+    portaltileGroupLiveCollaborationAdmin:
+      - "cn=managed-by-attribute-LivecollaborationAdmin,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupVideoconference:
       - "cn=managed-by-attribute-Videoconference,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupNotes:
