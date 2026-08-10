@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# OpenShift HAProxy ignores nginx/haproxy-ingress rewrite annotations. Add the
+# native Route rewrite so Ingress→Route copies it onto generated Routes.
+# Chart path: appsuite.ingress.routes.<name>.annotations (annotationMode: Add).
+# Mirror of annotations.openxchangeAppsuiteIngress.* in values.yaml.gotmpl for
+# targeted `helm upgrade --reuse-values -f` when helmfile/helm-diff hangs.
+# MUST also pass --post-renderer .../post-renderer-openxchange-HAPROXY.sh so
+# chart "(.*)" path suffixes become Prefix (else OpenShift Routes match the
+# literal regex and every path 404s).
+# See docs/openshift-errors.md failure #17.
+---
+appsuite:
+  ingress:
+    routes:
+      guard-api-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /oxguard
+      guard-support-api-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /guardsupport
+      guard-pgp-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /pgp
+      # Chart nginx rewrite targets /ui; this core-ui image serves SPA at /.
+      core-ui-api-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /
+      core-help-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /help
+      rt2-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /rt2
+      http-api-routes-api:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /appsuite/api
+      http-api-routes-ajax:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /appsuite/api
+      office-web-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /appsuite
+      dav-root-route:
+        annotations:
+          haproxy.router.openshift.io/rewrite-target: /servlet/dav

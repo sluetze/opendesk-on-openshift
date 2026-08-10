@@ -5,6 +5,9 @@ environments:
   dev:
     values:
       - "{{ requiredEnv "PWD" }}/helmfile/environments/dev/*.yaml.gotmpl"
+  openshift:
+    values:
+      - "{{ requiredEnv "PWD" }}/helmfile/environments/openshift/*.yaml.gotmpl"
   test:
     values:
       - "{{ requiredEnv "PWD" }}/helmfile/environments/test/*.yaml.gotmpl"

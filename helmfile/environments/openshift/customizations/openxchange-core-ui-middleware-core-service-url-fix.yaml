@@ -1,0 +1,49 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via the openDesk
+# `customization.release.openxchange` extension point (see
+# helmfile/environments/default/customization.yaml.gotmpl for how that mechanism
+# works) -- NOT auto-loaded by the `environments/openshift/*.yaml.gotmpl` glob, since it
+# lives one directory deeper. This is deep-merged as an extra `-f` values file for
+# the `open-xchange` helm release only, on top of
+# helmfile/apps/open-xchange/values-openxchange.yaml.gotmpl.
+#
+# Why this file exists (docs/openshift-errors.md failure #12):
+# core-ui-middleware's own vendored chart (core-ui-middleware/values.yaml,
+# key `coreServiceURL`, default "") leaves it unset by openDesk's
+# values-openxchange.yaml.gotmpl. With it unset, the Node.js middleware's own
+# src/server-config.js falls back to its documented last resort: build the
+# backend URL from the *external, browser-facing* request hostname
+# ("https://<hostname>", i.e. the public webmail Route), then makes a real
+# outbound HTTPS connection to itself through the OpenShift router to fetch
+# "/api/apps/manifests?action=config" -- which fails Node's TLS verification
+# ("unable to verify the first certificate") whenever the Route leaf's CA is
+# not in Node's built-in trust store (first seen under Option 2a in-cluster
+# CA; still true for BYO RH Internal CA unless that root is in Node). Java
+# core-mw-groupware already mounts truststore.jks; this Node service does not.
+#
+# Fix: set CORE_SERVICE_URL to the officially documented "direct connection"
+# form (see core-ui-middleware/templates/deployment.yaml's own comment:
+# "Example: http://core-mw.svc.cluster.local/appsuite") -- an in-cluster,
+# plain-HTTP call straight to the open-xchange-core-mw-http-api Service,
+# bypassing the public HTTPS Route (and therefore the TLS-trust problem)
+# entirely. "/appsuite" is the dispatcher prefix this backend actually serves
+# under (confirmed via the same endpoint's own JSON response,
+# "prefix":"/appsuite/api", and the "/appsuite/api" Route already pointing at
+# this same Service). No chart edit needed -- `coreServiceURL` is a plain,
+# fully-overridable Helm value already exposed by the vendored chart.
+#
+# Nesting: the "open-xchange" helm release is the "appsuite-public-sector"
+# umbrella chart, whose dependencies are "appsuite", "nextcloud-integration-ui",
+# and "public-sector-ui" (confirmed via `helm get metadata open-xchange -n
+# opendesk`). "core-ui-middleware" is itself a subchart of "appsuite" (see
+# values-openxchange.yaml.gotmpl's own top-level `appsuite:` key), so the
+# value must be nested one level deeper than a naive read of that file
+# suggests -- `appsuite.core-ui-middleware.coreServiceURL`, not a bare
+# top-level `core-ui-middleware.coreServiceURL` (confirmed empirically: the
+# latter silently no-ops, verified via `helm diff upgrade --reuse-values`
+# before rolling this out live).
+appsuite:
+  core-ui-middleware:
+    coreServiceURL: "http://open-xchange-core-mw-http-api/appsuite"
+...

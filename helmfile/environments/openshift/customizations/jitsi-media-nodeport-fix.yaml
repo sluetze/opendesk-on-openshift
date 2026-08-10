@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Pin JVB NodePort so firewall docs and reconstruct stay deterministic.
+# openDesk helmfile sets jitsi.jvb.service.type via service.type.jitsiVideoBridge
+# (values.yaml.gotmpl); chart default would pick a random 30000–32767 port.
+# Clients must reach <cluster.networking.ingressGatewayIP>:UDP/<this port>.
+# See docs/openshift-errors.md failure #16.
+---
+jitsi:
+  jvb:
+    nodePort: 31000
