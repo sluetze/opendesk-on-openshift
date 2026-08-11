@@ -206,6 +206,13 @@ probes:
     initialDelaySeconds: 150
     failureThreshold: 30
 
+metrics:
+  enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+  serviceMonitor:
+    enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+    labels:
+      {{ .Values.monitoring.prometheus.serviceMonitors.labels | toYaml | nindent 6 }}
+
 openproject:
   extraEnvVarsSecret: {{ .Values.secrets.postfix.opendeskSystemPassword.name | quote }}
   # seed will only be executed on initial installation
