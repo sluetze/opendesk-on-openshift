@@ -69,8 +69,9 @@ oc create namespace opendesk
 export CERTIFICATES_JKS_PASSWORD='<jks password>'
 bash docs/openshift-manifests/create-byo-certificate-secrets.sh
 
-# RBAC filename sorts before routes that use externalCertificate
-oc apply -f docs/openshift-manifests/
+# Copy overlays/example → overlays/<your-site> and set portalHost / namespace
+# (portal.<global.domain>). See docs/openshift-manifests/README.md.
+oc apply -k docs/openshift-manifests/overlays/example
 
 export MASTER_PASSWORD='<your passphrase>'
 helmfile apply -e openshift -n opendesk
@@ -87,7 +88,7 @@ OpenShift object fix is a static YAML under `docs/openshift-manifests/`
 | `helmfile/environments/openshift/values.yaml.gotmpl` | Site helm values (**tracked** — edit for your cluster) |
 | `helmfile/environments/openshift/customizations/` | Release-scoped fixes (**tracked**) via `customization.release.*` |
 | `helmfile/environments/openshift/certs/` | Gitignored PEMs + optional `truststore.jks` |
-| `docs/openshift-manifests/` | SCC, router TLS RBAC, Exact-path Routes, BYO secrets script |
+| `docs/openshift-manifests/` | Kustomize base + site overlay (SCC, router TLS RBAC, Exact-path Routes); BYO secrets script |
 | [`CURSOR.MD`](../CURSOR.MD) | Reconstruction contract |
 | [`openshift-errors.md`](./openshift-errors.md) | Historical failures / Changes (reference deploy) |
 | [`openshift-legacy-selfsigned-ca/`](./openshift-legacy-selfsigned-ca/) | Archived Option 2a — **do not use** for reconstruct |
@@ -131,7 +132,9 @@ already trust (corp PKI, public CA, etc.). Stage PEMs under gitignored
 `helmfile/environments/openshift/certs/`;
 `create-byo-certificate-secrets.sh` creates the three Secrets and builds
 `truststore.jks` when missing. Routes use `tls.externalCertificate` (no
-embedded PEMs) plus `opendesk-00-router-tls-secret-rbac.yaml`.
+embedded PEMs) plus router TLS RBAC in
+`docs/openshift-manifests/base/opendesk-00-router-tls-secret-rbac.yaml`
+(applied via the site overlay).
 
 **Naming trap:** `certificate.selfSigned: true` means **mount the CA trust
 bundle** — not “mint a self-signed CA”. With `apps.certificates.enabled:

@@ -49,4 +49,4 @@ jitsi:
           - SETUID
   # jibri chart default enabled:false (recording off). When enabled, chart already
   # requests SYS_ADMIN; SCC allowedCapabilities includes SYS_ADMIN
-  # (docs/openshift-manifests/opendesk-anyuid-seccomp-scc.yaml).
+  # (docs/openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml).

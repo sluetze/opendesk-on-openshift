@@ -17,9 +17,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-portal-root
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /
   port:
     targetPort: http
@@ -38,9 +37,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-languages-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/languages.json
   port:
     targetPort: http
@@ -59,9 +57,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-login-dialog-js
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/login/dialog.js
   port:
     targetPort: http
@@ -80,9 +77,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-login-i18n-main-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/login/i18n/en/main.json
   port:
     targetPort: http
@@ -101,9 +97,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-login-logindialog-js
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/login/LoginDialog.js
   port:
     targetPort: http
@@ -122,9 +117,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-login-main-js
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/login/main.js
   port:
     targetPort: http
@@ -143,9 +137,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-meta-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/meta.json
   port:
     targetPort: http
@@ -164,9 +157,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-portal-api-v1-me
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/portal/api/v1/me
   port:
     targetPort: http
@@ -185,9 +177,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-portal-navigation-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/portal/navigation.json
   port:
     targetPort: http
@@ -206,9 +197,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-portal-portal-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/portal/portal.json
   port:
     targetPort: http
@@ -227,9 +217,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-selfservice-api-v1-me
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/selfservice/api/v1/me
   port:
     targetPort: http
@@ -248,9 +237,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-selfservice-navigation-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/selfservice/navigation.json
   port:
     targetPort: http
@@ -269,9 +257,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-selfservice-portal-json
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/selfservice/portal.json
   port:
     targetPort: http
@@ -290,9 +277,8 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: opendesk-fix-univention-theme-css
-  namespace: opendesk
 spec:
-  host: portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+  host: portal.example.invalid
   path: /univention/theme.css
   port:
     targetPort: http

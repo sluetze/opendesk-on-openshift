@@ -20,26 +20,26 @@ Superseded Option 2a (in-cluster self-signed CA) material:
 | 4 | same | `ingress.ingressClassName` | `openshift-default` | Chart default (`haproxy`) doesn't exist here; this is OpenShift's actual IngressClass |
 | 5 | same | `persistence.storageClassNames.RWO` / `.RWX` | `coe-netapp-nas` | Only StorageClass on the cluster that's NFS-backed (supports RWX); the other (`coe-netapp-san`) is block/iSCSI, RWO-only |
 | 6 | same | `certificate.selfSigned` | `true` | **Mount CA trust bundle** into apps (`opendesk-certificates-ca-tls` / `truststore.jks`). Chart flag name is misleading — does **not** mint a self-signed CA under Option 1 BYO (`apps.certificates.enabled: false`) |
-| 7 | same | `apps.*.enabled` | see [selection above](./openshift-deployment.md#current-app-set--hosts) | Minimal core-only footprint |
-| 8 | OpenShift `SecurityContextConstraints` (cluster-scoped) | `oc apply -f opendesk-anyuid-seccomp-scc.yaml` | custom SCC `opendesk-anyuid-seccomp` (any UID/GID/fsGroup + `seccompProfiles: [runtime/default]` + `allowPrivilegeEscalation: true` + `allowedCapabilities: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, NET_BIND_SERVICE, SETGID, SETUID, SYS_ADMIN, SYS_CHROOT]`), scoped to `groups: [system:serviceaccounts:opendesk]` | `restricted-v2` rejects openDesk's hardcoded non-namespace UIDs; plain `anyuid` then rejects `seccompProfile` — see [failures 1–2](#1-pods-rejected-by-scc-runasuserfsgroup-outside-namespaces-allocated-uid-range); `CHOWN`/`FOWNER`/`SYS_CHROOT` were added for Collabora ([failure 7](#7-collabora-needs-privilege-escalation--extra-capabilities-the-custom-scc-didnt-grant-yet)); `DAC_OVERRIDE`/`KILL`/`NET_BIND_SERVICE`/`SETGID`/`SETUID` were added for Dovecot/Postfix ([failure 10](#10-dovecotpostfix-need-more-capabilities-than-collaboras-scc-grant-covers)); `SYS_ADMIN` was added for Jitsi Jibri when recording is enabled ([failure 13](#13-jitsi-pods-crashloop-under-requireddropcapabilities-all--empty-capabilities--missing-sys_admin-for-jibri)) |
+| 7 | same | `apps.*.enabled` | see [selection above](./openshift-deployment.md#app-set--hosts) | Minimal core-only footprint |
+| 8 | OpenShift `SecurityContextConstraints` (cluster-scoped) | `oc apply -k docs/openshift-manifests/overlays/example` | custom SCC `opendesk-anyuid-seccomp` (any UID/GID/fsGroup + `seccompProfiles: [runtime/default]` + `allowPrivilegeEscalation: true` + `allowedCapabilities: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, NET_BIND_SERVICE, SETGID, SETUID, SYS_ADMIN, SYS_CHROOT]`), scoped to `groups: [system:serviceaccounts:opendesk]` | `restricted-v2` rejects openDesk's hardcoded non-namespace UIDs; plain `anyuid` then rejects `seccompProfile` — see [failures 1–2](#1-pods-rejected-by-scc-runasuserfsgroup-outside-namespaces-allocated-uid-range); `CHOWN`/`FOWNER`/`SYS_CHROOT` were added for Collabora ([failure 7](#7-collabora-needs-privilege-escalation--extra-capabilities-the-custom-scc-didnt-grant-yet)); `DAC_OVERRIDE`/`KILL`/`NET_BIND_SERVICE`/`SETGID`/`SETUID` were added for Dovecot/Postfix ([failure 10](#10-dovecotpostfix-need-more-capabilities-than-collaboras-scc-grant-covers)); `SYS_ADMIN` was added for Jitsi Jibri when recording is enabled ([failure 13](#13-jitsi-pods-crashloop-under-requireddropcapabilities-all--empty-capabilities--missing-sys_admin-for-jibri)) |
 | 9 | ~~`ClusterIssuer/selfsigned-issuer`~~ | ~~`oc apply -f selfsigned-clusterissuer.yaml`~~ | — | **Superseded** (Option 2a only). Full row + YAML: [`openshift-legacy-selfsigned-ca/`](./openshift-legacy-selfsigned-ca/changes-rows-option-2a.md) |
 | 10 | ~~`certificate.issuerRef` → `selfsigned-issuer`~~ | — | — | **Superseded** with row 9 — Option 2a only |
-| 11 | `docs/openshift-manifests/opendesk-fix-univention-routes.yaml` (new) | `oc apply -f docs/openshift-manifests/` | 14 `Route` objects (namespace-scoped, `opendesk` ns): `portal.../` → `ums-portal-frontend:http`; the 6 `portal.../univention/{portal,selfservice}/{portal.json,navigation.json,api/v1/me}` JSON/XHR endpoints and the 7 `portal.../univention/{meta.json,languages.json,theme.css,login/main.js,login/dialog.js,login/LoginDialog.js,login/i18n/en/main.json}` UMC bootstrap assets → `ums-umc-gateway:http`/`ums-portal-server:http` (all edge termination, reusing the `opendesk-certificates-tls` leaf cert) | OpenShift's Ingress→Route converter drops every `pathType: Exact` Ingress rule, so these 14 paths across 3 charts (`ums-portal-frontend`, `ums-portal-server`, `ums-umc-gateway`) had zero Routes — see [failures 5](#5-openshifts-ingressroute-converter-silently-drops-pathtype-exact-rules) and [6](#6-same-ingressroute-exact-bug-second-instance-on-ums-umc-gateway) |
-| 12 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.collabora.enabled` | `true` | Restore openDesk's own upstream default (see [Minimal app selection](./openshift-deployment.md#current-app-set--hosts)) as an explicitly-added module |
-| 13 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.nextcloud.enabled` | `true` | Same as row 12, as an explicitly-added module — validated with its own full teardown+reconstruct cycle, **needed no other change** (see [Minimal app selection](./openshift-deployment.md#current-app-set--hosts)) |
+| 11 | `docs/openshift-manifests/base/opendesk-fix-univention-routes.yaml` (new) | `oc apply -k docs/openshift-manifests/overlays/example` | 14 `Route` objects (namespace-scoped, `opendesk` ns): `portal.../` → `ums-portal-frontend:http`; the 6 `portal.../univention/{portal,selfservice}/{portal.json,navigation.json,api/v1/me}` JSON/XHR endpoints and the 7 `portal.../univention/{meta.json,languages.json,theme.css,login/main.js,login/dialog.js,login/LoginDialog.js,login/i18n/en/main.json}` UMC bootstrap assets → `ums-umc-gateway:http`/`ums-portal-server:http` (all edge termination, reusing the `opendesk-certificates-tls` leaf cert) | OpenShift's Ingress→Route converter drops every `pathType: Exact` Ingress rule, so these 14 paths across 3 charts (`ums-portal-frontend`, `ums-portal-server`, `ums-umc-gateway`) had zero Routes — see [failures 5](#5-openshifts-ingressroute-converter-silently-drops-pathtype-exact-rules) and [6](#6-same-ingressroute-exact-bug-second-instance-on-ums-umc-gateway) |
+| 12 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.collabora.enabled` | `true` | Restore openDesk's own upstream default (see [Minimal app selection](./openshift-deployment.md#app-set--hosts)) as an explicitly-added module |
+| 13 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.nextcloud.enabled` | `true` | Same as row 12, as an explicitly-added module — validated with its own full teardown+reconstruct cycle, **needed no other change** (see [Minimal app selection](./openshift-deployment.md#app-set--hosts)) |
 | 14 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.openproject.enabled` | `true` | Same as rows 12/13, as an explicitly-added module — validated with its own full teardown+reconstruct cycle |
 | 15 | `helmfile/environments/openshift/values.yaml.gotmpl` + `helmfile/environments/openshift/customizations/openproject-design-seed-fix.yaml` (new) | `customization.release.openproject.ssrfSafeDesignSeed` | path to the new customization file, which sets all 7 `OPENPROJECT_SEED_DESIGN_*` env vars to a base64 `data:image/png` placeholder URI | Uses openDesk's own `customization.release.<name>` extension point to inject an extra Helm values file into just the `openproject` release, without touching its chart's `values.yaml.gotmpl` — see [failure 8](#8-openprojects-db-seed-job-blocks-itself-downloading-its-own-branding-assets-ssrf-guard) |
 | 16 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.clamavSimple.enabled` | `false` → `true` | Restores openDesk's own upstream default (per `docs/getting-started.md`'s apps table) — Nextcloud's `antivirus.enabled: true` is hardcoded with no toggle, and only gets a real ICAP host from `clamavSimple`/`clamavDistributed`; with both off, every file write 500s — see [failure 9](#9-nextclouds-hardcoded-antivirus-integration-has-no-scanner-behind-it) |
-| 17 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.oxAppSuite.enabled` / `apps.dovecot.enabled` / `apps.postfix.enabled` | `false` → `true` (all three) | Restores openDesk's own upstream default, as an explicitly-added module bundle (groupware + IMAP + SMTP are wired together, not independently useful) — see [Minimal app selection](./openshift-deployment.md#current-app-set--hosts) |
-| 18 | OpenShift `SecurityContextConstraints` (cluster-scoped, same object as row 8) | `oc apply -f opendesk-anyuid-seccomp-scc.yaml` | extended `allowedCapabilities` with `DAC_OVERRIDE`, `KILL`, `NET_BIND_SERVICE`, `SETGID`, `SETUID` | Dovecot and both Postfix releases hardcode these capabilities (`docs/security-context.md`'s compliance table) — the SCC only had Collabora's 3 from row 8 — see [failure 10](#10-dovecotpostfix-need-more-capabilities-than-collaboras-scc-grant-covers) |
+| 17 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.oxAppSuite.enabled` / `apps.dovecot.enabled` / `apps.postfix.enabled` | `false` → `true` (all three) | Restores openDesk's own upstream default, as an explicitly-added module bundle (groupware + IMAP + SMTP are wired together, not independently useful) — see [Minimal app selection](./openshift-deployment.md#app-set--hosts) |
+| 18 | OpenShift `SecurityContextConstraints` (cluster-scoped, same object as row 8) | `oc apply -k docs/openshift-manifests/overlays/example` | extended `allowedCapabilities` with `DAC_OVERRIDE`, `KILL`, `NET_BIND_SERVICE`, `SETGID`, `SETUID` | Dovecot and both Postfix releases hardcode these capabilities (`docs/security-context.md`'s compliance table) — the SCC only had Collabora's 3 from row 8 — see [failure 10](#10-dovecotpostfix-need-more-capabilities-than-collaboras-scc-grant-covers) |
 | 19 | `helmfile/environments/openshift/values.yaml.gotmpl` + `helmfile/environments/openshift/customizations/openxchange-core-ui-middleware-core-service-url-fix.yaml` (new) | `customization.release.openxchange.coreServiceUrlFix` → `appsuite.core-ui-middleware.coreServiceURL` | `"http://open-xchange-core-mw-http-api/appsuite"` | Points `core-ui-middleware`'s Node.js backend client at the internal Service over plain HTTP instead of self-referencing the public HTTPS Route (Node TLS verify fails when leaf CA is absent from Node's trust store) — see [failure 12](#12-core-ui-middleware-self-referencing-https-call-to-fetch-pwajson-fails-tls-verification-against-the-self-signed-ca) |
 | 20 | `helmfile/environments/openshift/values.yaml.gotmpl` | Option 1 BYO: `apps.certificates.enabled: false`, `certificate.selfSigned: true` (mount trust only), remove `issuerRef`, `secrets.certificates.password` → `opendesk-certificates-keystore-jks` + `CERTIFICATES_JKS_PASSWORD` | (see Reconstruction) | Current TLS path: user-provided RH Internal CA leaf (`*.opendesk.apps...`); was Option 2a — archive [`openshift-legacy-selfsigned-ca/`](./openshift-legacy-selfsigned-ca/) |
-| 21 | `docs/openshift-manifests/opendesk-fix-univention-routes.yaml` | `tls.externalCertificate.name` | `opendesk-certificates-tls` | Drop embedded ECME PEM/key (no private keys in git); Route ExternalCertificate feature (OCP 4.22, gate enabled) |
-| 22 | `docs/openshift-manifests/opendesk-00-router-tls-secret-rbac.yaml` (new) | Role/RoleBinding | `openshift-ingress:router` → get/list/watch Secret `opendesk-certificates-tls` | Required for `externalCertificate` (filename `00-` sorts before fix-routes) |
+| 21 | `docs/openshift-manifests/base/opendesk-fix-univention-routes.yaml` | `tls.externalCertificate.name` | `opendesk-certificates-tls` | Drop embedded ECME PEM/key (no private keys in git); Route ExternalCertificate feature (OCP 4.22, gate enabled) |
+| 22 | `docs/openshift-manifests/base/opendesk-00-router-tls-secret-rbac.yaml` (new) | Role/RoleBinding | `openshift-ingress:router` → get/list/watch Secret `opendesk-certificates-tls` | Required for `externalCertificate`; applied via `oc apply -k docs/openshift-manifests/overlays/example` |
 | 23 | ~~`selfsigned-clusterissuer.yaml`~~ | ~~deleted from live manifests~~ | — | **Superseded** — YAML kept under [`openshift-legacy-selfsigned-ca/`](./openshift-legacy-selfsigned-ca/selfsigned-clusterissuer.yaml) |
-| 24 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.cryptpad` / `apps.element` / `apps.jitsi` / `apps.xwiki` | `false` → `true` | Restore upstream defaults; auto-wires Nextcloud↔CryptPad, Element↔Synapse/OX/Jitsi, XWiki↔newsfeed/Keycloak — see [Minimal app selection](./openshift-deployment.md#current-app-set--hosts) |
+| 24 | `helmfile/environments/openshift/values.yaml.gotmpl` | `apps.cryptpad` / `apps.element` / `apps.jitsi` / `apps.xwiki` | `false` → `true` | Restore upstream defaults; auto-wires Nextcloud↔CryptPad, Element↔Synapse/OX/Jitsi, XWiki↔newsfeed/Keycloak — see [Minimal app selection](./openshift-deployment.md#app-set--hosts) |
 | 25 | `helmfile/environments/openshift/values.yaml.gotmpl` + `helmfile/environments/openshift/customizations/jitsi-capabilities-fix.yaml` (new) | `customization.release.jitsi.capabilitiesFix` → `jitsi.{web,prosody,jicofo,jvb}.securityContext.capabilities.add` | `CHOWN`/`SETGID`/`SETUID` (all four); plus `NET_BIND_SERVICE` on `web` | SCC `requiredDropCapabilities: [ALL]` leaves pods with `capabilities: {}` with zero caps — s6 needs SETGID, chown needs CHOWN, nginx `:80` needs NET_BIND_SERVICE — see [failure 13](#13-jitsi-pods-crashloop-under-requireddropcapabilities-all--empty-capabilities--missing-sys_admin-for-jibri) |
-| 26 | OpenShift `SecurityContextConstraints` (cluster-scoped, same object as row 8) | `oc apply -f opendesk-anyuid-seccomp-scc.yaml` | extended `allowedCapabilities` with `SYS_ADMIN` | Chart hardcodes `SYS_ADMIN` on `jitsi.jibri` for Chromium/FFmpeg recording; jibri stays off by default (`jibri.enabled: false`) but SCC must allow the cap before anyone flips it on — see [failure 13](#13-jitsi-pods-crashloop-under-requireddropcapabilities-all--empty-capabilities--missing-sys_admin-for-jibri) |
+| 26 | OpenShift `SecurityContextConstraints` (cluster-scoped, same object as row 8) | `oc apply -k docs/openshift-manifests/overlays/example` | extended `allowedCapabilities` with `SYS_ADMIN` | Chart hardcodes `SYS_ADMIN` on `jitsi.jibri` for Chromium/FFmpeg recording; jibri stays off by default (`jibri.enabled: false`) but SCC must allow the cap before anyone flips it on — see [failure 13](#13-jitsi-pods-crashloop-under-requireddropcapabilities-all--empty-capabilities--missing-sys_admin-for-jibri) |
 | 27 | `helmfile/environments/openshift/customizations/jitsi-capabilities-fix.yaml` | `jitsi.prosody.securityContext.capabilities.add` | add `DAC_OVERRIDE` | Prosody cont-init `mv` of mode-0400 keys into `/config/certs` needs DAC_OVERRIDE under `requiredDropCapabilities: [ALL]` — empty certs → no c2s TLS → Jicofo/JVB XMPP auth fail — see [failure 14](#14-jitsi-prosody-tls-certs-missing-without-dac_override--xmpp-auth-fails-join-stuck) |
 | 28 | `helmfile/environments/openshift/values.yaml.gotmpl` + `helmfile/environments/openshift/customizations/keycloak-xwiki-ics-redirect-fix.yaml.gotmpl` (new) | `customization.release.opendeskKeycloakBootstrap.xwikiIcsRedirectFix` → `config.opendesk.clients.opendesk-xwiki.redirectUris` | restates wiki+portal wildcards and adds `https://ics.<domain>/oidc/authenticator/callback` | Intercom proxies XWiki and presents that ICS callback as `redirect_uri` for client `opendesk-xwiki`; upstream bootstrap omit it → Keycloak `invalid_redirect_uri` — see [failure 15](#15-intercom--xwiki-oidc-invalid_redirect_uri-ics-callback-missing-from-opendesk-xwiki-allowlist) |
 | 29 | `helmfile/environments/openshift/values.yaml.gotmpl` + `helmfile/environments/openshift/customizations/jitsi-media-nodeport-fix.yaml` (new) | `service.type.jitsiVideoBridge` → `NodePort`; `cluster.networking.ingressGatewayIP` → `10.32.105.193`; `jitsi.jvb.nodePort` → `31000` | Jitsi media ICE: browsers need reachable UDP to JVB; ClusterIP + TCP Routes + empty TURN leave ICE dead — see [failure 16](#16-jitsi-meet-audio--no-media-ice-unreachable-jvb-candidates) |
@@ -127,7 +127,7 @@ scoped via its own `groups: [system:serviceaccounts:opendesk]` field so it only
 applies inside this namespace:
 
 ```shell
-oc apply -f opendesk-anyuid-seccomp-scc.yaml   # see Changes table for full spec
+oc apply -k docs/openshift-manifests/overlays/example   # see Changes table for full spec
 oc adm policy remove-scc-from-group anyuid system:serviceaccounts:opendesk
 ```
 
@@ -152,9 +152,10 @@ an S3-compatible endpoint, and this cluster has no externally provided one to pl
 into `objectstores.nubus.endpoint`.
 
 **Fix (priority 1, helm value) — applied:** re-enabled `apps.seaweedfs` (openDesk's
-default, lighter-weight object-storage backend, vs. MinIO) in the dev values. This
+default, lighter-weight object-storage backend, vs. MinIO) in the openshift
+values. This
 corrects the initial minimal-set assumption; see the updated
-[Minimal app selection](./openshift-deployment.md#current-app-set--hosts) below.
+[Minimal app selection](./openshift-deployment.md#app-set--hosts) below.
 
 ### 4. `certificate.selfSigned: true` alone does not make the CA self-signed — cascading blocker for the whole Nubus chain
 
@@ -223,11 +224,11 @@ converter, not inventing new routing logic), reusing the wildcard leaf cert/key
 already in the `opendesk-certificates-tls` Secret (the same one every
 auto-generated sibling Route already inlines) so TLS behaves identically. The
 static, reconstructable form of this fix is
-[`docs/openshift-manifests/opendesk-fix-univention-routes.yaml`](./openshift-manifests/opendesk-fix-univention-routes.yaml)
+[`docs/openshift-manifests/base/opendesk-fix-univention-routes.yaml`](./openshift-manifests/base/opendesk-fix-univention-routes.yaml)
 (7 of its 14 `Route` objects — the `opendesk-fix-portal-root` and
 `opendesk-fix-univention-{portal,selfservice}-*` ones — are this failure's fix;
 the other 7 belong to [failure 6](#6-same-ingressroute-exact-bug-second-instance-on-ums-umc-gateway)),
-applied with `oc apply -f docs/openshift-manifests/` per the
+applied with `oc apply -k docs/openshift-manifests/overlays/example` per the
 [Reconstruction](./openshift-deployment.md#reconstruction) steps. It was first prototyped live with
 `oc create route edge ...` (extracting the cert/key from the Secret via
 `jsonpath`+`base64 -d`) while debugging, then captured into that manifest as the
@@ -259,13 +260,13 @@ fine) — this was purely a missing-Route gap, not an app bug.
 
 **Fix (priority 2, same as failure 5 — no helm value controls Route generation):**
 the other 7 `Route` objects in
-[`docs/openshift-manifests/opendesk-fix-univention-routes.yaml`](./openshift-manifests/opendesk-fix-univention-routes.yaml)
+[`docs/openshift-manifests/base/opendesk-fix-univention-routes.yaml`](./openshift-manifests/base/opendesk-fix-univention-routes.yaml)
 (`opendesk-fix-univention-{meta,languages,theme,login-*}-*`), same edge
 termination/leaf cert, pointed at `ums-umc-gateway:http` instead. While
 debugging this was first prototyped by cloning an existing `opendesk-fix-*`
 Route's JSON via `oc get route -o json | jq '...' | oc apply -f -` for each of
-the 7 missing paths; the manifest is the actual documented, `oc apply -f
-docs/openshift-manifests/`-reconstructable form. See [Changes row 11](#changes).
+the 7 missing paths; the manifest is the actual documented, `oc apply -k
+docs/openshift-manifests/overlays/example`-reconstructable form. See [Changes row 11](#changes).
 
 **Verified:** all 7 URLs now return `200 OK`; a full sweep of every remaining
 `Exact` Ingress rule in the namespace against existing Routes found no other live
@@ -276,7 +277,7 @@ Prefix/catch-all Route on the same host and 301-redirect correctly).
 recur per-chart on OpenShift; if a future openDesk version adds new `Exact` Ingress
 rules anywhere, re-run the `oc get ingress -o json | jq` sweep described above and
 add the missing Routes to
-[`opendesk-fix-univention-routes.yaml`](./openshift-manifests/opendesk-fix-univention-routes.yaml)
+[`opendesk-fix-univention-routes.yaml`](./openshift-manifests/base/opendesk-fix-univention-routes.yaml)
 rather than waiting for a fresh symptom report.
 
 ### 7. Collabora needs privilege escalation + extra capabilities the custom SCC didn't grant yet
@@ -325,7 +326,7 @@ SYS_CHROOT]`. It's still scoped to `groups: [system:serviceaccounts:opendesk]`
 only (this namespace), consistent with the existing broad-but-namespace-scoped
 grant style from failures 1–2 rather than introducing a second, Collabora-only
 SCC. See [Changes row 8](#changes) and
-[`docs/openshift-manifests/opendesk-anyuid-seccomp-scc.yaml`](./openshift-manifests/opendesk-anyuid-seccomp-scc.yaml).
+[`docs/openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml`](./openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml).
 
 **Verified:** after `oc apply`-ing the updated SCC, the existing `ReplicaSet`
 retried on its own (no `helmfile`/`oc` re-trigger needed) and `collabora` came
@@ -445,7 +446,7 @@ custom add-on) plus direct inspection of
 the symptom" approach used for failures #3 and #8).
 
 **Fix (priority 1, helm value) — applied:** flipped `apps.clamavSimple.enabled`
-from `false` to `true` in the dev values — openDesk's own upstream default,
+from `false` to `true` in the openshift values — openDesk's own upstream default,
 not a workaround. No new SCC/manifest was needed: `clamav-simple-0` scheduled
 and reached `2/2 Running` under the already-existing `opendesk-anyuid-seccomp`
 SCC on the first try. See [Changes row 16](#changes).
@@ -474,7 +475,7 @@ SCC on the first try. See [Changes row 16](#changes).
   browser SSO login + file-list load by the user.
 
 **Drift check:** this fix touched no `docs/openshift-manifests/` object;
-`oc apply --dry-run=server -f docs/openshift-manifests/` still reports
+`oc apply --dry-run=server -k docs/openshift-manifests/overlays/example` still reports
 everything `unchanged`.
 
 ### 10. Dovecot/Postfix need more capabilities than Collabora's SCC grant covers
@@ -519,7 +520,7 @@ these are unconditionally templated by the charts, not exposed as values.
 *before* running `helmfile apply` this time (since the exact requirement was
 already known from the docs, unlike the reactive fixes in failures #1/#2/#7).
 See [Changes row 18](#changes) and
-[`docs/openshift-manifests/opendesk-anyuid-seccomp-scc.yaml`](./openshift-manifests/opendesk-anyuid-seccomp-scc.yaml).
+[`docs/openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml`](./openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml).
 
 **Verified:** all of `dovecot`, `postfix` (base), and `postfix-ox` scheduled
 and reached `1/1 Running` on the first attempt — no `FailedCreate`/SCC
@@ -599,7 +600,7 @@ below.
 **Drift check:** this fix touched no `docs/openshift-manifests/` object, and
 the drafted-then-reverted `resources:` override never reached
 `helmfile/environments/openshift/values.yaml.gotmpl`'s committed state — `oc apply
---dry-run=server -f docs/openshift-manifests/` still reports everything
+--dry-run=server -k docs/openshift-manifests/overlays/example` still reports everything
 `unchanged`.
 
 ## Final state
@@ -607,8 +608,8 @@ the drafted-then-reverted `resources:` override never reached
 This state was captured after **three consecutive full teardown + clean-slate
 redeploy cycles**, each adding exactly one module and each rebuilt using
 *only* the [documented reconstruction path](./openshift-deployment.md#reconstruction) (`oc delete
-namespace opendesk`, then `oc create namespace`, `oc apply -f
-docs/openshift-manifests/`, `helmfile apply -e openshift -n opendesk` — no ad-hoc
+namespace opendesk`, then `oc create namespace`, `oc apply -k
+docs/openshift-manifests/overlays/example`, `helmfile apply -e openshift -n opendesk` — no ad-hoc
 commands): first adding Collabora (surfaced
 [failure #7](#7-collabora-needs-privilege-escalation--extra-capabilities-the-custom-scc-didnt-grant-yet)),
 then Nextcloud on top of that (surfaced **nothing new**), then OpenProject on
@@ -655,7 +656,7 @@ End-to-end HTTP checks (against the fresh redeploy, with OpenProject added):
 | `https://projects.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com/` | `302` → Keycloak OIDC `/realms/opendesk/protocol/openid-connect/auth?client_id=opendesk-openproject...` → `200 OK` (OpenProject, full SSO chain via Nubus) |
 | `https://opendesk.apps.ocp22.stormshift.coe.muc.redhat.com/` (bare base domain) | `503` — see [Unsolved](#unsolved) |
 
-**Drift check:** `oc apply --dry-run=server -f docs/openshift-manifests/`
+**Drift check:** `oc apply --dry-run=server -k docs/openshift-manifests/overlays/example`
 reports every object (`opendesk-anyuid-seccomp`, router TLS RBAC, all 14
 `opendesk-fix-*` Routes) as `unchanged` — the manifests remain a byte-accurate
 snapshot of the live cluster's OpenShift-side config after this redeploy too.
@@ -697,7 +698,7 @@ reconstruction by default going forward).
 ### Addendum 2: OX App Suite + Dovecot + Postfix, applied fix-forward (no teardown)
 
 Fourth module round: `apps.oxAppSuite`, `apps.dovecot`, and `apps.postfix`
-enabled together (see [Minimal app selection](./openshift-deployment.md#current-app-set--hosts)),
+enabled together (see [Minimal app selection](./openshift-deployment.md#app-set--hosts)),
 applied **incrementally** to the already-running namespace with a plain
 `helmfile apply -e openshift -n opendesk`, per this round's explicit scope (same
 "fix-forward, no teardown" pattern as the `clamavSimple` addendum above —
@@ -755,7 +756,7 @@ for this evaluation deployment; there is no external SMTP relay configured
 delivery" mode, not a workaround), and this cluster has no verified path to
 send real internet mail from.
 
-**Drift check:** `oc apply --dry-run=server -f docs/openshift-manifests/`
+**Drift check:** `oc apply --dry-run=server -k docs/openshift-manifests/overlays/example`
 reports every object (`opendesk-anyuid-seccomp` — now with the row-18
 capability additions live — router TLS RBAC, all 14 `opendesk-fix-*`
 Routes) as `unchanged` — the manifests remain a byte-accurate snapshot of
@@ -875,7 +876,7 @@ with the *correct* original `MASTER_PASSWORD`) would also produce for this
 release — this is a live-safety workaround for reapplying to an
 already-running revision-1 release with the wrong seed in hand, not a
 deviation from the documented reconstruction path itself: a **fresh**
-`oc apply -f docs/openshift-manifests/` + `helmfile apply -e openshift -n opendesk`
+`oc apply -k docs/openshift-manifests/overlays/example` + `helmfile apply -e openshift -n opendesk`
 from an empty namespace (a single consistent `MASTER_PASSWORD` throughout)
 reproduces this exact same `appsuite.core-ui-middleware.coreServiceURL` value
 correctly on the very first install, no `helm upgrade --reuse-values`
@@ -913,7 +914,7 @@ workaround needed.
   `helm diff` output before applying anything.
 
 **Drift check:** this fix touched no `docs/openshift-manifests/` object —
-`oc apply --dry-run=server -f docs/openshift-manifests/` still reports every
+`oc apply --dry-run=server -k docs/openshift-manifests/overlays/example` still reports every
 object (`opendesk-anyuid-seccomp`, router TLS RBAC, all 14
 `opendesk-fix-*` Routes) `unchanged`.
 
@@ -953,7 +954,7 @@ only a new `helmfile/environments/openshift/customizations/*.yaml` file plus its
 19](#changes)), same "Helm value only" category as the OpenProject SSRF fix
 in failure #8.
 
-**Drift check:** `oc apply --dry-run=server -f docs/openshift-manifests/`
+**Drift check:** `oc apply --dry-run=server -k docs/openshift-manifests/overlays/example`
 still reports every object (`opendesk-anyuid-seccomp`, router TLS RBAC,
 all 14 `opendesk-fix-*` Routes) `unchanged` — this round touched zero
 OpenShift-native objects.
@@ -1023,8 +1024,8 @@ chart template `templates/jibri/deployment.yaml` gating on that flag.
    `customization.release.jitsi.capabilitiesFix` in
    `helmfile/environments/openshift/values.yaml.gotmpl`. See [Changes row 25](#changes).
 2. SCC extension: add `SYS_ADMIN` to `allowedCapabilities` in
-   [`docs/openshift-manifests/opendesk-anyuid-seccomp-scc.yaml`](openshift-manifests/opendesk-anyuid-seccomp-scc.yaml)
-   and `oc apply -f` it. See [Changes row 26](#changes).
+   [`docs/openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml`](openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml)
+   and `oc apply -k docs/openshift-manifests/overlays/example`. See [Changes row 26](#changes).
 
 **Rollout notes:** `helmfile apply -l name=jitsi` hung for minutes on
 `helm-diff` against large binary ConfigMaps in the Jitsi chart; the upgrade

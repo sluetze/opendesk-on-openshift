@@ -48,7 +48,7 @@ supplementalGroups:
   type: RunAsAny
 priority: 10
 groups:
-- system:serviceaccounts:opendesk
+- system:serviceaccounts:placeholder
 users: []
 volumes:
 - configMap
