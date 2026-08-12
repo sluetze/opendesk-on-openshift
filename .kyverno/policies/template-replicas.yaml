@@ -51,6 +51,10 @@ spec:
               replicas: 1
           - metadata:
               name: "*ox-connector*"
+          # Exception: each JVB deployment runs a single pod on its own UDP port; the number of
+          # bridges is set by `replicas.jvb`, not by a deployment's replica count.
+          - metadata:
+              name: "*jvb*"
             spec:
               replicas: 1
           - spec:

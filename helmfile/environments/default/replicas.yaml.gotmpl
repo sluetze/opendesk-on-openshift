@@ -147,7 +147,9 @@ replicas:
   jitsi: 1
   # -- scalable: tbd
   jitsiKeycloakAdapter: 1
-  # -- scalable: tbd
+  # -- scalable: true
+  # -- comment: Number of JVBs to run. Each one is published on its own UDP port of the JVB
+  # service and advertised separately by the patchJVB job.
   jvb: 1
   # -- scalable: false
   # -- comment: The upstream `jitsi-meet` chart hardcodes `replicas: 1` for prosody, so this number

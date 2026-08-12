@@ -236,7 +236,8 @@ jitsi:
       {{ . | toYaml | nindent 6 }}
       {{- end }}
   jvb:
-    replicaCount: {{ .Values.replicas.jvb }}
+    replicaCount: 1
+    portRangeSize: {{ .Values.replicas.jvb }}
     # The `useNodeIP` option provided by the upstream charts does not support all relevant scenarios, but since
     # upstream charts v1.4.0 a value for `publicIPs` is required. We set a dummy value as we anyway update it
     # later with the `patchJVB` job.
