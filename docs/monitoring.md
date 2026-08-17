@@ -75,7 +75,15 @@ Please find further details in the [related Helm chart](https://gitlab.opencode.
 
 ## Component overview
 
-| Component | Metrics (pod- or serviceMonitor) | Alerts (prometheusRule) | Dashboard (Grafana) |
-|:----------|----------------------------------|-------------------------|---------------------|
-| Collabora | :white_check_mark:               | :white_check_mark:      | :white_check_mark:  |
-| Nextcloud | :white_check_mark:               | :x:                     | :x:                 |
+| Component    | Metrics (pod- or serviceMonitor) | Alerts (prometheusRule) | Dashboard (Grafana) |
+| :----------- | -------------------------------- | ----------------------- | ------------------- |
+| Collabora    | :white_check_mark:               | :white_check_mark:      | :white_check_mark:  |
+| Cryptpad     | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| Dovecot      | :x:                              | :x:                     | :white_check_mark:  |
+| Element      | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| Jitsi        | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| Nextcloud    | :white_check_mark:               | :white_check_mark:      | :white_check_mark:  |
+| Nubus        | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| Open-Xchange | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| OpenProject  | :x:                              | :white_check_mark:      | :white_check_mark:  |
+| xWiki        | :x:                              | :white_check_mark:      | :white_check_mark:  |
