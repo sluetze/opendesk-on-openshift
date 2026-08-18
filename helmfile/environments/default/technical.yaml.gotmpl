@@ -65,6 +65,27 @@ technical:
           # Ref.: https://doc.dovecot.org/main/core/admin/limits.html#mail_max_userip_connections
           maxUserIpConnections: 30
 
+  # Notes related settings
+  notes:
+    # Notes throttles its API per user and answers "429 Too Many Requests" above the limit.
+    # Ref.: https://github.com/suitenumerique/docs
+    rateLimit:
+      # Documents: listing, creating, reading, updating, starring.
+      document: "80/minute"
+      # Members of a document.
+      documentAccess: "50/minute"
+      # Invitations to a document.
+      invitation: "60/minute"
+      # Requests for access to a document. Left at the upstream default: it is the one limit
+      # facing people without access to the document.
+      documentAskForAccess: "30/minute"
+      # Frontend configuration, fetched once per page load.
+      config: "30/minute"
+      # Searching users to share with, short term.
+      userListBurst: "30/minute"
+      # Searching users to share with, long term.
+      userListSustained: "180/hour"
+
   # Nextcloud related settings
   nextcloud:
     # Settings for the Nextcloud all-in-one (AIO) pod

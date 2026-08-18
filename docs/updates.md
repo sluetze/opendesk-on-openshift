@@ -24,6 +24,8 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Nubus password quality options](#nubus-password-quality-options)
     * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
       * [Configure Nubus extensions](#configure-nubus-extensions)
+      * [Configure LDAP indices](#configure-ldap-indices)
+      * [Notes API rate limits](#notes-api-rate-limits)
   * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
@@ -242,6 +244,30 @@ technical:
             - "univentionFreeAttribute2"
           custom: []
 ```
+
+#### Notes API rate limits
+
+Notes throttles its API per user and answers `429 Too Many Requests` above the limit. The limits can now be
+configured, for example raised for load tests or lowered to harden a deployment:
+
+```yaml
+technical:
+  notes:
+    rateLimit:
+      document: "80/minute"
+      documentAccess: "50/minute"
+      invitation: "60/minute"
+      documentAskForAccess: "30/minute"
+      config: "30/minute"
+      userListBurst: "30/minute"
+      userListSustained: "180/hour"
+```
+
+Each value is a throttle rate in the form `<count>/<period>`, where the period is one of `second`, `minute`, `hour`
+or `day`. Leaving an option unset (`~`) keeps the upstream default for that limit instead of passing an override.
+
+`documentAskForAccess` is the only limit facing people who do not have access to the document yet, so raise it with
+care.
 
 ## 1.18.0
 

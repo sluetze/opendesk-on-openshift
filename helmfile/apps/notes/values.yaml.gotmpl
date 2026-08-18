@@ -65,6 +65,12 @@ backend:
     collaboration:
       apiUrl: {{ printf "https://%s.%s/collaboration/api/" .Values.global.hosts.notes .Values.global.domain | quote }}
       wsUrl: {{ printf "wss://%s.%s/collaboration/ws/" .Values.global.hosts.notes .Values.global.domain | quote }}
+    docSpec:
+      # Docs 5.0 split the DOCX -> Yjs import path: the backend hands the
+      # DOCX -> BlockNote leg to docSpec before y-provider takes over. Disabling
+      # this only costs DOCX import; export and everything else keep working.
+      enabled: true
+      apiUrl: {{ printf "http://%s.%s.svc.%s" "impress-docspec" (.Values.apps.notes.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
     database:
       host: {{ .Values.databases.notes.host | quote }}
       name: {{ .Values.databases.notes.name | quote }}
@@ -128,11 +134,51 @@ backend:
         (.Values.cache.notes.password.value | urlquery | replace "+" "%20")
         .Values.cache.notes.host
         .Values.cache.notes.port | quote }}
+    celery:
+      broker:
+        scheme: {{ ternary "rediss" "redis" .Values.cache.notes.tls | quote }}
+        host: {{ .Values.cache.notes.host | quote }}
+        port: {{ .Values.cache.notes.port }}
+        database: "8"
+        username: {{ .Values.cache.notes.username | quote }}
+        password:
+          # Percent-encoded here, since the chart joins it into the broker URL as it is.
+          value: {{ .Values.cache.notes.password.value | urlquery | replace "+" "%20" | quote }}
   extraEnvVars:
     - name: "FRONTEND_HOMEPAGE_FEATURE_ENABLED"
       value: "False"
     - name: "FRONTEND_FOOTER_FEATURE_ENABLED"
       value: "False"
+  {{- with .Values.technical.notes.rateLimit }}
+    {{- with .document }}
+    - name: "API_DOCUMENT_THROTTLE_RATE"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .documentAccess }}
+    - name: "API_DOCUMENT_ACCESS_THROTTLE_RATE"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .invitation }}
+    - name: "API_INVITATION_THROTTLE_RATE"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .documentAskForAccess }}
+    - name: "API_DOCUMENT_ASK_FOR_ACCESS_THROTTLE_RATE"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .config }}
+    - name: "API_CONFIG_THROTTLE_RATE"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .userListBurst }}
+    - name: "API_USERS_LIST_THROTTLE_RATE_BURST"
+      value: {{ . | quote }}
+    {{- end }}
+    {{- with .userListSustained }}
+    - name: "API_USERS_LIST_THROTTLE_RATE_SUSTAINED"
+      value: {{ . | quote }}
+    {{- end }}
+  {{- end }}
   containerSecurityContext:
     allowPrivilegeEscalation: false
     capabilities:
@@ -193,6 +239,18 @@ backend:
       mountPath: "/cert/cacert.pem"
       subPath: "ca-certificates.crt"
   {{- end }}
+  # Runs the backend's background tasks: notifying the collaboration server after a permission
+  # change, and sending "ask for access" mails.
+  worker:
+    enabled: true
+    replicaCount: {{ .Values.replicas.notesWorker }}
+    resources:
+      {{ .Values.resources.notesWorker | toYaml | nindent 6 }}
+    podAnnotations:
+      intents.otterize.com/service-name: "impress-worker"
+      {{- with .Values.annotations.notesWorker.pod }}
+      {{ . | toYaml | nindent 6 }}
+      {{- end }}
 
 frontend:
   image:
@@ -205,6 +263,7 @@ frontend:
     annotations:
       {{ .Values.annotations.notesFrontend.ingress | toYaml | nindent 6 }}
     ingressClassName: {{ .Values.ingress.ingressClassName }}
+  replicaCount: {{ .Values.replicas.notesFrontend }}
   resources:
     {{ .Values.resources.notesFrontend | toYaml | nindent 4 }}
   containerSecurityContext:
@@ -240,8 +299,49 @@ frontend:
         name: "impress-customization"
   extraVolumeMounts:
     - name: "customization-volume"
-      mountPath: "/usr/share/nginx/html/runtime-env.js"
+      # Docs v5 builds the static frontend into /app instead of
+      # /usr/share/nginx/html; runtime-env.js has to sit in the served root or
+      # window.RUNTIME_ENV stays undefined and the central menu gets no URLs.
+      mountPath: "/app/runtime-env.js"
       subPath: "runtime-env.js"
+
+docspec:
+  enabled: true
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.notesDocspec.registry | quote }}
+    repository: {{ .Values.images.notesDocspec.repository | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    tag: {{ .Values.images.notesDocspec.tag | quote }}
+  replicaCount: {{ .Values.replicas.notesDocspec }}
+  resources:
+    {{ .Values.resources.notesDocspec | toYaml | nindent 4 }}
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    enabled: true
+    privileged: false
+    runAsUser: 1000
+    runAsGroup: 1000
+    seccompProfile:
+      type: "RuntimeDefault"
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.notesDocspec | toYaml | nindent 6 }}
+  podAnnotations:
+    intents.otterize.com/service-name: "impress-docspec"
+    {{- with .Values.annotations.notesDocspec.pod }}
+    {{ . | toYaml | nindent 4 }}
+    {{- end }}
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1000
+    fsGroupChangePolicy: "Always"
+  service:
+    annotations:
+      {{ .Values.annotations.notesDocspec.service | toYaml | nindent 6 }}
 
 y-provider:
   image:
@@ -249,7 +349,7 @@ y-provider:
     repository: {{ .Values.images.notesYProvider.repository | quote }}
     pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     tag: {{ .Values.images.notesYProvider.tag }}
-  replicaCount: 1
+  replicaCount: {{ .Values.replicas.notesYProvider }}
   debug: true
   {{- if .Values.trust.secret.mount }}
   extraEnvVars:
@@ -284,15 +384,27 @@ y-provider:
       {{ .Values.seLinuxOptions.notesBackend | toYaml | nindent 6 }}
   ingressCollaborationApi:
     annotations:
-      {{ .Values.annotations.notesYProvider.ingressCollaborationAPI | toYaml | nindent 6 }}
+      nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_room"
+      haproxy-ingress.github.io/balance-algorithm: "url_param room"
+      haproxy-ingress.github.io/config-backend: |
+        hash-type consistent
+    {{- with .Values.annotations.notesYProvider.ingressCollaborationAPI }}
+      {{ . | toYaml | nindent 6 }}
+    {{- end }}
     ingressClassName: {{ .Values.ingress.ingressClassName }}
   ingressCollaborationWs:
     annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "{{ .Values.ingress.parameters.bodyTimeout.notesYprovider }}"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "{{ .Values.ingress.parameters.bodyTimeout.notesYprovider }}"
+      nginx.ingress.kubernetes.io/upstream-hash-by: "$arg_room"
       haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.notesYprovider }}s"
+      haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.notesYprovider }}s"
       haproxy-ingress.github.io/balance-algorithm: "url_param room"
-      {{- with .Values.annotations.notesYProvider.ingressCollaborationWS }}
+      haproxy-ingress.github.io/config-backend: |
+        hash-type consistent
+    {{- with .Values.annotations.notesYProvider.ingressCollaborationWS }}
       {{ . | toYaml | nindent 6 }}
-      {{- end }}
+    {{- end }}
     ingressClassName: {{ .Values.ingress.ingressClassName }}
   podAnnotations:
     intents.otterize.com/service-name: "impress-y-provider"
