@@ -932,7 +932,7 @@ nubusLdapServer:
   podSecurityContext:
     seLinuxOptions:
       {{ .Values.seLinuxOptions.umsLdapServer | toYaml | nindent 6 }}
-  dhInitcontainer:
+  dhInitContainer:
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusLdapServerDhInitContainer.registry | quote }}
       repository: {{ .Values.images.nubusLdapServerDhInitContainer.repository }}
