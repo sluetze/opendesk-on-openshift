@@ -35,19 +35,12 @@ configuration:
     {{- if .Values.antivirus.icap.host }}
     enabled: true
     host: {{ .Values.antivirus.icap.host | quote }}
-    port: {{ .Values.antivirus.icap.port }}
-    {{- else }}
-    {{- if .Values.apps.clamavDistributed.enabled }}
-    enabled: true
-    host: "clamav-icap"
-    port: 1344
-    {{- else if .Values.apps.clamavSimple.enabled }}
-    enabled: true
-    host: "clamav-simple"
-    port: 1344
+    port: {{ .Values.antivirus.icap.port | quote }}
+    icap:
+      requestService: {{ .Values.antivirus.icap.serviceName | quote }}
+      mode: "respmod"
     {{- else }}
     enabled: false
-    {{- end }}
     {{- end }}
 
   cache:

@@ -103,16 +103,6 @@ postfix:
     30-antivirus:
       host: {{ .Values.antivirus.milter.host | quote }}
       port: {{ .Values.antivirus.milter.port }}
-    {{- else }}
-    {{- if .Values.apps.clamavDistributed.enabled }}
-    30-antivirus:
-      host: "clamav-milter"
-      port: 7357
-    {{- else if .Values.apps.clamavSimple.enabled }}
-    30-antivirus:
-      host: "clamav-simple"
-      port: 7357
-    {{- end }}
     {{- end }}
   {{- if .Values.smtp.host }}
   relayHost:
