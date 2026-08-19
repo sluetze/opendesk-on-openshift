@@ -989,6 +989,15 @@ nubusLdapServer:
 nubusLicenseImport:
   enabled: {{ not (empty .Values.enterpriseKeys.nubus.license) }}
   license: {{ .Values.enterpriseKeys.nubus.license | quote }}
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusLicenseImport.registry | quote }}
+    repository: {{ .Values.images.nubusLicenseImport.repository }}
+    tag: {{ .Values.images.nubusLicenseImport.tag }}
+  waitForDependency:
+    image:
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
+      repository: {{ .Values.images.nubusWaitForDependency.repository }}
+      tag: {{ .Values.images.nubusWaitForDependency.tag }}
 
 nubusProvisioning:
   enabled: true
