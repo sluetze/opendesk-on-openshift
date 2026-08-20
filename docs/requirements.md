@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -49,9 +49,6 @@ openDesk is a Kubernetes-only solution and requires an existing Kubernetes (K8s)
 > You can check which versions of the deployment tools the openDesk team is using in their development pipelines by looking up the
 > default value for `HELM_IMAGE_PIN` in [`.gitlab-ci.yml`](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/blob/develop/.gitlab-ci.yml?ref_type=heads)
 > and checking the corresponding [release in the Helm image repository](https://gitlab.opencode.de/bmi/opendesk/components/platform-development/images/helm/-/releases).
-
-**Additional openDesk Enterprise requirements**
-- [OpenKruise](https://openkruise.io/)[^3] >= v1.6
 
 ## Hardware
 
