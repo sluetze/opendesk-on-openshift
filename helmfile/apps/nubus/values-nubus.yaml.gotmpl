@@ -1669,10 +1669,7 @@ nubusKeycloakBootstrap:
       oxContextIDNum:
         alwaysReadFromLdap: true
       univentionObjectIdentifier:
-        # This is a read-only attribute, just for openDesk 1.18.0 it will be updated.
-        # We keep it always read from LDAP to avoid any issues with the attribute being out of sync.
-        # But that can be changed to "false" with 1.19+
-        alwaysReadFromLdap: true
+        alwaysReadFromLdap: false
     twoFactorAuthentication:
       enabled: true
   config:
