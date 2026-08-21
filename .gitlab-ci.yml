@@ -482,8 +482,8 @@ env-cleanup:
     - |
       set -e
       export KUBECTL_TIMEOUT="300s"
-      echo "Cleaning up ${NAMESPACE} with OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED=${OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED}..."
-      if [ "${OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED}" = "yes" ]; then
+      echo "Cleaning up ${NAMESPACE} with OPENDESK_DESTROY=${OPENDESK_DESTROY}..."
+      if [ "${OPENDESK_DESTROY}" = "resources" ]; then
         for OPENDESK_RELEASE in $(helm ls -n ${NAMESPACE} -q); do
           echo "Uninstalling release ${OPENDESK_RELEASE}"
           helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} || true;
@@ -495,9 +495,15 @@ env-cleanup:
         kubectl delete jobs --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
         echo "Deleting ConfigMaps (timeout: ${KUBECTL_TIMEOUT})..."
         kubectl delete configmaps --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
-      else
+      elif [ "${OPENDESK_DESTROY}" = "helmfile" ]; then
         echo "Destroying namespace..."
         helmfile destroy --namespace ${NAMESPACE};
+      elif [ "${OPENDESK_DESTROY}" = "namespace" ]; then
+        echo "Deleting Namespace (timeout: ${KUBECTL_TIMEOUT})..."
+        kubectl delete namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+      else
+        echo "Unknown option for OPENDESK_DESTROY: ${OPENDESK_DESTROY}. Please set it to 'resources', 'helmfile' or 'namespace'."
+        exit 1
       fi
   stage: "env-cleanup"
 
