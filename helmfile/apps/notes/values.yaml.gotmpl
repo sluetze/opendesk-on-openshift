@@ -241,7 +241,7 @@ frontend:
 
 y-provider:
   image:
-    registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.notesYProvider.registry | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.notesYProvider.registry | quote }}
     repository: {{ .Values.images.notesYProvider.repository | quote }}
     pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     tag: {{ .Values.images.notesYProvider.tag }}

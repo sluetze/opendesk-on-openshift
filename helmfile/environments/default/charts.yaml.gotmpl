@@ -59,9 +59,12 @@ charts:
     version: "1.3.0"
     verify: true
   collaboraController:
-    # Enterprise Component
+    # enterpriseRegistryBase: "COOL_EE_REGISTRY"
+    # enterpriseRegistryPath: "COOL_EE_REGISTRY_PATH_COCO_CHART"
     # providerCategory: "Supplier"
     # providerResponsible: "Collabora"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["1", "2", "1"]
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/collabora/charts-mirror"
     name: "cool-controller"
@@ -490,18 +493,16 @@ charts:
     version: "6.2.2"
     verify: true
   synapseAdmin:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-admin"
     version: "6.2.2"
     verify: true
   synapseAdminbotWeb:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-adminbot-web"
@@ -510,15 +511,12 @@ charts:
   synapseCreateAccount:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-create-account"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-create-account"
     version: "6.2.2"
     verify: true
   synapseGroupsync:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
@@ -527,7 +525,6 @@ charts:
     version: "6.2.2"
     verify: true
   synapsePipe:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
@@ -538,8 +535,6 @@ charts:
   synapseWeb:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-web"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-web"

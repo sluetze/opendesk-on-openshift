@@ -62,9 +62,12 @@ images:
     repository: "bmi/opendesk/components/supplier/collabora/images/collabora-online-for-opendesk"
     tag: "26.04.2.4.1@sha256:8e72cb0c1c9e1e7c2060cefe0ad994522d3e488619b433aaee50350a11077497"
   collaboraController:
-    # Enterprise Component
+    # enterpriseRegistryBase: "COOL_EE_REGISTRY"
+    # enterpriseRegistryPath: "COOL_EE_REGISTRY_PATH_COCO_IMAGE"
     # providerCategory: "Supplier"
     # providerResponsible: "Collabora"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["1", "2", "0"]
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/collabora/images-mirror/cool-controller"
     tag: "1.2.0@sha256:f2012d4e9a72098e4240ba4b5a96b2e23d729d276efa96c4eb6360086b0ae5f4"
@@ -117,37 +120,32 @@ images:
     repository: "bmi/opendesk/components/supplier/element/images/opendesk-element-web"
     tag: "v1.12.18@sha256:4dbe226d31a6b69fab22878cf9480102087ddbf2ca51848232b4106ce1e9b1ca"
   elementAdminBot:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/access_element_web"
     tag: "v1.11.109@sha256:d0ddee5e8f6ad4858f1294acfc2827be959547d9e87757378dcfa2b5b3dfa087"
   elementGroupsync:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/groupsync"
     tag: "v0.14.0@sha256:a8cee92b9035d8cc80cc13194e4e0118c7dfbfcbc4c0ee5ac173582d0cd55846"
   elementPipe:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/pipe"
     tag: "6.7.1@sha256:3b9bcf59faa065b8650ca619d48b2d752c9678243589a0939659f4fce074f271"
   elementSynapseAdmin:
-    # Enterprise Component
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/synapse_admin"
     tag: "v17.10.00@sha256:09a1507cb060591a16451c23f6610b7aca7ad3edf8192cde76220c1650f5ccd1"
   elementSyncAdmins:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-element-syncadmins"
     tag: "1.0.5@sha256:ae0e18eadea762e11f8edacc52285742a5c4ed6e2e92bfa32ec5638e377e7b7b"
@@ -360,16 +358,12 @@ images:
   notesBackend:
     # providerCategory: "Supplier"
     # providerResponsible: "DINUM"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "lasuite/impress-backend"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-notes"
     tag: "1.14.1-docs-v4.4.0-backend@sha256:e4a2633191efaf07113cd5025741556ca6977961d589f34d5c190507b65b1078"
   notesFrontend:
     # providerCategory: "Supplier"
     # providerResponsible: "DINUM"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "lasuite/impress-frontend"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-notes"
     tag: "1.14.1-docs-v4.4.0-frontend@sha256:46c4a11f8419bde8dbb2b9870eb2f1f87018ff06ae418a552644b646ea155266"
@@ -378,8 +372,8 @@ images:
     # providerResponsible: "DINUM"
     # upstreamRegistry: "https://registry-1.docker.io"
     # upstreamRepository: "lasuite/impress-y-provider"
-    registry: "registry-1.docker.io"
-    repository: "lasuite/impress-y-provider"
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/dinum/images-mirror/impress-y-provider"
     tag: "v4.4.0@sha256:125633f265463490b7646ad951528e621abbf7e2a5a9869be1811a0f25904dd8"
   nubusBlocklistCleanup:
     # providerCategory: "Supplier"
@@ -944,44 +938,30 @@ images:
   synapse:
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "matrixdotorg/synapse"
-    # upstreamMirrorTagFilterRegEx: '^v(\d+)\.(\d+)\.(\d+)$'
-    # upstreamMirrorStartFrom: ["1", "91", "2"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/element/images-mirror/synapse"
     tag: "v1.157.2@sha256:3827b727cb40c52d7d4806db2eb96058eb4514e94a79ca1d7b805de7a8fc44d9"
   synapseCreateUser:
     # providerCategory: "Community"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "alpine/k8s"
     registry: "registry-1.docker.io"
     repository: "alpine/k8s"
     tag: "1.36.2@sha256:44ef4942e171939b9c665a4a84beb80e2dcdb9a24330d4651cfdfd2e9deecc47"
   synapseGuestModule:
     # providerCategory: "Supplier"
     # providerResponsible: "Element"
-    # upstreamRegistry: "https://ghcr.io"
-    # upstreamRepository: "element-hq/synapse-guest-module"
-    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
-    # upstreamMirrorStartFrom: ["1", "0", "0"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/element/images-mirror/synapse-guest-module"
     tag: "1.0.1@sha256:a8c02b2eb4dfea9632b32d00415af8d5276870fa150fac392914f67053c161ea"
   synapseWeb:
     # providerCategory: "Community"
     # providerResponsible: "Element"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "rapidfort/haproxy-official"
     registry: "registry-1.docker.io"
     repository: "rapidfort/haproxy-official"
     tag: "3.1.8-bookworm@sha256:0e9c25e96fddda659c0690ed809cd7db2c08035587fb896a917313b57955ec3e"
   wellKnown:
     # providerCategory: "Community"
     # providerResponsible: "Element"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "library/nginx"
     registry: "registry-1.docker.io"
     repository: "library/nginx"
     tag: "1.30.4-alpine3.24@sha256:97d490c12ba55b4946b01546d1c3ed324e8d41ab1c9fcb2a616aa470620e5b46"
