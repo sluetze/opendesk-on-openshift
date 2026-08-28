@@ -281,9 +281,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/api/drive/client/windows/ox/install(.*)$ /\1
+          haproxy-ingress.github.io/rewrite-target: "/"
           haproxy-ingress.github.io/session-cookie-name: "drive-client-windows-ox-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.driveClientWindowsOxRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -297,9 +295,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/ui(.*)$ /ui\1
+          haproxy-ingress.github.io/rewrite-target: "/ui"
           haproxy-ingress.github.io/session-cookie-name: "core-ui-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.coreUiApiRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -313,10 +309,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/api(.*)$ /appsuite/api\1
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-api"
+          haproxy-ingress.github.io/rewrite-target: "/appsuite/api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesApi }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -329,10 +323,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/ajax(.*)$ /appsuite/api\1
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-ajax"
+          haproxy-ingress.github.io/rewrite-target: "/appsuite/api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesAjax }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -346,7 +338,7 @@ appsuite:
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/path-type: "prefix"
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-appsuite-api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesAppsuiteApi }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -370,10 +362,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/rt2(.*)$ /rt2\1
-          haproxy-ingress.github.io/session-cookie-name: "rt2-route"
+          haproxy-ingress.github.io/rewrite-target: "/rt2"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.rt2Route }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -387,9 +377,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help-documents(.*)$ /help-documents\1
+          haproxy-ingress.github.io/rewrite-target: "/help-documents"
           haproxy-ingress.github.io/session-cookie-name: "documents-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.documentsHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -404,9 +392,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help-drive(.*)$ /help\1
+          haproxy-ingress.github.io/rewrite-target: "/help"
           haproxy-ingress.github.io/session-cookie-name: "drive-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.driveHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -420,9 +406,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help(.*)$ /help\1
+          haproxy-ingress.github.io/rewrite-target: "/help"
           haproxy-ingress.github.io/session-cookie-name: "core-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.coreHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -436,9 +420,7 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/office(.*)$ /appsuite\1
+          haproxy-ingress.github.io/rewrite-target: "/appsuite"
           haproxy-ingress.github.io/session-cookie-name: "office-web-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.officeWebRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -489,10 +471,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/(.*)$ /servlet/dav/\1
-          haproxy-ingress.github.io/session-cookie-name: "dav-root-route"
+          haproxy-ingress.github.io/rewrite-target: "/servlet/dav/"
+          haproxy-ingress.github.io/session-cookie-name: "authorization"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.davRootRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -517,10 +497,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/api/oxguard(.*)$ /oxguard\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-api-route"
+          haproxy-ingress.github.io/rewrite-target: "/oxguard"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardApiRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -533,10 +511,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/api/guardsupport(.*)$ /guardsupport\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-support-api-route"
+          haproxy-ingress.github.io/rewrite-target: "/guardsupport"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardSupportApiRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -549,10 +525,8 @@ appsuite:
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/pks(.*)$ /pgp\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-pgp-route"
+          haproxy-ingress.github.io/rewrite-target: "/pgp"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardPgpRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
