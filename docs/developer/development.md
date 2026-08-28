@@ -18,7 +18,7 @@ However, contributions are possible using the [CLA](https://gitlab.opencode.de/b
       * [Disable linting selectively](#disable-linting-selectively)
     * [Renovate](#renovate)
     * [Mirroring](#mirroring)
-      * [Get new artifacts mirrored](#get-new-artifacts-mirrored)
+      * [Get artifacts mirrored](#get-artifacts-mirrored)
   * [Creating new charts/images](#creating-new-chartsimages)
 <!-- TOC -->
 
@@ -156,22 +156,15 @@ they are no longer mirrored automatically:
 
 Find more details and the code of the mirror script here: https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror
 
-> [!note]
-> The mirror is scheduled to run every hour at 42 minutes past the hour.
+#### Get artifacts mirrored
 
-#### Get new artifacts mirrored
-
-Every scheduled run mirrors the versions pinned in the `develop` branch, so once your branch is merged into
-`develop`, related artifacts are updated automatically.
-
-If you need the artifacts pinned in your branch mirrored before it is merged, open an issue in the [oci-pull-mirror](https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror)
-project with your branch name as the issue's subject. The next scheduled run additionally processes every
-branch named by an open issue and closes the issue with a summary report once the branch was mirrored
-successfully; on failures the issue stays open and and will be retried on the next run.
+Create a work item in the [oci-pull-mirror](https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror/-/work_items)
+project using your branch name to run the mirror for in the items title. Nothing else is needed. Every 15min the script
+will be triggered and process the work items. Once a work item defined branch was successfully mirrored the item will
+be commented on and closed.
 
 > [!note]
-> The mirror does not create target repository structures: If the target project does not
-> exist yet, it has to be created before the mirror can push to it.
+> Once a day the mirror is executed for the `develop` branch to update potential `.att` data.
 
 ## Creating new charts/images
 
