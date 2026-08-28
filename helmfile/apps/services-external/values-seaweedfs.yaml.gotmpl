@@ -107,7 +107,6 @@ s3:
       nginx.org/client-max-body-size: "4G"
       {{- else if eq .Values.ingress.ingressClassName "haproxy" }}
       haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
-      haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
       {{- end }}
       {{- with .Values.annotations.servicesExternalSeaweedfs.apiIngress }}
       {{ . | toYaml | nindent 6 }}

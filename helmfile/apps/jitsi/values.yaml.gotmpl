@@ -85,7 +85,6 @@ jitsi:
       enabled: {{ .Values.ingress.enabled }}
       annotations:
         haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.jitsi }}s"
-        haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.jitsi }}s"
         {{- with .Values.annotations.jitsiWeb.ingress }}
         {{ . | toYaml | nindent 8 }}
         {{- end }}
