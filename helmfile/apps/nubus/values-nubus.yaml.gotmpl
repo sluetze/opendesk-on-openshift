@@ -237,6 +237,10 @@ keycloak:
   serviceAccount:
     annotations:
       {{ .Values.annotations.nubusKeycloak.serviceAccount | toYaml | nindent 6 }}
+  serviceMonitor:
+    enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+    labels:
+      {{ .Values.monitoring.prometheus.serviceMonitors.labels | toYaml | nindent 6 }}
   {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-crt-secret-volume"
