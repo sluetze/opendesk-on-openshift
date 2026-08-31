@@ -877,6 +877,13 @@ nubusUdmRestApi:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusUdmRestApi.registry | quote }}
       repository: {{ .Values.images.nubusUdmRestApi.repository }}
       tag: {{ .Values.images.nubusUdmRestApi.tag }}
+  # Workaround for an issue with the UDM REST API in Nubus v1.22.0, which still generates the legacy / insecure hashes.
+  # Can get removed when we integrate Nubus v1.22.1 into openDesk...
+  extraVolumeMounts:
+    - name: "etc-krb5-volume"
+      mountPath: "/etc/krb5.conf"
+      subPath: "krb5.conf"
+      readOnly: true
 
 nubusLdapNotifier:
   additionalAnnotations:
