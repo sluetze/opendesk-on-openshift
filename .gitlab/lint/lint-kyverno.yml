@@ -45,7 +45,9 @@ helmfile-template:
       --include-needs
       --skip-tests
       > "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
-
+    - >
+      test -s "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
+      || { echo "ERROR: helmfile rendered an empty manifest for '${APP}'. Is the app enabled in the 'test' environment?"; exit 1; }
 
 helmfile-template-diff:
   allow_failure: true
@@ -116,6 +118,9 @@ lint-kyverno-required:
       -f opendesk.yaml
       --skip-tests true
       ${APP}
+    - >
+      ! grep -q "^results: \[\]" kyverno-test.yaml
+      || { echo "ERROR: no Kyverno tests were generated for '${APP}'."; exit 1; }
     - "kyverno test ."
     - "popd"
 
@@ -150,6 +155,9 @@ lint-kyverno-prefereable:
       -f opendesk.yaml
       --skip-tests true
       ${APP}
+    - >
+      ! grep -q "^results: \[\]" kyverno-test.yaml
+      || { echo "ERROR: no Kyverno tests were generated for '${APP}'."; exit 1; }
     - "kyverno test ."
     - "popd"
 ...
