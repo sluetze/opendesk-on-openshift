@@ -39,6 +39,9 @@ helmfile-template:
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
     - >
+      printf 'apps:\n  notes:\n    enabled: true\n'
+      > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
+    - >
       helmfile template
       -f "${CI_PROJECT_DIR}/helmfile/apps/${APP}/helmfile.yaml.gotmpl"
       -e test
@@ -73,6 +76,9 @@ helmfile-template-diff:
       -d ${CI_PROJECT_DIR}/helmfile/environments
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
+    - >
+      printf 'apps:\n  notes:\n    enabled: true\n'
+      > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
     - >
       helmfile template
       -f "${CI_PROJECT_DIR}/helmfile/apps/${APP}/helmfile.yaml.gotmpl"
