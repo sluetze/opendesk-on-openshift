@@ -20,6 +20,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
       * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
+      * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
   * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
@@ -155,6 +156,20 @@ functional:
 ```
 
 `true`, the default, erases the data (GDPR erasure): The profile is dropped and the user's events are marked for redaction, which cannot be undone. `false` only deactivates the account and keeps its data.
+
+#### Load additional data files into the Nubus data loader
+
+The content can now be customized beyond the existing options by loading additional data files into the
+Nubus data loader (Nubus chart option `nubusStackDataUms.stackDataUms.extraDataFiles`). Additional portal
+categories, folders, entries (tiles) or announcements are the typical use-cases, but any object type the data
+loader supports can be managed this way.
+
+```yaml
+functional:
+  portal:
+    customize:
+      extraDataFiles: {}
+```
 
 ## 1.18.0
 

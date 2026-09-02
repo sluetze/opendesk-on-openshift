@@ -448,6 +448,44 @@ functional:
       enabled: false
 
   portal:
+    # Adapt portal and admin portal content beyond what the options below cover by loading additional data files into
+    # the Nubus data loader. Additional portal categories, folders, entries (tiles) or announcements are the
+    # typical use-cases, but any object type the data loader supports can be managed this way. So you might as
+    # well e.g. create custom user templates or groups.
+    customize:
+      # A map from the desired filename to the file's content (a string, use a YAML block scalar). Each
+      # content has to be a valid YAML stream that the Nubus data loader is able to process; the map is
+      # passed to the Nubus chart option "nubusStackDataUms.stackDataUms.extraDataFiles".
+      # All data files are processed in lexical order, so prefix the filename with a number to control when
+      # it runs relative to the default openDesk/Nubus files that can be found here and provides examples:
+      # Nubus: https://github.com/univention/ums-stack-data/tree/main/helm/stack-data-ums/data-files/default
+      # openDesk: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-nubus/-/tree/main/udm/udm-data-loader
+      #
+      # List of available actions: https://github.com/univention/ums-stack-data/blob/main/src/univention/data_loader/actions.py
+      #
+      # Notes:
+      # - Ensure you separate each entry with `---` and that you end with `...` to make it a valid YAML stream.
+      # - Use the UDM REST API first to test the objects you want to template and then convert the JSON successfully
+      #   processed by the API to YAML and use it in the portal customization.
+      # - When you make use of this option and the `stack-data` job fails, be sure to remove the customization and
+      #   re-run the job to get clarity about the cause for the failing job.
+      #
+      # Example:
+      # ```
+      # extraDataFiles:
+      #   "98-portal-announcement-maintenance.yaml": |
+      #     ---
+      #     action: "create"
+      #     module: "portals/announcement"
+      #     position: "cn=announcement,cn=portals,cn=univention,dc=swp-ldap,dc=internal"
+      #     properties:
+      #       name: "maintenance"
+      #       title:
+      #         en_US: "Scheduled maintenance"
+      #         de_DE: "Geplante Wartung"
+      #     ...
+      # ```
+      extraDataFiles: {}
     # Configure if the a re-direct to the login dialogue is enforced, or if the portal is shown and the user as to actively
     # trigger the login flow, e.g. but clicking on the "Login" portal tile.
     enforceLogin: true

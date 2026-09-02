@@ -1407,6 +1407,18 @@ nubusStackDataUms:
   serviceAccount:
     annotations:
       {{ .Values.annotations.nubusStackDataUms.serviceAccount | toYaml | nindent 6 }}
+  {{- with .Values.functional.portal.customize.extraDataFiles }}
+  stackDataUms:
+    # Additional data files for the Nubus data loader, configured through
+    # "functional.portal.customize.extraDataFiles". The sub-chart applies Helm templating ("tpl") to each
+    # file's content, so any curly braces in the content (i.e. Jinja2 expressions meant for the data
+    # loader) are escaped here to pass through that stage unchanged.
+    extraDataFiles:
+      {{- range $filename, $content := . }}
+      {{ $filename | quote }}: |
+        {{- $content | replace "{{" "\x00" | replace "}}" "\x01" | replace "\x00" "{{ \"{{\" }}" | replace "\x01" "{{ \"}}\" }}" | nindent 8 }}
+      {{- end }}
+  {{- end }}
   templateContext:
     initialPasswordAdministrator: {{ .Values.secrets.nubus.systemAccounts.administratorPassword.value | quote }}
     additionalMailDomains: {{ .Values.global.additionalMailDomains | toYaml | nindent 6 }}
