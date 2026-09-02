@@ -129,6 +129,24 @@ migrations:
             # property of that deployment.
             maxOrphanPercent: {{ .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.maxOrphanPercent }}
     {{- end }}
+    {{- if .Values.apps.nubus.enabled }}
+      # Removes the NT password hashes and the weak Kerberos keys Nubus 1.22.0 stopped writing
+      # from every account still carrying them, with the two cleanup tools that release ships.
+      # See ../../docs/migrations-automated.md#udm_remove_legacy_hashes
+      - id: "udm_remove_legacy_hashes"
+        tag: "v1.19.0"
+        runMode: "apply"
+        versions:
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1"
+        config:
+          dryRun: false
+          udm:
+            podSelector: "app.kubernetes.io/name=udm-rest-api,app.kubernetes.io/instance=ums"
+            container: "main"
+            timeoutSeconds: 300
+    {{- end }}
   # `actionsSkip` opts out of declared actions. It mirrors `actions` - an entry names the stage,
   # the `id` and the `tag` of the action it skips, and has to match both exactly; the `runMode` is
   # not part of it. It is not part of the migration's definition but configured per deployment in

@@ -39,6 +39,7 @@ SPDX-License-Identifier: Apache-2.0
     * [`ox_shared_accounts_import`](#ox_shared_accounts_import)
     * [`flush_intercom_sessions`](#flush_intercom_sessions)
     * [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)
+    * [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)
   * [Development](#development)
 <!-- TOC -->
 
@@ -181,7 +182,8 @@ removed it again.
 
 | Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered  |
 | ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ----------------- |
-| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x    |
+| [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)                       | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
+| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
 | [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
 | [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
 | [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
@@ -640,6 +642,28 @@ secretFiles:
     secret:
       name: "provisioning-admin-account"
       key: "access_token"
+```
+
+### `udm_remove_legacy_hashes`
+
+Removes the two kinds of legacy password material that Nubus 1.22.0 stopped generating from every account still
+carrying them, by running the two cleanup tools that release ships in the UDM HTTP REST API container - the tools its
+[release notes](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#udm-http-rest-api)
+ask to be run after the upgrade. Both are executed with a pod exec into the UDM REST API.
+
+With Nubus 1.22.0 UDM no longer writes the NT hash - the new setting `password/samba/nthash` defaults to
+`false` - and writes `krb5Key` with
+[strong encryption types only](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#kerberos-encryption-types).
+
+```yaml
+- id: "udm_remove_legacy_hashes"
+  runMode: "apply"
+  config:
+    dryRun: false
+    udm:
+      podSelector: "app.kubernetes.io/name=udm-rest-api,app.kubernetes.io/instance=ums"
+      container: "main"
+      timeoutSeconds: 300
 ```
 
 ## Development
