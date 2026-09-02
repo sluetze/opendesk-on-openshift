@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0
         * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
       * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
         * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
+        * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
     * [Versions ≥ v1.18.0](#versions--v1180)
       * [Pre-upgrade to versions ≥ v1.18.0](#pre-upgrade-to-versions--v1180)
         * [New persistence requirement: OX Connector requires its own PostgreSQL database](#new-persistence-requirement-ox-connector-requires-its-own-postgresql-database)
@@ -261,6 +262,59 @@ The default runmode of the migration action is **dry run**  that reports every a
 
 > [!note]
 > In case you want to handle the accounts yourself: Leave `dryRun` at `true`, so nothing else happens. To also drop the action from the migration, opt out of it through `migrations.actionsSkip`, see [Skip single actions of the automated migrations](./updates.md#skip-single-actions-of-the-automated-migrations).
+
+##### Changed Nubus default: Structured logging enabled
+
+**Target group:** Deployments that process Nubus logs with alerting rules, filters or parsers relying on the
+previous plain-text log format.
+
+**Context**
+
+Nubus v1.22.0 [activates structured logging by default](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#structured-logging).
+The affected components (UDM HTTP REST API, UMC Server, Directory Notifier and Directory Listener) now emit log lines
+in the format described in the
+[Nubus manual](https://docs.software-univention.de/nubus-manual/1.x/en/logging.html#nubus-logging-structured-components):
+An ISO 8601 timestamp, the severity padded to 8 characters, a request ID, the message and a tab-separated,
+logfmt-formatted set of key-value pairs with application data, the source code reference, PID, log facility and, if
+applicable, a traceback.
+
+Upstream declares plain logging deprecated and will remove it in a future Nubus release.
+
+**Required action**
+
+Review any alerting rules, filters, parsers or dashboards that match on the Nubus log output of the components listed
+above and adapt them to the structured format.
+
+As a temporary fallback you can restore the previous plain-text format by overriding the UCR variables through an
+additional values file for the `ums` release (see `customization.release` in `customization.yaml.gotmpl`) setting:
+
+```yaml
+global:
+  configUcr:
+    umc:
+      server:
+        debug:
+          structured-logging: "false"
+      module:
+        debug:
+          structured-logging: "false"
+    directory:
+      manager:
+        rest:
+          debug:
+            structured-logging: "false"
+    listener:
+      debug:
+        structured-logging: "false"
+    notifier:
+      debug:
+        structured-logging: "false"
+```
+
+> [!warning]
+> Plain logging is deprecated upstream. openDesk does not track this customization and will **not** announce when a
+> future Nubus update stops supporting it; the override will then silently stop having an effect. Treat the fallback as
+> a bridge while adapting your log processing, not as a permanent configuration.
 
 ### Versions ≥ v1.18.0
 
