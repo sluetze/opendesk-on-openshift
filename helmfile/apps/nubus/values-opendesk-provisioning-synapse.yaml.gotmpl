@@ -56,6 +56,7 @@ resources:
   {{ .Values.resources.provisioningSynapse | toYaml | nindent 2 }}
 
 containerSecurityContext:
+  privileged: false
   seLinuxOptions:
     {{ .Values.seLinuxOptions.provisioningSynapse | toYaml | nindent 4 }}
 

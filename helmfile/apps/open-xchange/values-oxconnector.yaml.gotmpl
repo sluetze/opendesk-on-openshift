@@ -93,8 +93,6 @@ podAnnotations:
   {{ . | toYaml | nindent 2 }}
   {{- end }}
 
-replicaCount: {{ .Values.replicas.oxConnector }}
-
 podSecurityContext:
   fsGroup: 1000
 

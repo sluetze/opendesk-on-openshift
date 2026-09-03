@@ -44,6 +44,15 @@ spec:
               name: "*jigasi*"
             spec:
               replicas: 1
+          # Exceptions: All provisioning consumers are singletons.
+          - metadata:
+              name: "opendesk-provisioning-*"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "*ox-connector*"
+            spec:
+              replicas: 1
           - spec:
               replicas: 42
 
