@@ -216,13 +216,25 @@ spec:
           spec:
             =(ephemeralContainers):
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
             =(initContainers):
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
             containers:
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
 
     - name: "require-default-procMount"
       match:
