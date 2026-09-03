@@ -36,9 +36,9 @@ openDesk is a Kubernetes-only solution and requires an existing Kubernetes (K8s)
   - [Ingress nginx](https://github.com/kubernetes/ingress-nginx/) >= [4.11.5/1.11.5](https://github.com/kubernetes/ingress-nginx/releases) - [now deprecated](https://www.kubernetes.dev/blog/2025/11/12/ingress-nginx-retirement/)
   - See section [Ingress controller](#ingress-controller) for more details.
 - Deployment tools
-  - [Helm](https://helm.sh/) >= v3.17.3 but not
-    - v3.18.0[^1]
-    - v3.20.1[^2]
+  - [Helm](https://helm.sh/) >= v3.17.3 an < v4.x[^1] but not
+    - v3.18.0[^2]
+    - v3.20.1[^3]
   - [Helmfile](https://helmfile.readthedocs.io/en/latest/) >= v1.0.0
   - [Helm Diff](https://github.com/databus23/helm-diff) >= v3.11.0
   - [yq](https://github.com/mikefarah/yq) >= v4.52.4
@@ -155,13 +155,13 @@ deployments, you need to make use of your own production-grade services; see the
 | -------- | --------------------- | ------- | --------------------- |
 | Cache    | Memcached             | `1.6.x` | Memcached             |
 |          | Redis                 | `7.x.x` | Redis                 |
-| Database | Cassandra[^3]         | `5.0.x` | Cassandra             |
+| Database | Cassandra[^4]         | `5.0.x` | Cassandra             |
 |          | MariaDB               | `10.x`  | MariaDB               |
 |          | PostgreSQL            | `15.x`  | PostgreSQL            |
 | Mail     | Mail Transfer Agent   |         | Postfix               |
 |          | PKI/CI (S/MIME)       |         |                       |
 | Security | AntiVirus/ICAP        |         | ClamAV                |
-| Storage  | K8s ReadWriteOnce[^4] |         | Ceph / Cloud specific |
+| Storage  | K8s ReadWriteOnce[^5] |         | Ceph / Cloud specific |
 |          | K8s ReadWriteMany     |         | Ceph / NFS            |
 |          | Object Storage        |         | SeaWeed               |
 | Voice    | TURN                  |         | Coturn                |
@@ -175,10 +175,12 @@ Helmfile requires [HelmDiff](https://github.com/databus23/helm-diff) to compare 
 
 ## Footnotes
 
-[^1]: Due to a [Helm bug](https://github.com/helm/helm/issues/30890) v3.18.0 is not supported.
+[^1]: Helm 4 support will be a breaking change for openDesk due to changed post-renderer handling; once available all deployments must migrate. Targeted for end of 2026.
 
-[^2]: Due to Helm bugs [[1](https://github.com/helm/helm/issues/31919), [2](https://github.com/helm/helm/issues/31971)] v3.20.1 is not supported.
+[^2]: Due to a [Helm bug](https://github.com/helm/helm/issues/30890) v3.18.0 is not supported.
 
-[^3]: Required for Dovecot Pro as part of openDesk Enterprise Edition.
+[^3]: Due to Helm bugs [[1](https://github.com/helm/helm/issues/31919), [2](https://github.com/helm/helm/issues/31971)] v3.20.1 is not supported.
 
-[^4]: Due to technical limitations within NFS it is not supported as storage backend for RWO.
+[^4]: Required for Dovecot Pro as part of openDesk Enterprise Edition.
+
+[^5]: Due to technical limitations within NFS it is not supported as storage backend for RWO.
