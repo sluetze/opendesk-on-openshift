@@ -106,6 +106,17 @@ global:
           # Upstream indices at the time of writing start at "aRecord", the openDesk specific ones are added before that.
           univentionFreeAttribute1,univentionFreeAttribute2,aRecord,automountInformation,cNAMERecord,cn,description,dhcpHWAddress,displayName,entryUUID,gidNumber,givenName,homeDirectory,krb5PrincipalName,macAddress,mail,mailAlternativeAddress,mailPrimaryAddress,memberUid,objectClass,ou,pTRRecord,relativeDomainName,sambaAcctFlags,sambaDomainName,sambaGroupType,sambaPrimaryGroupSID,sambaSID,sambaSIDList,secretary,shadowExpire,sn,uid,uidNumber,uniqueMember,univentionCanonicalRecipientRewriteEnabled,univentionDataType,univentionInventoryNumber,univentionLicenseModule,univentionLicenseObject,univentionMailHomeServer,univentionNagiosHostname,univentionObjectFlag,univentionObjectType,univentionPolicyReference,univentionServerRole,univentionService,univentionShareGid,univentionShareSambaName,univentionShareWriteable,univentionUDMOptionModule,univentionUDMPropertyCLIName,univentionUDMPropertyCopyable,univentionUDMPropertyDefault,univentionUDMPropertyDeleteObjectClass,univentionUDMPropertyDoNotSearch,univentionUDMPropertyHook,univentionUDMPropertyLayoutOverwritePosition,univentionUDMPropertyLayoutOverwriteTab,univentionUDMPropertyLayoutPosition,univentionUDMPropertyLayoutTabAdvanced,univentionUDMPropertyLayoutTabName,univentionUDMPropertyLdapMapping,univentionUDMPropertyLongDescription,univentionUDMPropertyModule,univentionUDMPropertyMultivalue,univentionUDMPropertyObjectClass,univentionUDMPropertyOptions,univentionUDMPropertyShortDescription,univentionUDMPropertySyntax,univentionUDMPropertyTranslationLongDescription,univentionUDMPropertyTranslationShortDescription,univentionUDMPropertyTranslationTabName,univentionUDMPropertyValueMayChange,univentionUDMPropertyValueRequired,univentionUDMPropertyVersion,zoneName,univentionObjectIdentifier
 
+    password:
+      quality:
+        length:
+          min: {{ .Values.functional.authentication.password.quality.length.min }}
+        credit:
+          digits: {{ .Values.functional.authentication.password.quality.credit.digits }}
+          upper: {{ .Values.functional.authentication.password.quality.credit.upper }}
+          lower: {{ .Values.functional.authentication.password.quality.credit.lower }}
+          other: {{ .Values.functional.authentication.password.quality.credit.other }}
+        mspolicy: {{ .Values.functional.authentication.password.quality.mspolicy | quote }}
+
     ucs:
       web:
         theme: "light"
@@ -119,8 +130,9 @@ global:
         show: "false"
       login:
         password-complexity-message:
-          de: "Das Passwort muss mindestens 8 Zeichen lang sein und darf keine Zahlenabfolge oder ganze Worte enthalten, wie '1234Test'."
-          en: "Password must be at least 8 characters long and cannot include a number series or regular words, like '1234Test'."
+          {{- range $language, $message := .Values.functional.authentication.password.complexityMessage }}
+          {{ $language }}: {{ $message | quote }}
+          {{- end }}
       module:
         udm:
           oxmail:

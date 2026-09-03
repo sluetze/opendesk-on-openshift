@@ -31,6 +31,7 @@ SPDX-License-Identifier: Apache-2.0
       * [Pre-upgrade to versions ≥ v1.19.0](#pre-upgrade-to-versions--v1190)
         * [Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates)
         * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
+        * [Changed Helmfile default: Minimum password length raised from 8 to 14 characters](#changed-helmfile-default-minimum-password-length-raised-from-8-to-14-characters)
       * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
         * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
         * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
@@ -231,6 +232,37 @@ This setting affects both use cases:
 
 - The ongoing provisioning from this release on
 - The one-time catch-up for the users that were deleted before it existed, which is the [post-upgrade step below](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated).
+
+##### Changed Helmfile default: Minimum password length raised from 8 to 14 characters
+
+**Target group:** All deployments.
+
+**Context:**
+
+openDesk 1.19.0 makes the password quality rules of the Nubus IAM configurable, see
+[`updates.md` > "Nubus password quality options"](./updates.md#nubus-password-quality-options). Along with this,
+the default minimum length for passwords is raised from 8 to 14 characters. The new minimum applies whenever a
+password is set or changed after the upgrade, e.g. via the portal's self-service or the admin portal; existing
+passwords are not affected and remain valid.
+
+**Required action:**
+
+None, if the new default is acceptable for your deployment. To keep the previous minimum of 8 characters, set the
+rule back in [`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl) and adapt the
+password complexity message accordingly:
+
+```yaml
+functional:
+  authentication:
+    password:
+      complexityMessage:
+        de: "Das Passwort muss mindestens 8 Zeichen lang sein und darf keine unsicheren Zeichenfolgen enthalten."
+        en: "Password must be at least 8 characters long and must not contain insecure character sequences."
+        fr: "Le mot de passe doit comporter au moins 8 caractères et ne doit pas contenir de chaînes de caractères peu sûres."
+      quality:
+        length:
+          min: 8
+```
 
 #### Post-upgrade to versions ≥ v1.19.0
 

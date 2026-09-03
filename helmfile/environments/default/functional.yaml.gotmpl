@@ -42,6 +42,37 @@ functional:
       clients: {}
       # Define additional/custom OIDC client scopes to be created in the 'opendesk' realm within Keycloak.
       clientScopes: {}
+    password:
+      # Password quality rules enforced by the Nubus IAM whenever a password is set or changed, e.g. via the
+      # portal's self-service or the admin portal.
+      # Ref.: https://docs.software-univention.de/ucs-operation/5.2/en/iam/password-management/policies.html#password-policy-settings
+      # The message shown in the login and self-service dialogues when a new password does not comply with the
+      # password quality rules configured in `quality` below. The message is a static text that is not derived
+      # from those rules, so keep the two in sync.
+      # Define one message per language, keyed by the two-letter language code. Always provide at least "en", as
+      # it serves as the fallback for languages without a message.
+      complexityMessage:
+        de: "Das Passwort muss mindestens 14 Zeichen lang sein und darf keine unsicheren Zeichenfolgen enthalten."
+        en: "Password must be at least 14 characters long and must not contain insecure character sequences."
+        fr: "Le mot de passe doit comporter au moins 14 caractères et ne doit pas contenir de chaînes de caractères peu sûres."
+      quality:
+        length:
+          # The minimum length for new passwords (`password/quality/length/min`).
+          min: 14
+        # Beside the length requirement, classes of characters can be required in new passwords.
+        credit:
+          # Minimum number of digits (`password/quality/credit/digits`).
+          digits: 0
+          # Minimum number of uppercase letters (`password/quality/credit/upper`).
+          upper: 0
+          # Minimum number of lowercase letters (`password/quality/credit/lower`).
+          lower: 0
+          # Minimum number of characters that are neither letters nor digits, e.g. special characters
+          # (`password/quality/credit/other`).
+          other: 0
+        # Check the Microsoft password complexity criteria in addition to ("true") or instead of ("sufficient")
+        # the checks above; set to "false" to not apply them (`password/quality/mspolicy`).
+        mspolicy: "false"
     # Configure global settings of the 'opendesk' realm within Keycloak. The values are directly
     # passed into the `realmSettings` section of the `opendesk-keycloak-bootstrap` chart.
     # Ref.: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-keycloak-bootstrap

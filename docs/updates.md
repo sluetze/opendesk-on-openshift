@@ -21,6 +21,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
       * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
       * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
+      * [Nubus password quality options](#nubus-password-quality-options)
   * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
@@ -169,6 +170,32 @@ functional:
   portal:
     customize:
       extraDataFiles: {}
+```
+
+#### Nubus password quality options
+
+The global password quality rules the Nubus IAM enforces whenever a password is set or changed (e.g. via the portal's
+self-service or the admin portal) can now be configured. The options map 1:1 to the options from [the upstream documentation](https://docs.software-univention.de/ucs-operation/5.2/en/iam/password-management/policies.html#password-policy-settings).
+
+The message shown in the login and self-service dialogues when a new password does not comply with the rules
+can now be configured as well. The message is a static text that is not derived from the
+rules, so keep the two in sync.
+
+```yaml
+functional:
+  authentication:
+    password:
+      complexityMessage:
+        en: "Password must be at least 14 characters long and must not contain insecure character sequences."
+      quality:
+        length:
+          min: 14
+        credit:
+          digits: 0
+          upper: 0
+          lower: 0
+          other: 0
+        mspolicy: "false"
 ```
 
 ## 1.18.0
