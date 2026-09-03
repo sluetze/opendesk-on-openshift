@@ -130,8 +130,12 @@ lint-kyverno-required:
     - "kyverno test ."
     - "popd"
 
-lint-kyverno-prefereable:
-  allow_failure: true
+# The "preferable" (optional) policy set runs in two jobs sharing this base:
+# apps that already satisfy the whole set are listed in
+# `lint-kyverno-prefereable-enforced` and hard-fail on regressions, the rest
+# stay in `lint-kyverno-prefereable` as non-blocking warnings. When an app's
+# warnings reach zero, move it from the warning matrix to the enforced one.
+.lint-kyverno-prefereable-base:
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
   needs:
@@ -140,8 +144,6 @@ lint-kyverno-prefereable:
       parallel:
         matrix:
           - APP: ["$[[ matrix.APP ]]"]
-  parallel:
-    matrix: *matrix
   script:
     - >
       mv "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml" "${CI_PROJECT_DIR}/.kyverno/opendesk.yaml"
@@ -166,4 +168,33 @@ lint-kyverno-prefereable:
       || { echo "ERROR: no Kyverno tests were generated for '${APP}'."; exit 1; }
     - "kyverno test ."
     - "popd"
+
+lint-kyverno-prefereable:
+  allow_failure: true
+  extends: ".lint-kyverno-prefereable-base"
+  parallel:
+    matrix:
+      - APP:
+          - "collabora"
+          - "cryptpad"
+          - "element"
+          - "jitsi"
+          - "notes"
+          - "open-xchange"
+          - "openproject"
+          - "services-external"
+          - "xwiki"
+
+lint-kyverno-prefereable-enforced:
+  allow_failure: false
+  extends: ".lint-kyverno-prefereable-base"
+  parallel:
+    matrix:
+      - APP:
+          - "nextcloud"
+          - "nubus"
+          - "opendesk-migrations-post"
+          - "opendesk-migrations-pre"
+          - "opendesk-openproject-bootstrap"
+          - "opendesk-services"
 ...
