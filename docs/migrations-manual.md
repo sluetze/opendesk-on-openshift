@@ -97,7 +97,6 @@ We cannot hold back all migrations as some are required e.g. due to a change in 
 This section provides an overview of potential changes to be part of the next major release (openDesk 2.0).
 
 - `functional.portal.link*` (see `functional.yaml.gotmpl` for details) are going to be moved into the `theme.*` tree, we are also going to move the icons used for the links currently found under `theme.imagery.portalEntries` in this step.
-- We will explicitly set the [database schema configuration](https://www.xwiki.org/xwiki/bin/view/Documentation/AdminGuide/Configuration/#HConfigurethenamesofdatabaseschemas) for XWiki to avoid the use of the `public` schema.
 - Removal of the `OPENDESK_1_12_0_SKIP_PVC_MIGRATION` option that was [introduced with openDesk 1.12.0](#fixed-helmfile-templating-storageclassnames-for-nubus-openproject-and-ox-connector).
 - Focussing on PostgreSQL all components except OX App Suite components:
   - Removal of the XWiki MariaDB support.

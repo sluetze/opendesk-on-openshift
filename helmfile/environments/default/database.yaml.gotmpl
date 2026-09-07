@@ -211,6 +211,10 @@ databases:
   xwiki:
     type: "postgresql"
     name: "xwiki"
+    # PostgreSQL only: The schema holding the main wiki has to exist before XWiki starts, as XWiki only creates the
+    # schemas of sub-wikis; `public` exists in every PostgreSQL database. Creating the sub-wiki schemas requires the
+    # configured user to hold the `CREATE` privilege on the database, which the database owner has by default.
+    schema: "public"
     host: "postgresql"
     port: 5432
     username: "xwiki_user"
