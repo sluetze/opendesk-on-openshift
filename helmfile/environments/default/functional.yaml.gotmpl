@@ -483,7 +483,9 @@ functional:
     # the Nubus data loader. Additional portal categories, folders, entries (tiles) or announcements are the
     # typical use-cases, but any object type the data loader supports can be managed this way. So you might as
     # well e.g. create custom user templates or groups.
-    customize:
+    # If you need to extend Nubus itself (LDAP schemas, UDM/UMC modules, ...) see `technical.nubus.extensions.custom`
+    # in `technical.yaml.gotmpl`.
+    custom:
       # A map from the desired filename to the file's content (a string, use a YAML block scalar). Each
       # content has to be a valid YAML stream that the Nubus data loader is able to process; the map is
       # passed to the Nubus chart option "nubusStackDataUms.stackDataUms.extraDataFiles".

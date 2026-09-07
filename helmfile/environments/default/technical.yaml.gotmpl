@@ -117,6 +117,57 @@ technical:
           # Enable the NATS Box container for the deployment. Will also be enabled in case of
           # `.Values.debug.enabled: true`
           enabled: false
+    # Nubus extensions are container images that add plugins (LDAP schemas, UDM modules, UMC modules,
+    # portal extensions, ...) to Nubus. They are loaded via init containers into the relevant Nubus
+    # components and passed to the Nubus chart option `global.extensions`.
+    # Ref.: https://docs.software-univention.de/nubus-kubernetes-operation/latest/en/reference.html
+    extensions:
+      # Toggle the extensions that openDesk ships by default.
+      toggle:
+        # Attribute-to-Group (a2g) mapper: A UDM hook that maps user attributes to group memberships,
+        # used by openDesk to derive the application access groups from the user's attributes.
+        # Ref.: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-nubus-a2g-mapper
+        a2gMapper: true
+      # Load additional custom extensions into Nubus. `image.registry` falls back to `global.imageRegistry`
+      # when omitted (one of both is required) and `image.pullPolicy` to `global.imagePullPolicy`.
+      #
+      # **Warning:** Extensions are an extremely powerful tool, they add LDAP schemas, UDM modules and hooks or
+      # UMC modules to the core of the identity management. A faulty extension can easily break the deployment
+      # (e.g. the LDAP server no longer starting) and can render your directory data inconsistent. You must
+      # ensure that the extensions you load are compatible with the Nubus version used by openDesk and test
+      # them on a non-production environment first. openDesk support does not cover custom extensions.
+      #
+      # To manage additional objects (e.g. portal tiles, groups or user templates) that an extension might
+      # need, use `functional.portal.custom.extraDataFiles` in `functional.yaml.gotmpl`. Attributes that an
+      # extension adds and that are used in searches should be indexed via `technical.nubus.ldap.index`.
+      #
+      # Example:
+      # ```
+      # custom:
+      #   - name: "my-extension"
+      #     image:
+      #       registry: "registry.example.org"
+      #       repository: "my-org/my-nubus-extension"
+      #       tag: "1.0.0"
+      # ```
+      custom: []
+    ldap:
+      # LDAP attribute indices of the Nubus LDAP server (UCR `ldap/index/*`). Nubus only supports overriding the
+      # complete list of indexed attributes per index type (https://forge.univention.org/bugzilla/show_bug.cgi?id=58993),
+      # so openDesk templates the upstream Nubus defaults, followed by the openDesk specific and your custom attributes.
+      # Ref.: https://docs.software-univention.de/ext-performance/5.0/en/index.html (section "LDAP indices")
+      index:
+        # Equality index (`ldap/index/eq`)
+        eq:
+          # Attributes indexed in addition to the upstream Nubus defaults as they are used by openDesk
+          # components in searches. Shown here for transparency, do not remove entries.
+          opendesk:
+            - "univentionFreeAttribute1"
+            - "univentionFreeAttribute2"
+          # Additional attributes to index, e.g. attributes that are added through custom extensions
+          # (see `technical.nubus.extensions.custom`) and that are used in searches. The LDAP server
+          # re-indexes on start-up, expect a longer start-up time after changes on larger directories.
+          custom: []
 
   # OX App Suite related technical settings
   oxAppSuite:

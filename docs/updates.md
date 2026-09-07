@@ -22,13 +22,15 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
       * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
       * [Nubus password quality options](#nubus-password-quality-options)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
+      * [Configure Nubus extensions](#configure-nubus-extensions)
   * [1.18.0](#1180)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
       * [Identity a user schedules under in a Shared Account's calendar](#identity-a-user-schedules-under-in-a-shared-accounts-calendar)
     * [`migrations.yaml.gotmpl`](#migrationsyamlgotmpl)
       * [Timeout and log retention of the migration jobs](#timeout-and-log-retention-of-the-migration-jobs)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-1)
       * [Allow overriding HTTP request rate limiting for the core-mw component of the OX App Suite](#allow-overriding-http-request-rate-limiting-for-the-core-mw-component-of-the-ox-app-suite)
     * [`theme.yaml.gotmpl`](#themeyamlgotmpl)
       * [Dedicated mobile logo and touch icon for OpenProject](#dedicated-mobile-logo-and-touch-icon-for-openproject)
@@ -45,7 +47,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Provide selected secrets as pre-created Kubernetes Secrets](#provide-selected-secrets-as-pre-created-kubernetes-secrets)
     * [`smtp.yaml.gotmpl`](#smtpyamlgotmpl)
       * [Postfix HELO names](#postfix-helo-names)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-1)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-2)
       * [OX App Suite LDAP caching for contact picker](#ox-app-suite-ldap-caching-for-contact-picker)
       * [Postfix](#postfix)
         * [SPF validation for incoming mail](#spf-validation-for-incoming-mail)
@@ -54,7 +56,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
   * [1.16.0](#1160)
     * [`theme.yaml.gotmpl`](#themeyamlgotmpl-1)
       * [OpenProject PDF export theming](#openproject-pdf-export-theming)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-2)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-3)
       * [Nextcloud worker and memory tuning](#nextcloud-worker-and-memory-tuning)
     * [`service.yaml.gotmpl`](#serviceyamlgotmpl)
       * [Option to set a `loadBalancerIp` for Dovecot and Postfix](#option-to-set-a-loadbalancerip-for-dovecot-and-postfix)
@@ -66,7 +68,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-3)
       * [Per user-quota for external sharing](#per-user-quota-for-external-sharing)
       * [Virtual alias limits](#virtual-alias-limits)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-3)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-4)
       * [Proxy protocol support for Postfix](#proxy-protocol-support-for-postfix)
       * [Set limitation on maximum number of objects (for tasks, contacts, attachments)](#set-limitation-on-maximum-number-of-objects-for-tasks-contacts-attachments)
 <!-- TOC -->
@@ -168,7 +170,7 @@ loader supports can be managed this way.
 ```yaml
 functional:
   portal:
-    customize:
+    custom:
       extraDataFiles: {}
 ```
 
@@ -196,6 +198,49 @@ functional:
           lower: 0
           other: 0
         mspolicy: "false"
+```
+
+### `technical.yaml.gotmpl`
+
+#### Configure Nubus extensions
+
+Nubus extensions are container images that add plugins (e.g. LDAP schemas, UDM/UMC modules, portal extensions) to
+Nubus (Nubus chart option `global.extensions`). The extensions openDesk ships can now be toggled and additional
+custom extensions can be loaded:
+
+```yaml
+technical:
+  nubus:
+    extensions:
+      toggle:
+        a2gMapper: true
+      custom:
+        - name: "my-extension"
+          image:
+            registry: "registry.example.org"
+            repository: "my-org/my-nubus-extension"
+            tag: "1.0.0"
+```
+
+Extensions are extremely powerful and a faulty extension can easily break the deployment, so make sure to test
+custom extensions on a non-production environment first.
+
+#### Configure LDAP indices
+
+The attributes indexed by the Nubus LDAP server can now be configured. The openDesk specific attributes that are
+indexed in addition to the upstream Nubus defaults are shown in `opendesk` and additional attributes, e.g. added
+through custom extensions, can be indexed via `custom`:
+
+```yaml
+technical:
+  nubus:
+    ldap:
+      index:
+        eq:
+          opendesk:
+            - "univentionFreeAttribute1"
+            - "univentionFreeAttribute2"
+          custom: []
 ```
 
 ## 1.18.0
