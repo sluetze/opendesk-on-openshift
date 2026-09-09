@@ -255,6 +255,33 @@ variables:
   TESTS_PROJECT_URL:
     description: "Project url for e2e-tests (`<domain of gitlab>/api/v4/projects/<id>`)"
     value: "gitlab.opencode.de/api/v4/projects/1506"
+  TESTS_SCREENSHOT_TEST:
+    description: "Toggle screenshot capture for tests."
+    value: "on_fail"
+    options:
+      - "yes"
+      - "no"
+      - "on_fail"
+      - "on_success"
+  TESTS_SCREENSHOT_BEFORE_STEP:
+    description: "Toggle screenshot capture for tests: Before each step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+  TESTS_SCREENSHOT_AFTER_STEP:
+    description: "Toggle screenshot capture for tests: After each step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+  TESTS_SCREENSHOT_REDIRECT_STEP:
+    description: "Toggle screenshot capture for tests: For Redirect step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+
   HELM_IMAGE_PIN:
     description: "The Helm image tag/checksum."
     value: "1.4.0@sha256:300e345cf6b0ca0909e55ba62e15028d85b06d4e02f907e04b01747512e74f36"
@@ -857,10 +884,10 @@ run-tests:
           \"browser\": \"${TESTS_BROWSER}\", \
           \"udm_api_username\": \"Administrator\", \
           \"udm_api_password\": \"${DEFAULT_ADMINISTRATOR_PASSWORD}\", \
-          \"screenshot_test\": \"yes\", \
-          \"screenshot_before_step\": \"yes\", \
-          \"screenshot_after_step\": \"yes\", \
-          \"screenshot_redirect_step\": \"yes\", \
+          \"screenshot_test\": \"${TESTS_SCREENSHOT_TEST}\", \
+          \"screenshot_before_step\": \"${TESTS_SCREENSHOT_BEFORE_STEP}\", \
+          \"screenshot_after_step\": \"${TESTS_SCREENSHOT_AFTER_STEP}\", \
+          \"screenshot_redirect_step\": \"${TESTS_SCREENSHOT_REDIRECT_STEP}\", \
           \"testsets\": \"${TESTS_TESTSETS}\", \
           \"testprofile\": \"Namespace\", \
           \"OPENDESK_BRANCH\": \"${CI_COMMIT_REF_NAME}\", \
