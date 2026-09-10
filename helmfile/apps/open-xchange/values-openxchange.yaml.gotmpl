@@ -1140,9 +1140,10 @@ appsuite:
     initContainer:
       resources:
         {{ .Values.resources.openxchangeCoreMW | toYaml | nindent 8 }}
+    # The YAML filenames are hardcoded, so do not update them (e.g. streamline their extension)
     yamlFiles:
-    {{- if or .Values.databases.oxAppSuite.useSSL }}
-      dbconnector.yml:
+    {{- if .Values.databases.oxAppSuite.useSSL }}
+      dbconnector.yaml:
         com.mysql.jdbc:
         # The driver properties should be kept at their defaults
             useUnicode: true
@@ -1161,6 +1162,7 @@ appsuite:
             nullCatalogMeansCurrent: {{ .Values.databases.oxAppSuite.nullCatalogMeansCurrent }}
     {{- end }}
     {{- if .Values.functional.groupware.davSupport.enabled }}
+      # Ref.: https://documentation.open-xchange.com/8/middleware/login_and_sessions/application_passwords.html#application-details
       app-password-apps.yml:
         caldav:
           displayName_t10e: "Calendar Client (CalDAV)"
