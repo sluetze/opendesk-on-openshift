@@ -160,7 +160,7 @@ deployments, you need to make use of your own production-grade services; see the
 |          | PostgreSQL            | `15.x`  | PostgreSQL            |
 | Mail     | Mail Transfer Agent   |         | Postfix               |
 |          | PKI/CI (S/MIME)       |         |                       |
-| Security | AntiVirus/ICAP        |         | ClamAV                |
+| Security | AntiVirus/ICAP[^6]    |         | ClamAV                |
 | Storage  | K8s ReadWriteOnce[^5] |         | Ceph / Cloud specific |
 |          | K8s ReadWriteMany     |         | Ceph / NFS            |
 |          | Object Storage        |         | SeaWeed               |
@@ -184,3 +184,5 @@ Helmfile requires [HelmDiff](https://github.com/databus23/helm-diff) to compare 
 [^4]: Required for Dovecot Pro as part of openDesk Enterprise Edition.
 
 [^5]: Due to technical limitations within NFS it is not supported as storage backend for RWO.
+
+[^6]: See [malware](./configuration-yamls/antivir.md) for antivirus/ICAP configuration details.

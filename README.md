@@ -78,7 +78,7 @@ You would like to install openDesk in your own infrastructure?
 - [Security](./docs/security.md)
 - [Scaling](./docs/scaling.md)
 - [Monitoring](./docs/monitoring.md)
-- [Theming](./docs/theming.md)
+- [Theming](./docs/configuration-yamls/theming.md)
 
 ## Architecture
 

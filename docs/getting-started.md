@@ -53,10 +53,10 @@ Before deploying openDesk, you must configure the deployment to fit your environ
 To keep your deployment up to date, we recommend customizing in `dev`, `test`, or `prod` and not in `default` environment
 files.
 
-> All configuration options and their default values can be found in files at [`helmfile/environments/default/`](../helmfile/environments/default/)
+All configuration options and their default values can be found in files at [`helmfile/environments/default/`](../helmfile/environments/default/). While they contain helpful inline documenation, additional documentation can be found for some of them in the [`configurations-yamls`](./configuration-yamls/index.md) subfolder.
 
 For the following guide, we will use `dev` as environment where variables can be set in
-`helmfile/environments/dev/values.yaml.gotmpl`.
+`helmfile/environments/dev/values.yaml.gotmpl` that will override the settings from the default environment.
 
 ## DNS
 
