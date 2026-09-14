@@ -14,20 +14,13 @@ containerSecurityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "DAC_OVERRIDE"
-      - "FOWNER"
-      - "SETGID"
-      - "SETUID"
-      - "KILL"
   enabled: true
   seccompProfile:
     type: "RuntimeDefault"
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
-  runAsUser: 0
-  runAsGroup: 0
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
   privileged: false
   seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
 
@@ -36,16 +29,28 @@ initContainerSecurityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "FOWNER"
   enabled: true
   seccompProfile:
     type: "RuntimeDefault"
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
-  runAsUser: 0
-  runAsGroup: 0
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  privileged: false
+  seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
+
+policyContainerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  enabled: true
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
+  runAsGroup: 65534
   privileged: false
   seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
 
