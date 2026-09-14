@@ -40,6 +40,10 @@ imagePullSecrets:
   - name: {{ . | quote }}
 {{- end }}
 
+# New domain value introduced in helm 0.1.0 in advance when ingress is dropped
+# in favor or routes.
+mainDomain: "{{ .Values.global.hosts.cryptpad }}.{{ .Values.global.domain }}"
+
 ingress:
   enabled: {{ .Values.ingress.enabled }}
   annotations:
@@ -85,7 +89,7 @@ securityContext:
   privileged: false
   seccompProfile:
     type: "RuntimeDefault"
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 4001
   runAsGroup: 4001
@@ -98,5 +102,18 @@ serviceAccount:
     {{ .Values.annotations.cryptpad.serviceAccount | toYaml | nindent 4 }}
 
 workloadStateful: false
+
+# Required when readOnlyRootFilesystem is enabled
+extraVolumes:
+  - name: "customize"
+    emptyDir: {}
+  - name: "npm-cache"
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: "customize"
+    mountPath: "/cryptpad/customize"
+  - name: "npm-cache"
+    mountPath: "/cryptpad/.npm"
 
 ...
