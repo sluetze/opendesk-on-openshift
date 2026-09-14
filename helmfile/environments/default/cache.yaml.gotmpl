@@ -8,12 +8,12 @@
 # nothing to provision a Secret for and a `create`/`name`/`key` there would only suggest a Secret
 # reference that no consumer makes.
 #
-# The per-component `password.value` entries are empty by default: an empty entry means "the
-# bundled server's password", and every consumer falls back to `cache.redis.password.value` for it.
-# Overriding only `cache.redis.password.value` therefore changes the password for the server and
-# for every component using it. Pointing a component at an external cache means overriding its
-# `host`/`port`/`username`/`tls` **and** its `password.value`; a non-empty component entry wins
-# over the fallback in every consumer.
+# The openDesk bundled Redis and its consumers derive the same default password from MASTER_PASSWORD.
+# Each consumer uses its own password.value directly, including explicit empty strings.
+# When overriding the bundled Redis password, also override every consumer using it.
+# For an external cache, configure the component's host/port/username/tls and password.value.
+
+{{- $redisDefaultPassword := derivePassword 1 "long" (env "MASTER_PASSWORD") "redis" "password" | sha1sum }}
 
 cache:
   redis:
@@ -21,7 +21,7 @@ cache:
     password:
       # A non-empty MASTER_PASSWORD is enforced in `secrets.yaml.gotmpl`, which every helmfile run
       # renders alongside this file.
-      value: {{ derivePassword 1 "long" (env "MASTER_PASSWORD") "redis" "password" | sha1sum | quote }}
+      value: {{ $redisDefaultPassword | quote }}
       create: true
       name: "redis-password"
       key: "redis-password"
@@ -31,13 +31,9 @@ cache:
     # Username is currently being ignored by the Intercom Service Helm chart.
     # Ref.: https://forge.univention.org/bugzilla/show_bug.cgi?id=59490
     username: "default"
-    # Read as a Secret by the `flush_intercom_sessions` migration and as a literal by the Intercom
-    # Service chart, which has no `existingSecret` for it. The Secret below carries the *override*
-    # only: while `value` is empty, the migration mounts the server's `redis-password` Secret
-    # instead (see `opendesk-migrations-post/values.yaml.gotmpl`), so both stay a plain reflection
-    # of what this file states.
+    # The Intercom Service chart consumes the password as a literal.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
       create: true
       name: "cache-intercom-service-password"
       key: "password"
@@ -48,7 +44,7 @@ cache:
     username: "default"
     # Value-only: the Nextcloud charts inline the password into their configuration.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
     tls: false
   notes:
     host: "redis-headless"
@@ -56,7 +52,7 @@ cache:
     username: "default"
     # Value-only: the Notes chart takes a connection URL with the password inlined.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
     tls: false
   openproject:
     host: "memcached"
@@ -67,7 +63,7 @@ cache:
     username: "default"
     # Value-only: OX App Suite inlines the password into its properties.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
     tls: false
   umsSelfservice:
     host: "memcached"

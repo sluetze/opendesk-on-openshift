@@ -32,6 +32,7 @@ SPDX-License-Identifier: Apache-2.0
         * [Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates)
         * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
         * [Changed Helmfile default: Minimum password length raised from 8 to 14 characters](#changed-helmfile-default-minimum-password-length-raised-from-8-to-14-characters)
+        * [Changed Helmfile default: Redis consumer password fallbacks removed](#changed-helmfile-default-redis-consumer-password-fallbacks-removed)
       * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
         * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
         * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
@@ -262,6 +263,28 @@ functional:
         length:
           min: 8
 ```
+
+##### Changed Helmfile default: Redis consumer password fallbacks removed
+
+**Target group:** Deployments that use bundled Redis and override its default password.
+
+**Context**
+
+Redis and its consumers now derive the same default password from `MASTER_PASSWORD` in
+[`cache.yaml.gotmpl`](../helmfile/environments/default/cache.yaml.gotmpl). Each consumer uses its own
+`cache.<component>.password.value` directly. Explicitly configured empty strings are preserved and no longer fall back to
+`cache.redis.password.value`.
+
+**Required action**
+
+If you override `cache.redis.password.value`, configure each consumer that uses bundled Redis with the same password using the applicable settings below:
+
+- `cache.intercomService.password.value`
+- `cache.nextcloud.password.value`
+- `cache.notes.password.value`
+- `cache.oxAppSuite.password.value`
+
+Changing only the server password no longer updates the consumers’ passwords automatically. Components using an external cache must retain that cache’s credentials.
 
 #### Post-upgrade to versions ≥ v1.19.0
 
