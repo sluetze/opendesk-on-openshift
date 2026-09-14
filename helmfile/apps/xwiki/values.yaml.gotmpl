@@ -58,6 +58,11 @@ securityContext:
   enabled: true
   fsGroup: 101
 
+initContainers:
+  supportReadonly:
+    enabled: true
+    as: jetty
+
 containerSecurityContext:
   allowPrivilegeEscalation: false
   enabled: true
@@ -70,7 +75,7 @@ containerSecurityContext:
       - "ALL"
   seccompProfile:
     type: "RuntimeDefault"
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   seLinuxOptions:
     {{ .Values.seLinuxOptions.xwiki | toYaml | nindent 4 }}
 
