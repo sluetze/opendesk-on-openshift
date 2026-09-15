@@ -48,6 +48,13 @@
 * **openproject:** Update from 17.6.0 to 17.7.2 ([7342b13](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/7342b137be202c725a183c27bd9330cc8395a6cb))
 * **ox-connector:** Update connector to support shared accounts; see `migrations.md` for required upgrade steps ([a611f7a](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/a611f7a6feef3c37cae48e2564f763e67a4f72c8))
 
+## [1.17.4](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.17.3...v1.17.4) (2026-09-15)
+
+
+### Bug Fixes
+
+- **nextcloud:** Update from 32.0.9 to 33.0.9 ([eff6fb9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/commit/eff6fb931038f6cc863f471bd33d6f87c37c7dec))
+
 ## [1.17.3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.17.2...v1.17.3) (2026-08-14)
 
 
