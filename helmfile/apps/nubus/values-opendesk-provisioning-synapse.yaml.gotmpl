@@ -56,7 +56,18 @@ resources:
   {{ .Values.resources.provisioningSynapse | toYaml | nindent 2 }}
 
 containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  enabled: true
   privileged: false
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
   seLinuxOptions:
     {{ .Values.seLinuxOptions.provisioningSynapse | toYaml | nindent 4 }}
 
