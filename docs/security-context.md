@@ -148,7 +148,7 @@ This list gives you an overview of templated security settings and if they compl
 | process | status | allowPrivilegeEscalation | privileged | readOnlyRootFilesystem | runAsNonRoot | runAsUser | runAsGroup | seccompProfile | capabilities |
 | ------- | ------ | ------------------------ | ---------- | ---------------------- | ------------ | --------- | ---------- | -------------- | ------------ |
 | **collabora**/collabora-online | :x: | yes | no | no | yes | 1001 | 1001 | yes | no ["CHOWN","FOWNER","SYS_CHROOT"] |
-| **cryptpad**/cryptpad | :x: | no | no | no | yes | 4001 | 4001 | yes | yes |
+| **cryptpad**/cryptpad | :white_check_mark: | no | no | yes | yes | 4001 | 4001 | yes | yes |
 | **element**/matrix-neoboard-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neochoice-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-bot | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
