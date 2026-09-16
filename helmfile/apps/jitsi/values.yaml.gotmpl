@@ -127,11 +127,6 @@ jitsi:
     image:
       repository: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.prosody.registry }}/{{ .Values.images.prosody.repository }}"
       tag: {{ .Values.images.prosody.tag | quote }}
-    initContainers:
-      busybox:
-        # Image for the `chown-data` init container. Upstream runs it as root on
-        # purpose, so its securityContext is deliberately left untouched here.
-        image: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.busybox.registry }}/{{ .Values.images.busybox.repository }}:{{ .Values.images.busybox.tag }}"
     imagePullSecrets:
     {{- range .Values.global.imagePullSecrets }}
       - name: {{ . | quote }}
