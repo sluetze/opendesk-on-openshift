@@ -73,7 +73,7 @@ You would like to install openDesk in your own infrastructure?
 
 ## Advanced customization
 
-- [Enhanced Configuration](./docs/enhanced-configuration.md)
+- [Enhanced configuration](./docs/enhanced-configuration.md)
 - [External services](./docs/external-services.md)
 - [Security](./docs/security.md)
 - [Scaling](./docs/scaling.md)

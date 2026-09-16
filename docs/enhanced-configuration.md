@@ -15,3 +15,4 @@ The following enhanced configuration use cases are described in their respective
 - [Groupware migration from M365 to openDesk](./enhanced-configuration/groupware-migration.md)
 - [Self-signed certificate and custom Certificate Authority (CA)](./enhanced-configuration/self-signed-certificates.md)
 - [GitOps deployments using Argo CD](./enhanced-configuration/gitops.md)
+- [Connecting AI assistants via MCP](./enhanced-configuration/ai-mcp.md)
