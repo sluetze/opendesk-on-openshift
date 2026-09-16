@@ -210,7 +210,7 @@ This list gives you an overview of templated security settings and if they compl
 | **open-xchange**/open-xchange/public-sector-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/opendesk-open-xchange-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/ox-connector | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **open-xchange**/postfix-ox | :x: | no | no | yes | no | 0 | 0 | yes | no ["CHOWN","DAC_OVERRIDE","FOWNER","SETGID","SETUID","KILL"] |
+| **open-xchange**/postfix-ox | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 | **opendesk-migrations-post**/opendesk-migrations-post | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **opendesk-migrations-pre**/opendesk-migrations-pre | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **opendesk-openproject-bootstrap**/opendesk-openproject-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
@@ -227,7 +227,7 @@ This list gives you an overview of templated security settings and if they compl
 | **services-external**/memcached | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/minio | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/opendesk-dkimpy-milter | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **services-external**/postfix | :x: | no | no | yes | no | 0 | 0 | yes | no ["CHOWN","DAC_OVERRIDE","FOWNER","SETGID","SETUID","KILL"] |
+| **services-external**/postfix | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 | **services-external**/postgresql | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/redis/master | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/seaweedfs/admin | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
