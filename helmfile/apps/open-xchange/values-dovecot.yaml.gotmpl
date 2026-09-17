@@ -115,36 +115,36 @@ containerSecurityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "DAC_OVERRIDE"
-      - "KILL"
-      - "NET_BIND_SERVICE"
-      - "SETGID"
-      - "SETUID"
-      - "SYS_CHROOT"
   enabled: true
   privileged: false
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  # vmail is uid 1000 but gid 102 in the community image. Dovecot derives the group of its internal
+  # services from vmail's primary group and a non-root process cannot setgid() away from its own
+  # group, so the community edition must run as 1000:102. The enterprise overlay raises this to
+  # 1000:1000, matching the Pro image.
+  runAsGroup: 102
   seccompProfile:
     type: "RuntimeDefault"
   seLinuxOptions:
     {{ .Values.seLinuxOptions.dovecot | toYaml | nindent 4 }}
 
-# The init-dovecot container only renders config files, chmods them, and (Pro only) chowns the metacache
-# volume, so it needs far fewer capabilities than the main container.
 initDovecotSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
   enabled: true
   privileged: false
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  # vmail is uid 1000 but gid 102 in the community image. Dovecot derives the group of its internal
+  # services from vmail's primary group and a non-root process cannot setgid() away from its own
+  # group, so the community edition must run as 1000:102. The enterprise overlay raises this to
+  # 1000:1000, matching the Pro image.
+  runAsGroup: 102
   seccompProfile:
     type: "RuntimeDefault"
   seLinuxOptions:
@@ -170,7 +170,9 @@ extraVolumeMounts:
 
 podSecurityContext:
   enabled: true
-  fsGroup: 1000
+  # Must match `containerSecurityContext.runAsGroup` so the mail volume is writable; the enterprise
+  # overlay raises this to 1000.
+  fsGroup: 102
 
 persistence:
   {{- if .Values.cluster.persistence.readWriteMany.enabled }}

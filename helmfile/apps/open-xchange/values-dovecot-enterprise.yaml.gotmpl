@@ -16,6 +16,17 @@ imageInitCassandra:
 imagePullSecrets:
   {{ .Values.global.imagePullSecrets | toYaml | nindent 2 }}
 
+# The Pro image ships vmail as 1000:1000, unlike the community image's 1000:102, so the group the
+# base values pin for the community edition is raised here.
+containerSecurityContext:
+  runAsGroup: 1000
+
+initDovecotSecurityContext:
+  runAsGroup: 1000
+
+podSecurityContext:
+  fsGroup: 1000
+
 initCassandraSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
@@ -25,7 +36,7 @@ initCassandraSecurityContext:
   privileged: false
   readOnlyRootFilesystem: true
   runAsGroup: 1000
-  runAsNonRoot: false
+  runAsNonRoot: true
   runAsUser: 1000
   seccompProfile:
     type: "RuntimeDefault"
