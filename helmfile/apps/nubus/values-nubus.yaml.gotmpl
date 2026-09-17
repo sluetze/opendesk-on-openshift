@@ -310,72 +310,6 @@ nubusGuardian:
 nubusTwofaHelpdesk:
   enabled: false
 
-nubusNotificationsApi:
-  enabled: false
-  additionalAnnotations:
-    {{- with .Values.annotations.nubusNotificationsApi.additional }}
-    {{ . | toYaml | nindent 4 }}
-    {{- end }}
-  containerSecurityContext:
-    privileged: false
-    allowPrivilegeEscalation: false
-    capabilities:
-      add: []
-      drop:
-        - "ALL"
-    enabled: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    seccompProfile:
-      type: "RuntimeDefault"
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-    seLinuxOptions:
-      {{ .Values.seLinuxOptions.umsNotificationsApi | toYaml | nindent 6 }}
-  image:
-    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNotificationsApi.registry | quote }}
-    repository: {{ .Values.images.nubusNotificationsApi.repository }}
-    tag: {{ .Values.images.nubusNotificationsApi.tag }}
-  ingress:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.ingress | toYaml | nindent 6 }}
-    certManager:
-      enabled: false
-    tls:
-      enabled: {{ .Values.ingress.tls.enabled }}
-      secretName: {{ .Values.ingress.tls.secretName | quote }}
-  persistence:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.persistence | toYaml | nindent 6 }}
-  podAnnotations:
-    intents.otterize.com/service-name: "ums-notifications-api"
-    {{- with .Values.annotations.nubusNotificationsApi.pod }}
-    {{ . | toYaml | nindent 4 }}
-    {{- end }}
-  postgresql:
-    connection:
-      host: {{ .Values.databases.umsNotificationsApi.host | quote }}
-      port: {{ .Values.databases.umsNotificationsApi.port | quote }}
-    auth:
-      username: {{ .Values.databases.umsNotificationsApi.username | quote }}
-      database: {{ .Values.databases.umsNotificationsApi.name | quote }}
-      password: {{ .Values.databases.umsNotificationsApi.password.value | quote }}
-      # NOTE: Nubus has still an existing secret configured for legacy reasons.
-      # This disables the existing secret and ensures that the value from above
-      # is used.
-      existingSecret:
-        name: null
-  service:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.service | toYaml | nindent 6 }}
-  serviceAccount:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.serviceAccount | toYaml | nindent 6 }}
-    create: true
-  replicaCount: {{ .Values.replicas.umsNotificationsApi }}
-  resources:
-    {{ .Values.resources.umsNotificationsApi | toYaml | nindent 4 }}
-
 nubusPortalFrontend:
   additionalAnnotations:
     {{- with .Values.annotations.nubusPortalFrontend.additional }}
@@ -905,13 +839,6 @@ nubusUdmRestApi:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusUdmRestApi.registry | quote }}
       repository: {{ .Values.images.nubusUdmRestApi.repository }}
       tag: {{ .Values.images.nubusUdmRestApi.tag }}
-  # Workaround for an issue with the UDM REST API in Nubus v1.22.0, which still generates the legacy / insecure hashes.
-  # Can get removed when we integrate Nubus v1.22.1 into openDesk...
-  extraVolumeMounts:
-    - name: "etc-krb5-volume"
-      mountPath: "/etc/krb5.conf"
-      subPath: "krb5.conf"
-      readOnly: true
 
 nubusLdapNotifier:
   additionalAnnotations:
@@ -1131,27 +1058,18 @@ nubusProvisioning:
         {{ .Values.seLinuxOptions.umsProvisioningNats | toYaml | nindent 8 }}
     nats:
       image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNats.registry | quote }}
+        registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNats.registry | quote }}
         repository: {{ .Values.images.nubusNats.repository }}
         tag: {{ .Values.images.nubusNats.tag }}
     natsBox:
       enabled: {{ or .Values.technical.nubus.provisioning.nats.natsBox.enabled .Values.debug.enabled }}
       image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNatsBox.registry | quote }}
+        registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNatsBox.registry | quote }}
         repository: {{ .Values.images.nubusNatsBox.repository }}
         tag: {{ .Values.images.nubusNatsBox.tag }}
     persistence:
       size: {{ .Values.persistence.storages.nubusProvisioningNats.size }}
       storageClassName: {{ coalesce .Values.persistence.storages.nubusProvisioningNats.storageClassName .Values.persistence.storageClassNames.RWO | quote }}
-    reloader:
-      image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNatsReloader.registry | quote }}
-        repository: {{ .Values.images.nubusNatsReloader.repository }}
-        tag: {{ .Values.images.nubusNatsReloader.tag }}
-        # NOTE: The subchart does not yet fully support
-        # "global.imagePullPolicy". This can be removed once the subchart has
-        # been adjusted.
-        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     resources:
       {{ .Values.resources.umsProvisioningNats | toYaml | nindent 6 }}
     serviceAccount:
@@ -1639,7 +1557,7 @@ nubusUmcServer:
           name: null
   proxy:
     image:
-      registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusUmcServerProxy.registry | quote }}
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusUmcServerProxy.registry | quote }}
       repository: {{ .Values.images.nubusUmcServerProxy.repository }}
       tag: {{ .Values.images.nubusUmcServerProxy.tag }}
     replicaCount: {{ .Values.replicas.umsUmcServerProxy }}
