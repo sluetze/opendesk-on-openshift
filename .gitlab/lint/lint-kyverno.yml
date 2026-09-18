@@ -175,15 +175,12 @@ lint-kyverno-prefereable:
   parallel:
     matrix:
       - APP:
-          - "collabora"
-          - "cryptpad"
           - "element"
           - "jitsi"
           - "notes"
           - "open-xchange"
           - "openproject"
           - "services-external"
-          - "xwiki"
 
 lint-kyverno-prefereable-enforced:
   allow_failure: false
@@ -191,10 +188,13 @@ lint-kyverno-prefereable-enforced:
   parallel:
     matrix:
       - APP:
+          - "collabora"
+          - "cryptpad"
           - "nextcloud"
           - "nubus"
           - "opendesk-migrations-post"
           - "opendesk-migrations-pre"
           - "opendesk-openproject-bootstrap"
           - "opendesk-services"
+          - "xwiki"
 ...
