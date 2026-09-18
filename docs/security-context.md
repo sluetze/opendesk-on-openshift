@@ -197,7 +197,7 @@ This list gives you an overview of templated security settings and if they compl
 | **nubus**/ums/nubusUdmRestApi | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcGateway | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcServer | :white_check_mark: | no | no | yes | yes | 999 | 999 | yes | yes |
-| **open-xchange**/dovecot | :x: | no | no | yes | no | n/a | n/a | yes | no ["CHOWN","DAC_OVERRIDE","KILL","NET_BIND_SERVICE","SETGID","SETUID","SYS_CHROOT"] |
+| **open-xchange**/dovecot | :x: | no | no | yes | yes | n/a | n/a | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-documentconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-guidedtours | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-imageconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
