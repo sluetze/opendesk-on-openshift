@@ -57,6 +57,7 @@ externalDB:
 securityContext:
   enabled: true
   fsGroup: 101
+  fsGroupChangePolicy: "OnRootMismatch"
 
 initContainers:
   supportReadonly:
@@ -271,7 +272,7 @@ serviceAccount:
     {{ .Values.annotations.xwiki.serviceAccount | toYaml | nindent 4 }}
 
 volumePermissions:
-  enabled: true
+  enabled: false
 
 {{- if .Values.trust.secret.mount }}
 extraVolumes:
