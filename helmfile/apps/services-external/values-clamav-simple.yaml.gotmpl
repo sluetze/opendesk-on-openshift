@@ -96,4 +96,12 @@ serviceAccount:
   annotations:
     {{ .Values.annotations.servicesExternalClamavSimple.serviceAccount | toYaml | nindent 4 }}
 
+startupProbe:
+  enabled: true
+  failureThreshold: 60
+  initialDelaySeconds: 30
+  periodSeconds: 20
+  successThreshold: 1
+  timeoutSeconds: 5
+
 ...
