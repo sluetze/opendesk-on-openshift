@@ -517,17 +517,17 @@ env-cleanup:
         done
         # NOTE: if you update the section below, please also update the respective section in getting_started.md
         echo "Deleting PVCs (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete pvc --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete pvc --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         echo "Deleting Jobs (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete jobs --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete jobs --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         echo "Deleting ConfigMaps (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete configmaps --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete configmaps --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
       elif [ "${OPENDESK_DESTROY}" = "helmfile" ]; then
         echo "Destroying namespace..."
         helmfile destroy --namespace ${NAMESPACE};
       elif [ "${OPENDESK_DESTROY}" = "namespace" ]; then
         echo "Deleting Namespace (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
       else
         echo "Unknown option for OPENDESK_DESTROY: ${OPENDESK_DESTROY}. Please set it to 'resources', 'helmfile' or 'namespace'."
         exit 1
