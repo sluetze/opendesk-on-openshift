@@ -227,6 +227,7 @@ variables:
       runs (still grouped under the same TestOps launch, but clearly separated in time).
       Prefix a test set with `!` to abort execution if it fails within a run.
     value: "!K8s State;E2E"
+  TESTS_LAUNCH_TYPE: "manual"
   TESTS_BROWSER:
     description: "Select the browser (engine) to use for the test run."
     value: "chromium"
@@ -889,6 +890,7 @@ run-tests:
           \"screenshot_after_step\": \"${TESTS_SCREENSHOT_AFTER_STEP}\", \
           \"screenshot_redirect_step\": \"${TESTS_SCREENSHOT_REDIRECT_STEP}\", \
           \"testsets\": \"${TESTS_TESTSETS}\", \
+          \"testlaunchtype\": \"${TESTS_LAUNCH_TYPE}\", \
           \"testprofile\": \"Namespace\", \
           \"OPENDESK_BRANCH\": \"${CI_COMMIT_REF_NAME}\", \
           \"OPENDESK_ENTERPRISE\": \"${OPENDESK_ENTERPRISE}\", \
