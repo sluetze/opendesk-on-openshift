@@ -177,7 +177,6 @@ lint-kyverno-prefereable:
     matrix:
       - APP:
           - "element"
-          - "jitsi"
           - "notes"
           - "open-xchange"
           - "openproject"
@@ -191,6 +190,7 @@ lint-kyverno-prefereable-enforced:
       - APP:
           - "collabora"
           - "cryptpad"
+          - "jitsi"
           - "nextcloud"
           - "nubus"
           - "opendesk-migrations-post"
