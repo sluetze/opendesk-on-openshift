@@ -3,6 +3,7 @@
 ---
 # Overwrite shared settings
 .common-semantic-release:
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/semantic-release:1.2.0"
   tags: []
 ...

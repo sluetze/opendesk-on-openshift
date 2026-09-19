@@ -50,7 +50,8 @@ helmfile-template:
       > "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
     - >
       test -s "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
-      || { echo "ERROR: helmfile rendered an empty manifest for '${APP}'. Is the app enabled in the 'test' environment?"; exit 1; }
+      || { echo "ERROR: helmfile rendered an empty manifest for '${APP}'.
+      Is the app enabled in the 'test' environment?"; exit 1; }
 
 helmfile-template-diff:
   allow_failure: true

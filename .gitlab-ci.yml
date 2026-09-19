@@ -200,7 +200,9 @@ variables:
       - "yes"
       - "no"
   LINT_KYVERNO_STRICT:
-    description: "Set to 'true' to make Kyverno tests fail the pipeline when not strictly passing. Defaults to advisory-only."
+    description: >
+      Set to 'true' to make Kyverno tests fail the pipeline when not strictly passing.
+      Defaults to advisory-only.
     value: "false"
     options:
       - "true"
@@ -298,6 +300,7 @@ variables:
   extends: ".environments"
   environment:
     name: "${NAMESPACE}"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/helm:${HELM_IMAGE_PIN}"
   script:
     # MASTER_PASSWORD_WEB_VAR as precedence for MASTER_PASSWORD
@@ -335,8 +338,8 @@ variables:
 
 db-cleanup:
   extends: ".deploy-common"
-  image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-ci-toolbox:1.0.1\
-          @sha256:b80a477d6c9a2034b9d622895dead26b7714b4a4f021cf7dbd9d03adf463a5d7"
+  # yamllint disable-line rule:line-length
+  image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-ci-toolbox:1.0.1@sha256:b80a477d6c9a2034b9d622895dead26b7714b4a4f021cf7dbd9d03adf463a5d7"
   needs:
     - job: "env-cleanup"
       optional: true
@@ -488,7 +491,8 @@ db-cleanup:
               AWS_BUCKET=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].bucket')
               AWS_ENDPOINT=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].endpoint')
               AWS_ACCESS_KEY_ID=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].username')
-              AWS_SECRET_ACCESS_KEY=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].secretKey.value')
+              AWS_SECRET_ACCESS_KEY=$(tail -n +1 $FILE | grep -v '{{' \
+                | yq '.objectstores.[env(ENV_BUCKET)].secretKey.value')
               AWS_DEFAULT_REGION=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].region')
             fi;
           fi;
@@ -530,13 +534,15 @@ env-cleanup:
         echo "Deleting Namespace (timeout: ${KUBECTL_TIMEOUT})..."
         kubectl delete namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
       else
-        echo "Unknown option for OPENDESK_DESTROY: ${OPENDESK_DESTROY}. Please set it to 'resources', 'helmfile' or 'namespace'."
+        echo "Unknown option for OPENDESK_DESTROY: ${OPENDESK_DESTROY}." \
+             "Please set it to 'resources', 'helmfile' or 'namespace'."
         exit 1
       fi
   stage: "env-cleanup"
 
 env-start:
   extends: ".deploy-common"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/docker.io/alpine/k8s:1.35.2@sha256:9a87b09e1b6d887fa52c2dea1611d112d9e7d3d0271708588711a2fb2016e82c"
   rules:
     - if: >
@@ -812,8 +818,11 @@ import-default-accounts:
     name: "${NAMESPACE}"
   rules:
     - if: >
-          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ && $NAMESPACE =~ /.+/ && $CREATE_DEFAULT_ACCOUNTS == "yes"
+          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ &&
+          $NAMESPACE =~ /.+/ &&
+          $CREATE_DEFAULT_ACCOUNTS == "yes"
       when: "on_success"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/user-import:3.9.0"
   script:
     - "echo \"Starting default account import for ${DOMAIN}\""
@@ -913,9 +922,12 @@ avscan-prepare:
           $CI_PIPELINE_SOURCE =~ /^push|merge_request_event$/
       when: "always"
     - when: "never"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/docker.io/mikefarah/yq:4.52.4@sha256:a4c2cafdf4674b2dc3c6ac457fe1486d55d7d93edb3ed4459637afda3c286af6"
   script:
-    - "echo \"Waiting for 180sec so the high number of scan jobs prepared here does not interfere with the actual release job\""
+    - >
+      echo "Waiting for 180sec so the high number of scan jobs prepared here
+      does not interfere with the actual release job"
     - "sleep 180"
     - |
       cat << 'EOF' > dynamic-scans.yml
