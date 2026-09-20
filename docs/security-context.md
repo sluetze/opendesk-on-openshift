@@ -174,6 +174,7 @@ This list gives you an overview of templated security settings and if they compl
 | **nextcloud**/opendesk-nextcloud/aio | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **nextcloud**/opendesk-nextcloud/exporter | :white_check_mark: | no | no | yes | yes | 65532 | 65532 | yes | yes |
 | **notes**/impress/backend | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
+| **notes**/impress/docspec | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **notes**/impress/frontend | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **notes**/impress/y-provider | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **nubus**/intercom-service | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
@@ -197,7 +198,7 @@ This list gives you an overview of templated security settings and if they compl
 | **nubus**/ums/nubusUdmRestApi | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcGateway | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcServer | :white_check_mark: | no | no | yes | yes | 999 | 999 | yes | yes |
-| **open-xchange**/dovecot | :x: | no | no | yes | yes | n/a | n/a | yes | yes |
+| **open-xchange**/dovecot | :white_check_mark: | no | no | yes | yes | 1000 | 102 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-documentconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-guidedtours | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-imageconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
@@ -232,6 +233,7 @@ This list gives you an overview of templated security settings and if they compl
 | **services-external**/redis/master | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/seaweedfs/admin | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **services-external**/seaweedfs/allInOne | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
+| **services-external**/seaweedfs/filer | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **services-external**/seaweedfs/worker | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **xwiki**/xwiki | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 
