@@ -20,6 +20,8 @@ global:
       rootPassword: {{ .Values.databases.oxAppSuite.password.value | default .Values.secrets.mariadb.rootPassword.value | quote }}
       readUser: {{ .Values.databases.oxAppSuite.readUser | default .Values.databases.oxAppSuite.username | quote }}
       readPassword: {{ .Values.databases.oxAppSuite.readPassword.value | default .Values.databases.oxAppSuite.password.value | quote}}
+  core-cacheservice:
+    enabled: false
 
 nextcloud-integration-ui:
   image:
@@ -678,10 +680,6 @@ appsuite:
           {{ .Values.seLinuxOptions.openxchangeGotenberg | toYaml | nindent 10 }}
       serviceAccount:
         create: false
-    documentConverterClient:
-      cache:
-        remoteCache:
-          url: ""
     {{ if .Values.functional.groupware.mail.encryption.enabled }}
     hooks:
       beforeAppsuiteStart:
@@ -1267,11 +1265,6 @@ appsuite:
     basicAuthLogin: "oxlogin"
     basicAuthPassword: {{ .Values.secrets.oxAppSuite.basicAuthPassword.value | quote }}
     enabled: true
-    documentConverter:
-      cache:
-        remoteCache:
-          enabled: false
-          url: ""
     imagePullSecrets:
     {{- range .Values.global.imagePullSecrets }}
       - name: {{ . | quote }}
