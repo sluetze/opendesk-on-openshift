@@ -86,6 +86,7 @@ environment:
   OPENPROJECT_MAIL__FROM: "{{ .Values.smtp.localpartNoReply }}@{{ .Values.global.mailDomain | default .Values.global.domain }}"
   OPENPROJECT_HOME__URL: {{ printf "https://%s.%s/" .Values.global.hosts.nubus .Values.global.domain | quote }}
   OPENPROJECT_OPENID__CONNECT_KEYCLOAK_ISSUER: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
+  OPENPROJECT_OPENID__CONNECT_KEYCLOAK_JWKS__URI: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}/protocol/openid-connect/certs"
   OPENPROJECT_OPENID__CONNECT_KEYCLOAK_POST__LOGOUT__REDIRECT__URI: "https://{{ .Values.global.hosts.openproject }}.{{ .Values.global.domain }}/"
   OPENPROJECT_PLUGIN__OPENPROJECT__AVATARS: "{enable_gravatars: false, enable_local_avatars: true}"
   OPENPROJECT_DEFAULT_LANGUAGE: {{ substr 0 2 .Values.functional.internationalization.defaultLanguage | quote }}
