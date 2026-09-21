@@ -229,7 +229,12 @@ variables:
       runs (still grouped under the same TestOps launch, but clearly separated in time).
       Prefix a test set with `!` to abort execution if it fails within a run.
     value: "!K8s State;E2E"
-  TESTS_LAUNCH_TYPE: "manual"
+  TESTS_LAUNCH_TYPE:
+    description: "Maps to the Allure Testops environment variable `Launch Type`. Can be used to filter for specific types of launches."
+    value: "manual"
+    options:
+      - "manual"
+      - "nightly"
   TESTS_BROWSER:
     description: "Select the browser (engine) to use for the test run."
     value: "chromium"
