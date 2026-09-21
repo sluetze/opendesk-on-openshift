@@ -12,6 +12,22 @@
 # Each consumer uses its own password.value directly, including explicit empty strings.
 # When overriding the bundled Redis password, also override every consumer using it.
 # For an external cache, configure the component's host/port/username/tls and password.value.
+#
+# Redis database allocation on the bundled Redis (16 databases, 0-15):
+#
+#   DB  Consumer                            Key prefix
+#   0   OX App Suite core-mw and core-ui    `ui-service:`, `ox-cache:`, `ox-map:`
+#   0   Intercom Service                    `sess:`
+#   4   Nextcloud distributed cache         `<instance-id>/...`, shared with notify_push
+#   5   Nextcloud PHP sessions              `PHPREDIS_SESSION:`
+#   7   Notes cache and Django sessions     `:1:django.contrib.sessions...`
+#   8   Notes Celery broker                 `_kombu.binding...`
+#
+# Databases 1-3, 6 and 9-15 are unassigned.
+#
+# The index is not configured here. Each consumer pins it in its own values file or takes its
+# chart default, so this table is the only place the whole allocation is visible - keep it in
+# sync when adding a consumer or pointing one at an external cache.
 
 {{- $redisDefaultPassword := derivePassword 1 "long" (env "MASTER_PASSWORD") "redis" "password" | sha1sum }}
 
@@ -26,6 +42,9 @@ cache:
       name: "redis-password"
       key: "redis-password"
   intercomService:
+    # Uses DB 0 and so shares it with OX App Suite: the chart exposes no database option and the
+    # image takes no REDIS_DB, leaving it on the client default. Its `sess:` prefix (connect-redis)
+    # is what keeps the two sets of keys apart.
     host: "redis-headless"
     port: 6379
     # Username is currently being ignored by the Intercom Service Helm chart.
@@ -39,6 +58,9 @@ cache:
       key: "password"
     tls: false
   nextcloud:
+    # Uses DB 4 for the distributed cache and DB 5 for the PHP sessions, from
+    # `configuration.cache.databaseIndex` and `.sessionIndex` in the `opendesk-nextcloud` and
+    # `opendesk-nextcloud-notifypush` charts. notify_push reads the same DB 4.
     host: "redis-headless"
     port: 6379
     username: "default"
@@ -47,6 +69,8 @@ cache:
       value: {{ $redisDefaultPassword | quote }}
     tls: false
   notes:
+    # Uses DB 7 for the cache and the Django sessions and DB 8 for the Celery broker, both pinned
+    # in `helmfile/apps/notes/values.yaml.gotmpl`.
     host: "redis-headless"
     port: 6379
     username: "default"
@@ -58,6 +82,8 @@ cache:
     host: "memcached"
     port: 11211
   oxAppSuite:
+    # Uses DB 0, shared with the Intercom Service. core-ui-middleware pins `redis.db: 0`, core-mw
+    # has no database option and stays on the client default.
     host: "redis-headless"
     port: 6379
     username: "default"
