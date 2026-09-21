@@ -84,7 +84,8 @@ configuration:
       enabled: true
 
   collabora:
-    # internalWopiUrl: ""
+    internalWopiUrl: "http://{{ printf "collabora.%s.svc.%s:9980" (.Values.apps.collabora.namespace | default .Release.Namespace) .Values.cluster.networking.domain }}"
+    callbackUrl: "http://{{ printf "opendesk-nextcloud-aio.%s.svc.%s" (.Values.apps.nextcloud.namespace | default .Release.Namespace) .Values.cluster.networking.domain }}"
     wopiAllowlist: {{ join ", " ( concat .Values.cluster.networking.cidr .Values.cluster.networking.incomingCIDR ) | quote }}
     defaultFormat: {{ .Values.functional.weboffice.defaultFormat | quote }}
 
@@ -204,6 +205,7 @@ configuration:
     token:
       value: {{ .Values.secrets.nextcloud.metricsToken.value | quote }}
 
+  trustedDomains: {{ printf "opendesk-nextcloud-aio.%s.svc.%s" (.Values.apps.nextcloud.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
   forbiddenChars: {{ join " " .Values.functional.filestore.naming.forbiddenChars | quote }}
 
 containerSecurityContext:
