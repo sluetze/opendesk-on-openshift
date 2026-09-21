@@ -48,7 +48,8 @@ dovecot:
       existingSecret:
         name: {{ .Values.secrets.keycloak.clientSecret.dovecot.name | quote }}
         key: {{ .Values.secrets.keycloak.clientSecret.dovecot.key | quote }}
-    host: {{ printf "%s.%s" .Values.global.hosts.keycloak .Values.global.domain | quote }}
+    scheme: "http"
+    host: "ums-keycloak.{{ .Values.apps.nubus.namespace | default .Release.Namespace }}.svc.{{ .Values.cluster.networking.domain }}:8080"
     introspectionPath: "/realms/{{ .Values.platform.realm }}/protocol/openid-connect/token/introspect"
     certsPath: "/realms/{{ .Values.platform.realm }}/protocol/openid-connect/certs"
     usernameAttribute: "opendesk_username"
