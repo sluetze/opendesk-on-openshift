@@ -232,6 +232,8 @@ releases:
       {{- range .Values.customization.release.seaweedfs }}
       - {{ . }}
       {{- end }}
+    needs:
+      - "seaweedfs-config"
     installed: {{ .Values.apps.seaweedfs.enabled }}
     timeout: {{ .Values.deployment.timeouts.releases.seaweedfs | default .Values.deployment.timeouts.default }}
 

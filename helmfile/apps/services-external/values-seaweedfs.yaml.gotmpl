@@ -19,6 +19,19 @@ image:
 
 allInOne:
   enabled: true
+  {{- $identities := list }}
+  {{- range $name, $store := .Values.objectstores }}
+  {{- if or (not (dig "enterprise" false $store)) (eq (env "OPENDESK_ENTERPRISE") "true") }}
+  {{- $actions := list }}
+  {{- range $store.actions }}
+  {{- $actions = append $actions (printf "%s:%s" . $store.bucket) }}
+  {{- end }}
+  {{- $identities = append $identities (dict "name" $name "credentials" (list (dict "accessKey" $store.username "secretKey" $store.secretKey.value)) "actions" $actions) }}
+  {{- end }}
+  {{- end }}
+  podAnnotations:
+    # Match values-seaweedfs-config.yaml.gotmpl: restart when the admin credential or active identities change.
+    checksum/s3-config: {{ dict "admin" (dict "accessKey" "admin" "secretKey" .Values.secrets.minio.rootPassword.value) "identities" $identities | toJson | sha256sum | quote }}
   {{- if .Values.cluster.persistence.readWriteMany.enabled }}
   replicas: {{ .Values.replicas.seaweedfs }}
   {{- else }}
