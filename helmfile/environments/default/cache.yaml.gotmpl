@@ -4,9 +4,9 @@
 # This file is the single place a cache and its credential are configured. A `password` carries the
 # full value/create/name/key convention documented on `cassandra.rootPassword` in
 # `secrets.yaml.gotmpl` only where something is handed the Secret rather than the value - the Redis
-# chart and the migrations. The rest are value-only: their charts inline the password, so there is
-# nothing to provision a Secret for and a `create`/`name`/`key` there would only suggest a Secret
-# reference that no consumer makes.
+# chart, Notes and the migrations. The rest are value-only: their charts inline the password, so
+# there is nothing to provision a Secret for and a `create`/`name`/`key` there would only suggest a
+# Secret reference that no consumer makes.
 #
 # The openDesk bundled Redis and its consumers derive the same default password from MASTER_PASSWORD.
 # Each consumer uses its own password.value directly, including explicit empty strings.
@@ -74,9 +74,13 @@ cache:
     host: "redis-headless"
     port: 6379
     username: "default"
-    # Value-only: the Notes chart takes a connection URL with the password inlined.
+    # `create: false`: Supported
+    # Note: The secret has to be URL-safe or percent-encoded.
     password:
       value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-notes-password"
+      key: "password"
     tls: false
   openproject:
     host: "memcached"

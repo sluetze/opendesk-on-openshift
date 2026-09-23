@@ -29,7 +29,9 @@ global:
     accessKeyId:
       value: {{ .Values.objectstores.notes.username | quote }}
     secretAccessKey:
-      value: {{ .Values.objectstores.notes.secretKey.value | quote }}
+      existingSecret:
+        name: {{ .Values.objectstores.notes.secretKey.name | quote }}
+        key: {{ .Values.objectstores.notes.secretKey.key | quote }}
 
 backend:
   image:
@@ -75,7 +77,9 @@ backend:
       host: {{ .Values.databases.notes.host | quote }}
       name: {{ .Values.databases.notes.name | quote }}
       password:
-        value: {{ .Values.databases.notes.password.value | quote }}
+        existingSecret:
+          name: {{ .Values.databases.notes.password.name | quote }}
+          key: {{ .Values.databases.notes.password.key | quote }}
       port: {{ .Values.databases.notes.port | quote }}
       user:
         value: {{ .Values.databases.notes.username | quote }}
@@ -127,13 +131,16 @@ backend:
           name: {{ .Values.secrets.notes.superuser.name | quote }}
           key: {{ .Values.secrets.notes.superuser.key | quote }}
     frontendTheme: "openDesk"
-    redisUrl:
-      value: {{ printf "%s://%s:%s@%s:%v/7"
-        (ternary "rediss" "redis" .Values.cache.notes.tls)
-        (.Values.cache.notes.username | urlquery | replace "+" "%20")
-        (.Values.cache.notes.password.value | urlquery | replace "+" "%20")
-        .Values.cache.notes.host
-        .Values.cache.notes.port | quote }}
+    redis:
+      tls: {{ .Values.cache.notes.tls }}
+      host: {{ .Values.cache.notes.host | quote }}
+      port: {{ .Values.cache.notes.port }}
+      database: "7"
+      username: {{ .Values.cache.notes.username | quote }}
+      password:
+        existingSecret:
+          name: {{ .Values.cache.notes.password.name | quote }}
+          key: {{ .Values.cache.notes.password.key | quote }}
     celery:
       broker:
         scheme: {{ ternary "rediss" "redis" .Values.cache.notes.tls | quote }}
@@ -142,8 +149,9 @@ backend:
         database: "8"
         username: {{ .Values.cache.notes.username | quote }}
         password:
-          # Percent-encoded here, since the chart joins it into the broker URL as it is.
-          value: {{ .Values.cache.notes.password.value | urlquery | replace "+" "%20" | quote }}
+          existingSecret:
+            name: {{ .Values.cache.notes.password.name | quote }}
+            key: {{ .Values.cache.notes.password.key | quote }}
   extraEnvVars:
     - name: "FRONTEND_HOMEPAGE_FEATURE_ENABLED"
       value: "False"
