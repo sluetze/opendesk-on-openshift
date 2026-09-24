@@ -201,12 +201,13 @@ This list gives you an overview of templated security settings and if they compl
 | **open-xchange**/open-xchange/appsuite/core-documentconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-guidedtours | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-imageconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
+| **open-xchange**/open-xchange/appsuite/core-mw | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-mw/gotenberg | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-ui-middleware | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-user-guide | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/guard-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **open-xchange**/open-xchange/nextcloud-integration-ui | :x: | no | no | no | yes | 1000 | 1000 | yes | yes |
+| **open-xchange**/open-xchange/nextcloud-integration-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/public-sector-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/opendesk-open-xchange-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/ox-connector | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
