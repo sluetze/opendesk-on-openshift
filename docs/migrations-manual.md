@@ -36,6 +36,7 @@ SPDX-License-Identifier: Apache-2.0
       * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
         * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
         * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
+        * [Nubus: Removed Notifications API, its database can be dropped](#nubus-removed-notifications-api-its-database-can-be-dropped)
     * [Versions ≥ v1.18.0](#versions--v1180)
       * [Pre-upgrade to versions ≥ v1.18.0](#pre-upgrade-to-versions--v1180)
         * [New persistence requirement: OX Connector requires its own PostgreSQL database](#new-persistence-requirement-ox-connector-requires-its-own-postgresql-database)
@@ -369,6 +370,31 @@ global:
 > Plain logging is deprecated upstream. openDesk does not track this customization and will **not** announce when a
 > future Nubus update stops supporting it; the override will then silently stop having an effect. Treat the fallback as
 > a bridge while adapting your log processing, not as a permanent configuration.
+
+##### Nubus: Removed Notifications API, its database can be dropped
+
+**Target group:** All deployments.
+
+**Context**
+
+With the update to Nubus 1.23 the Notifications API component (`ums-notifications-api`) is no longer part of openDesk.
+The feature was never enabled in openDesk, but the component was deployed and used its own PostgreSQL database
+`notificationsapi` with the user `notificationsapi_user`.
+
+Consequently the related Helmfile settings have been removed:
+
+- `databases.umsNotificationsApi`
+- `replicas.umsNotificationsApi`
+- `resources.umsNotificationsApi`
+- `seLinuxOptions.umsNotificationsApi`
+
+The Kubernetes secret `database-ums-notificationsapi-password` managed by openDesk is removed with the upgrade.
+The database itself and its user are **not** removed automatically.
+
+**Recommended action**
+
+1. Remove `umsNotificationsApi` related settings from your custom deployment values, as they no longer have an effect.
+2. Drop the no longer used database and user once the upgrade succeeded.
 
 ### Versions ≥ v1.18.0
 

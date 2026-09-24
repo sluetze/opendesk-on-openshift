@@ -184,18 +184,6 @@ databases:
       name: "database-ums-guardianmanagementapi-password"
       key: "password"
     connectionLimit: ~
-  umsNotificationsApi:
-    type: "postgresql"
-    name: "notificationsapi"
-    host: "postgresql"
-    port: 5432
-    username: "notificationsapi_user"
-    password:
-      value: {{ derivePassword 1 "long" $masterPassword "postgres" "notificationsapi_user" | sha1sum | quote }}
-      create: true
-      name: "database-ums-notificationsapi-password"
-      key: "password"
-    connectionLimit: ~
   umsSelfservice:
     type: "postgresql"
     name: "selfservice"

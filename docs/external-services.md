@@ -55,13 +55,6 @@ service.
 |                    |                    | Port      | `databases.keycloakExtension.port`            | `5432`                       |
 |                    |                    | Username  | `databases.keycloakExtension.username`        | `keycloak_extensions_user`   |
 |                    |                    | Password  | `databases.keycloakExtension.password`        |                              |
-|                    | Notifications API  |           |                                               |                              |
-|                    |                    | Type      | `databases.umsNotificationsApi.type`          | `postgresql`                 |
-|                    |                    | Name      | `databases.umsNotificationsApi.name`          | `notificationsapi`           |
-|                    |                    | Host      | `databases.umsNotificationsApi.host`          | `postgresql`                 |
-|                    |                    | Port      | `databases.umsNotificationsApi.port`          | `5432`                       |
-|                    |                    | Username  | `databases.umsNotificationsApi.username`      | `notificationsapi_user`      |
-|                    |                    | Password  | `databases.umsNotificationsApi.password`      |                              |
 |                    | Self Service       |           |                                               |                              |
 |                    |                    | Type      | `databases.umsSelfservice.type`               | `postgresql`                 |
 |                    |                    | Name      | `databases.umsSelfservice.name`               | `selfservice`                |

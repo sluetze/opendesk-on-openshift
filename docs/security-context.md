@@ -186,7 +186,6 @@ This list gives you an overview of templated security settings and if they compl
 | **nubus**/ums/nubusKeycloakExtensions/handler | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusKeycloakExtensions/proxy | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusLdapNotifier | :white_check_mark: | no | no | yes | yes | 101 | 102 | yes | yes |
-| **nubus**/ums/nubusNotificationsApi | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusPortalConsumer | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **nubus**/ums/nubusPortalFrontend | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusPortalServer | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |

@@ -431,7 +431,7 @@ db-cleanup:
     # Cleanup PostgreSQL
     - |
       export DATABASES="keycloak keycloakExtension nextcloud notes openproject synapse umsGuardianManagementApi \
-      umsNotificationsApi umsSelfservice xwiki"
+      umsSelfservice xwiki"
       export PGDATABASE="postgres"
       export PGHOST=""
       export PGPORT=""
