@@ -177,7 +177,6 @@ lint-kyverno-prefereable:
     matrix:
       - APP:
           - "element"
-          - "open-xchange"
           - "openproject"
           - "services-external"
 
@@ -193,6 +192,7 @@ lint-kyverno-prefereable-enforced:
           - "nextcloud"
           - "notes"
           - "nubus"
+          - "open-xchange"
           - "opendesk-migrations-post"
           - "opendesk-migrations-pre"
           - "opendesk-openproject-bootstrap"
