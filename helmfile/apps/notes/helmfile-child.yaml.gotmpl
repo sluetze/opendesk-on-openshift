@@ -30,7 +30,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.notes.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.impress | default .Values.deployment.timeouts.default }}
   - name: "impress-customization"
     chart: "notes-customization-repo/{{ .Values.charts.notesCustomization.name }}"
     version: "{{ .Values.charts.notesCustomization.version }}"
@@ -41,7 +41,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.notes.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.impressCustomization | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deploy-stage: "component-1"

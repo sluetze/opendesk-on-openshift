@@ -18,6 +18,8 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Template `group` in `issuerRef`](#template-group-in-issuerref)
       * [Allow overriding of `opendesk-certificates` chart options](#allow-overriding-of-opendesk-certificates-chart-options)
       * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
+    * [`deployment.yaml.gotmpl`](#deploymentyamlgotmpl)
+      * [Timeouts of the Helm releases](#timeouts-of-the-helm-releases)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
       * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
       * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
@@ -146,6 +148,34 @@ trust:
 
 Read more in [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section of
 [enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
+
+### `deployment.yaml.gotmpl`
+
+The file is added with openDesk 1.19.0.
+
+#### Timeouts of the Helm releases
+
+The time Helm waits for a release to become ready is now configured centrally, instead of being hard-coded per
+release in the application helmfiles:
+
+```yaml
+deployment:
+  timeouts:
+    # Seconds Helm waits for a release that has no timeout of its own.
+    default: 300
+    releases:
+      # A release with a timeout of its own.
+      openproject: 600
+      # A release following `default`.
+      cryptpad: ~
+```
+
+Every release has its own key below `releases`, named after the release in camelCase (e.g. `opendesk-nextcloud`
+becomes `opendeskNextcloud`). The two migration releases are not listed; their timeout is set with
+`migrations.job.timeoutSeconds`.
+
+> [!note]
+> `helmfile apply --timeout <seconds>` overrides all of these values for a single run.
 
 ### `functional.yaml.gotmpl`
 

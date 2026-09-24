@@ -29,7 +29,7 @@ releases:
   - name: "opendesk-secrets"
     chart: "openproject-secrets-repo/{{ .Values.charts.opendeskSecrets.name }}"
     installed: true
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskSecrets | default .Values.deployment.timeouts.default }}
     version: "{{ .Values.charts.opendeskSecrets.version }}"
     values:
       - "values-opendesk-secrets.yaml.gotmpl"

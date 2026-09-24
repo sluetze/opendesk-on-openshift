@@ -1,0 +1,84 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+deployment:
+  # Timeout in seconds Helm waits for a release to become ready (`helm upgrade --install --timeout`).
+  # Releases set to `~` use `default`. Setting `helmfile apply --timeout` overrides all values below.
+  timeouts:
+    default: 300
+    releases:
+      # collabora
+      collaboraController: ~
+      collaboraOnline: ~
+      # cryptpad
+      cryptpad: ~
+      # element
+      matrixNeoboardWidget: ~
+      matrixNeochoiceWidget: ~
+      matrixNeodatefixBot: ~
+      matrixNeodatefixBotBootstrap: ~
+      matrixNeodatefixWidget: ~
+      opendeskElement: ~
+      opendeskMatrixUserVerificationService: ~
+      opendeskMatrixUserVerificationServiceBootstrap: 600
+      opendeskProvisioningAdminBootstrap: ~
+      opendeskSynapse: ~
+      opendeskSynapseAdmin: ~
+      opendeskSynapseAdminbotBootstrap: ~
+      opendeskSynapseAdminbotPipe: ~
+      opendeskSynapseAdminbotWeb: ~
+      opendeskSynapseAuditbotBootstrap: ~
+      opendeskSynapseAuditbotPipe: ~
+      opendeskSynapseGroupsync: ~
+      opendeskSynapseWeb: ~
+      opendeskWellKnown: ~
+      # jitsi
+      jitsi: ~
+      # nextcloud
+      opendeskNextcloud: ~
+      opendeskNextcloudManagement: 600
+      opendeskNextcloudNotifypush: ~
+      # notes
+      impress: 600
+      impressCustomization: ~
+      # nubus
+      opendeskKeycloakBootstrap: ~
+      intercomService: ~
+      opendeskProvisioningSynapse: ~
+      ums: ~
+      # open-xchange
+      dovecot: 600
+      openXchange: ~
+      opendeskOpenXchangeBootstrap: 600
+      oxConnector: ~
+      postfixOx: ~
+      # opendesk-migrations-pre
+      opendeskSecrets: ~
+      # opendesk-openproject-bootstrap
+      opendeskOpenprojectBootstrap: ~
+      # opendesk-services
+      opendeskAlerts: ~
+      opendeskCertificates: ~
+      opendeskDashboards: ~
+      opendeskHome: ~
+      opendeskOtterize: ~
+      opendeskStaticFiles: ~
+      opendeskTrust: ~
+      # openproject
+      openproject: 600
+      # services-external
+      cassandra: ~
+      clamav: ~
+      clamavSimple: ~
+      mariadb: ~
+      memcached: ~
+      minio: ~
+      opendeskDkimpyMilter: ~
+      postfix: ~
+      postgresql: ~
+      redis: ~
+      seaweedfs: ~
+      seaweedfsConfig: ~
+      # xwiki
+      xwiki: 600
+...

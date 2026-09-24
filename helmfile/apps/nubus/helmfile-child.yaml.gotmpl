@@ -46,7 +46,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.nubus.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.ums | default .Values.deployment.timeouts.default }}
     {{- if ne (env "OPENDESK_1_12_0_SKIP_PVC_MIGRATION") "" }}
     postRenderer: "./post-renderer-nubus-OPENDESK_1_12_0_SKIP_PVC_MIGRATION.sh"
     {{- end }}
@@ -61,6 +61,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.nubus.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.intercomService | default .Values.deployment.timeouts.default }}
 
   # openDesk Keycloak Bootstrap Chart
   - name: "opendesk-keycloak-bootstrap"
@@ -74,7 +75,7 @@ releases:
     needs:
       - "ums"
     installed: {{ .Values.apps.nubus.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskKeycloakBootstrap | default .Values.deployment.timeouts.default }}
 
   # openDesk Provisioning Connector, running the "synapse" module
   - name: "opendesk-provisioning-synapse"
@@ -88,7 +89,7 @@ releases:
     needs:
       - "ums"
     installed: {{ and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskProvisioningSynapse | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

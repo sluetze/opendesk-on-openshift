@@ -34,7 +34,7 @@ releases:
     waitForJobs: true
     wait: true
     installed: {{ .Values.apps.nextcloud.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskNextcloudManagement | default .Values.deployment.timeouts.default }}
   - name: "opendesk-nextcloud"
     chart: "nextcloud-repo/{{ .Values.charts.nextcloud.name }}"
     version: "{{ .Values.charts.nextcloud.version }}"
@@ -49,7 +49,7 @@ releases:
     needs:
       - "opendesk-nextcloud-management"
     installed: {{ .Values.apps.nextcloud.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskNextcloud | default .Values.deployment.timeouts.default }}
   - name: "opendesk-nextcloud-notifypush"
     chart: "nextcloud-repo/{{ .Values.charts.nextcloudNotifyPush.name }}"
     version: "{{ .Values.charts.nextcloudNotifyPush.version }}"
@@ -65,7 +65,7 @@ releases:
     needs:
       - "opendesk-nextcloud"
     installed: {{ and .Values.apps.nextcloud.enabled (gt .Values.replicas.nextcloudNotifyPush 0) }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskNextcloudNotifypush | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

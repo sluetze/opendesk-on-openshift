@@ -82,7 +82,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.security.otterizeIntents.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskOtterize | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-home"
     chart: "home-repo/{{ .Values.charts.home.name }}"
@@ -93,6 +93,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.home.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskHome | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-certificates"
     chart: "certificates-repo/{{ .Values.charts.certificates.name }}"
@@ -103,7 +104,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ and .Values.apps.certificates.enabled .Values.certificate.create }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskCertificates | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-trust"
     chart: "opendesk-trust-repo/{{ .Values.charts.opendeskTrust.name }}"
@@ -116,7 +117,7 @@ releases:
     installed: {{ and .Values.apps.certificates.enabled .Values.trust.create }}
     waitForJobs: true
     wait: true
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskTrust | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-alerts"
     chart: "opendesk-alerts-repo/{{ .Values.charts.opendeskAlerts.name }}"
@@ -127,7 +128,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.monitoring.prometheus.prometheusRules.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskAlerts | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-dashboards"
     chart: "opendesk-dashboards-repo/{{ .Values.charts.opendeskDashboards.name }}"
@@ -138,7 +139,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.monitoring.grafana.dashboards.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskDashboards | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-static-files"
     chart: "opendesk-static-files-repo/{{ .Values.charts.opendeskStaticFiles.name }}"
@@ -149,7 +150,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.staticFiles.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskStaticFiles | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "030-opendesk-services"

@@ -22,7 +22,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.jitsi.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.jitsi | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

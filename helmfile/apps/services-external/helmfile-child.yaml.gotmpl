@@ -121,7 +121,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.redis.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.redis | default .Values.deployment.timeouts.default }}
 
   - name: "memcached"
     chart: "memcached-repo/{{ .Values.charts.memcached.name }}"
@@ -132,7 +132,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.memcached.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.memcached | default .Values.deployment.timeouts.default }}
 
   - name: "postgresql"
     chart: "postgresql-repo/{{ .Values.charts.postgresql.name }}"
@@ -143,7 +143,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.postgresql.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.postgresql | default .Values.deployment.timeouts.default }}
 
   - name: "mariadb"
     chart: "mariadb-repo/{{ .Values.charts.mariadb.name }}"
@@ -154,7 +154,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.mariadb.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.mariadb | default .Values.deployment.timeouts.default }}
 
   - name: "postfix"
     chart: "postfix-repo/{{ .Values.charts.postfix.name }}"
@@ -168,7 +168,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.postfix.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.postfix | default .Values.deployment.timeouts.default }}
 
   - name: "opendesk-dkimpy-milter"
     chart: "dkimpy-repo/{{ .Values.charts.dkimpy.name }}"
@@ -179,7 +179,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.dkimpy.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskDkimpyMilter | default .Values.deployment.timeouts.default }}
 
   - name: "clamav"
     chart: "clamav-repo/{{ .Values.charts.clamav.name }}"
@@ -190,7 +190,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.clamavDistributed.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.clamav | default .Values.deployment.timeouts.default }}
 
   - name: "clamav-simple"
     chart: "clamav-simple-repo/{{ .Values.charts.clamavSimple.name }}"
@@ -201,7 +201,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.clamavSimple.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.clamavSimple | default .Values.deployment.timeouts.default }}
 
   - name: "minio"
     chart: "minio-repo/{{ .Values.charts.minio.name }}"
@@ -212,7 +212,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.minio.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.minio | default .Values.deployment.timeouts.default }}
 
   - name: "seaweedfs-config"
     chart: "seaweedfs-config-repo/{{ .Values.charts.seaweedfsConfig.name }}"
@@ -223,7 +223,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.seaweedfs.enabled }}
-    timeout: 60
+    timeout: {{ .Values.deployment.timeouts.releases.seaweedfsConfig | default .Values.deployment.timeouts.default }}
   - name: "seaweedfs"
     chart: "seaweedfs-repo/{{ .Values.charts.seaweedfs.name }}"
     version: "{{ .Values.charts.seaweedfs.version }}"
@@ -233,7 +233,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.seaweedfs.enabled }}
-    timeout: 300
+    timeout: {{ .Values.deployment.timeouts.releases.seaweedfs | default .Values.deployment.timeouts.default }}
 
   # openDesk Enterprise Releases
   - name: "cassandra"
@@ -245,7 +245,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.cassandra.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.cassandra | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "030-services-external"
