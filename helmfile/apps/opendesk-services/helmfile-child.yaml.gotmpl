@@ -5,7 +5,7 @@ repositories:
   # openDesk Otterize
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-otterize
   - name: "otterize-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.otterize.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -15,7 +15,7 @@ repositories:
   # openDesk Home
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-home
   - name: "home-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.home.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -25,7 +25,7 @@ repositories:
   # openDesk Certificates
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-certificates
   - name: "certificates-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.certificates.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -35,7 +35,7 @@ repositories:
   # openDesk Trust
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-certificates
   - name: "opendesk-trust-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskTrust.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -45,7 +45,7 @@ repositories:
   # openDesk Alerts
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-alerts
   - name: "opendesk-alerts-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskAlerts.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -55,7 +55,7 @@ repositories:
   # openDesk Grafana Dashboards
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-dashboards
   - name: "opendesk-dashboards-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskDashboards.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -65,7 +65,7 @@ repositories:
   # openDesk Static Files
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-static-files
   - name: "opendesk-static-files-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskStaticFiles.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}

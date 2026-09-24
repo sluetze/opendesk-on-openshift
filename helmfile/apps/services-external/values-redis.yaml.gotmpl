@@ -15,6 +15,10 @@ global:
   imagePullSecrets:
     {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
   storageClass: {{ coalesce .Values.persistence.storages.redis.storageClassName .Values.persistence.storageClassNames.RWO | quote }}
+  security:
+    # The chart refuses to render with an image outside bitnami's own registry; the image below is the
+    # mirrored one.
+    allowInsecureImages: true
 
 image:
   registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.redis.registry | quote }}
