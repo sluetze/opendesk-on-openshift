@@ -57,6 +57,23 @@ spec:
               name: "*jvb*"
             spec:
               replicas: 1
+          # Exception: Dovecot must not scale (openDesk CE and EE), a user's IMAP sessions have
+          # to reach the same Pod and there is no routing layer to ensure that.
+          - metadata:
+              name: "dovecot"
+            spec:
+              replicas: 1
+          # Exception: SeaweedFS runs as a single all-in-one instance.
+          - metadata:
+              name: "seaweedfs-all-in-one"
+            spec:
+              replicas: 1
+          # Exception: The OX core-ui-middleware updater is a singleton by design. The upstream
+          # chart hardcodes `replicas: 1` with a Recreate strategy and never reads `replicaCount`.
+          - metadata:
+              name: "*core-ui-middleware-updater"
+            spec:
+              replicas: 1
           - spec:
               replicas: 42
 

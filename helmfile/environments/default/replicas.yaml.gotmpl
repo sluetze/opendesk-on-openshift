@@ -42,7 +42,8 @@ replicas:
 
   # -- component: Groupware (OX AppSuite, OX Dovecot etc.)
   # -- scalable: false
-  # -- comment: Scalable in openDesk Enterprise only
+  # -- comment: Runs as a single Pod in openDesk CE and EE, a user's IMAP sessions have to reach the same Pod and
+  # there is no routing layer to ensure that. The value is not evaluated.
   dovecot: 1
   # -- scalable: false
   postfix: 1

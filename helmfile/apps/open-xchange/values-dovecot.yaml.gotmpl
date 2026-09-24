@@ -23,6 +23,10 @@ imagePullSecrets:
 hostUsers: {{ not .Values.technical.userNamespaces }}
 
 dovecot:
+  auth:
+    cache:
+      size: "16M"
+      ttl: {{ printf "%d secs" (int .Values.functional.authentication.realmSettings.accessTokenLifespan) | quote }}
   mailDomains: {{ toYaml (prepend .Values.global.additionalMailDomains (.Values.global.mailDomain | default .Values.global.domain) | uniq) | nindent 4 }}
   defaultMailDomain: {{ .Values.global.mailDomain | default .Values.global.domain | quote }}
   password:
@@ -105,11 +109,7 @@ dovecot:
 certificate:
   secretName: {{ .Values.ingress.tls.secretName | quote }}
 
-{{- if .Values.cluster.persistence.readWriteMany.enabled }}
-replicaCount: {{ .Values.replicas.dovecot }}
-{{- else }}
 replicaCount: 1
-{{- end }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false

@@ -47,7 +47,7 @@ nextcloud-integration-ui:
       drop:
         - "ALL"
     privileged: false
-    readOnlyRootFilesystem: false
+    readOnlyRootFilesystem: true
     runAsGroup: 1000
     runAsNonRoot: true
     runAsUser: 1000
@@ -57,6 +57,9 @@ nextcloud-integration-ui:
       {{ .Values.seLinuxOptions.openxchangeNextcloudIntegrationUI | toYaml | nindent 6 }}
   serviceAccount:
     create: false
+  # The bundled ox-common does not support automountServiceAccountToken yet.
+  extraPodSpec:
+    automountServiceAccountToken: false
 
 public-sector-ui:
   image:
@@ -93,6 +96,9 @@ public-sector-ui:
       {{ .Values.seLinuxOptions.openxchangePublicSectorUI | toYaml | nindent 6 }}
   serviceAccount:
     create: false
+  # The bundled ox-common does not support automountServiceAccountToken yet.
+  extraPodSpec:
+    automountServiceAccountToken: false
 
 appsuite:
   appsuite-toolkit:
@@ -679,13 +685,14 @@ appsuite:
         seLinuxOptions:
           {{ .Values.seLinuxOptions.openxchangeGotenberg | toYaml | nindent 10 }}
       serviceAccount:
-        create: false
+        create: true
     {{ if .Values.functional.groupware.mail.encryption.enabled }}
     hooks:
       beforeAppsuiteStart:
         create-guard-dir.sh: |
+          # No chown: the middleware already runs as open-xchange, and with a read-only root filesystem
+          # the directory is an emptyDir (world-writable, owned by root), which a non-root user cannot chown.
           mkdir -p /opt/open-xchange/guard-files
-          chown open-xchange:open-xchange /opt/open-xchange/guard-files
     {{ end }}
     packages:
       status:
@@ -973,7 +980,22 @@ appsuite:
     extraEnv:
     - name: "JAVA_OPTS_APPEND"
       value: {{ printf "%s %s=%s" "-Djavax.net.ssl.trustStore=/etc/ssl/certs/truststore.jks -Djavax.net.ssl.trustStoreType=jks" "-Djavax.net.ssl.trustStorePassword" .Values.secrets.certificates.password.value | quote }}
+    {{- end }}
+    # The image writes into these paths at runtime. They are emptyDirs so the root filesystem can be
+    # read-only; `/configuration`, `etc` and `osgi` are seeded with the image's contents by
+    # `seed-writable-dirs`.
     extraVolumes:
+      - name: "mw-configuration"
+        emptyDir: {}
+      - name: "mw-etc"
+        emptyDir: {}
+      - name: "mw-osgi"
+        emptyDir: {}
+      - name: "mw-guard-files"
+        emptyDir: {}
+      - name: "mw-tmp"
+        emptyDir: {}
+      {{- if .Values.trust.secret.mount }}
       - name: "trusted-cert-secret-volume"
         secret:
           secretName: {{ .Values.trust.secret.name | quote }}
@@ -982,10 +1004,64 @@ appsuite:
               path: "truststore.jks"
             - key: "ca.crt"
               path: "ca-certificates.crt"
+      {{- end }}
     extraMounts:
+      - name: "mw-configuration"
+        mountPath: "/configuration"
+      - name: "mw-etc"
+        mountPath: "/opt/open-xchange/etc"
+      - name: "mw-osgi"
+        mountPath: "/opt/open-xchange/osgi"
+      - name: "mw-guard-files"
+        mountPath: "/opt/open-xchange/guard-files"
+      - name: "mw-tmp"
+        mountPath: "/tmp"
+      {{- if .Values.trust.secret.mount }}
       - name: "trusted-cert-secret-volume"
         mountPath: "/etc/ssl/certs/"
+      {{- end }}
+    # Runs after the chart's init-middleware, which in openDesk only waits for the database and does
+    # not touch /opt/open-xchange. The emptyDirs are mounted aside, so the image's originals are copied.
+    # As lists do not merge we refrain from using `values-openxchange-enterprise.yaml.gotmpl` but do the
+    # "EE" split here, as it is anyway a temporary solution until upstream directly supports RO RootFS.
+    {{- $mwRegistry := .Values.repositories.image.registryOpencodeDe }}
+    {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
+    {{- $mwRegistry = .Values.repositories.image.registryOpencodeDeEnterprise }}
     {{- end }}
+    extraInitContainers:
+      - name: "seed-writable-dirs"
+        image: "{{ coalesce $mwRegistry .Values.global.imageRegistry .Values.images.openxchangeCoreMW.registry }}/{{ .Values.images.openxchangeCoreMW.repository }}:{{ .Values.images.openxchangeCoreMW.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+        command:
+          - "/bin/sh"
+          - "-c"
+          # No `-a`: The chart's subPath mounts (e.g. etc/logback.xml) leave root-owned entries in the emptyDirs that
+          # cannot be overwritten or get their times preserved. `-u` skips them, as they are newer than the image's
+          # files, and keeps restarts of the init container idempotent.
+          - "cp -Ru /configuration/. /seed/configuration/ && cp -Ru /opt/open-xchange/etc/. /seed/etc/ && cp -Ru /opt/open-xchange/osgi/. /seed/osgi/"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: "RuntimeDefault"
+          seLinuxOptions:
+            {{ .Values.seLinuxOptions.openxchangeCoreMW | toYaml | nindent 12 }}
+        resources:
+          {{ .Values.resources.openxchangeCoreMW | toYaml | nindent 10 }}
+        volumeMounts:
+          - name: "mw-configuration"
+            mountPath: "/seed/configuration"
+          - name: "mw-etc"
+            mountPath: "/seed/etc"
+          - name: "mw-osgi"
+            mountPath: "/seed/osgi"
     secretProperties:
       com.openexchange.cookie.hash.salt: {{ .Values.secrets.oxAppSuite.cookieHashSalt.value | quote }}
       com.openexchange.sessiond.encryptionKey: {{ .Values.secrets.oxAppSuite.sessiondEncryptionKey.value | quote }}
@@ -1120,9 +1196,21 @@ appsuite:
       repository: {{ .Values.images.openxchangeCoreMW.repository | quote }}
       tag: {{ .Values.images.openxchangeCoreMW.tag | quote }}
       pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
-    # Security context for core-mw has no effect yet
-    # podSecurityContext: {}
-    # securityContext: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      privileged: false
+      # Paths the image writes into are emptyDirs, see extraVolumes.
+      readOnlyRootFilesystem: true
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: "RuntimeDefault"
+      seLinuxOptions:
+        {{ .Values.seLinuxOptions.openxchangeCoreMW | toYaml | nindent 8 }}
     update:
       podAnnotations:
         {{ .Values.annotations.openxchangeAppsuiteCoreMw.updatePod | toYaml | nindent 8 }}
@@ -1187,6 +1275,11 @@ appsuite:
       tag: {{ .Values.images.openxchangeCoreUI.tag | quote }}
       pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     replicaCount: {{ .Values.replicas.openxchangeCoreUI }}
+    probe:
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
     podAnnotations:
       intents.otterize.com/service-name: "open-xchange-core-ui"
       {{- with .Values.annotations.openxchangeAppsuiteCoreUi.pod }}
@@ -1208,6 +1301,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUI | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1254,7 +1348,7 @@ appsuite:
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUIMiddleware | toYaml | nindent 8 }}
     serviceAccount:
-      create: false
+      create: true
 
   core-cacheservice:
     enabled: false
@@ -1299,6 +1393,7 @@ appsuite:
           - "ALL"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeDocumentConverter | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1399,6 +1494,7 @@ appsuite:
           - "ALL"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeImageConverter | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1432,6 +1528,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeGuardUI | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1471,6 +1568,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUserGuide | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 ...

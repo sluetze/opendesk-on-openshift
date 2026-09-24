@@ -81,6 +81,8 @@ functional:
     realmSettings:
       # The lifespan of an access token in seconds.
       # Ref.: https://www.keycloak.org/docs/latest/server_admin > "Access Token Lifespan"
+      # The defined lifespan is also applied to Dovecot's `auth.cache.ttl`, so that Dovecot's authentication cache is in
+      # sync with Keycloak's access token lifespan.
       accessTokenLifespan: 300
       # If true, refresh tokens are revoked after use. If false, they can be reused until they expire.
       # Ref.: https://www.keycloak.org/docs/latest/server_admin > "Revoke Refresh Token"

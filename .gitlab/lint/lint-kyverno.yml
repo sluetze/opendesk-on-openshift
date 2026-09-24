@@ -123,7 +123,7 @@ lint-kyverno-required:
       -t required
       -s manifest
       -f opendesk.yaml
-      --skip-tests true
+      --skip-tests
       ${APP}
     - >
       ! grep -q "^results: \[\]" kyverno-test.yaml
@@ -162,7 +162,7 @@ lint-kyverno-required:
       -t optional
       -s manifest
       -f opendesk.yaml
-      --skip-tests true
+      --skip-tests
       ${APP}
     - >
       ! grep -q "^results: \[\]" kyverno-test.yaml
