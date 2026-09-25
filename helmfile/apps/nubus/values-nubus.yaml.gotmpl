@@ -1130,6 +1130,7 @@ nubusProvisioning:
       {{- with .Values.annotations.nubusProvisioning.registerConsumersAdditional }}
       {{ . | toYaml | nindent 6 }}
       {{- end }}
+    {{- if or .Values.apps.oxAppSuite.enabled .Values.apps.element.enabled }}
     createUsers:
       {{- if .Values.apps.oxAppSuite.enabled }}
       oxConsumer:
@@ -1145,6 +1146,7 @@ nubusProvisioning:
           keyMapping:
             registration: "registration"
       {{- end }}
+    {{- end }}
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
       repository: {{ .Values.images.nubusWaitForDependency.repository }}
