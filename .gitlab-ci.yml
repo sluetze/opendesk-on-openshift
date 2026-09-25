@@ -289,6 +289,11 @@ variables:
     options:
       - "yes"
       - "no"
+  TESTS_LANGUAGES:
+    description: >
+      Space-separated list of languages to run the E2E-tests in when `RUN_TESTS` is `yes`.
+      Supported: `en`, `de`.
+    value: "en de"
 
   HELM_IMAGE_PIN:
     description: "The Helm image tag/checksum."
@@ -873,12 +878,14 @@ run-tests:
   rules:
     - if: >
           $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ && $NAMESPACE =~ /.+/ && $RUN_TESTS == "yes"
+          && $TESTS_LANGUAGES =~ $LANGUAGE_REGEX
       when: "on_success"
   parallel:
     matrix:
-      - LANGUAGE:
-          - "en"
-          - "de"
+      - LANGUAGE: "en"
+        LANGUAGE_REGEX: '/\ben\b/'
+      - LANGUAGE: "de"
+        LANGUAGE_REGEX: '/\bde\b/'
   script:
     - |
       if [ "${LANGUAGE}" = "de" ]; then
