@@ -526,10 +526,13 @@ env-cleanup:
       export KUBECTL_TIMEOUT="300s"
       echo "Cleaning up ${NAMESPACE} with OPENDESK_DESTROY=${OPENDESK_DESTROY}..."
       if [ "${OPENDESK_DESTROY}" = "resources" ]; then
-        for OPENDESK_RELEASE in $(helm ls -n ${NAMESPACE} -q); do
+        for OPENDESK_RELEASE in $(helm ls -n ${NAMESPACE} --all -q); do
           echo "Uninstalling release ${OPENDESK_RELEASE}"
-          helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} || true;
+          helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} || \
+            helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} --no-hooks || true;
         done
+        echo "Deleting remaining Helm release records..."
+        kubectl delete secrets -l owner=helm --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         # NOTE: if you update the section below, please also update the respective section in getting_started.md
         echo "Deleting PVCs (timeout: ${KUBECTL_TIMEOUT})..."
         kubectl delete pvc --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
