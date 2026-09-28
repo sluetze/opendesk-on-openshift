@@ -33,6 +33,7 @@ SPDX-License-Identifier: Apache-2.0
         * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
         * [Changed Helmfile default: Minimum password length raised from 8 to 14 characters](#changed-helmfile-default-minimum-password-length-raised-from-8-to-14-characters)
         * [Changed Helmfile default: Redis consumer password fallbacks removed](#changed-helmfile-default-redis-consumer-password-fallbacks-removed)
+        * [Changed security contexts: Volume ownership now relies on fsGroup](#changed-security-contexts-volume-ownership-now-relies-on-fsgroup)
       * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
         * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
         * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
@@ -286,6 +287,58 @@ If you override `cache.redis.password.value`, configure each consumer that uses 
 - `cache.oxAppSuite.password.value`
 
 Changing only the server password no longer updates the consumers’ passwords automatically. Components using an external cache must retain that cache’s credentials.
+
+##### Changed security contexts: Volume ownership now relies on fsGroup
+
+**Target group:** Deployments on Kubernetes clusters without `securityContext.fsGroup` support, e.g. `ReadWriteMany`
+storage such as NFS/CephFS or CSI drivers with `fsGroupPolicy: None`.
+
+**Context:**
+
+To comply with the Pod Security Standards *restricted* profile, Dovecot and Postfix no longer run as root with
+capabilities but as unprivileged users, and the root init container that fixed the ownership of the XWiki data volume
+is disabled. None of these charts executes `chown` any more; ownership of the persistent volumes is
+handled by Kubernetes through `podSecurityContext.fsGroup` only. On storage that applies `fsGroup` the kubelet fixes
+the ownership on the first mount after the upgrade and nothing has to be done. On storage that does not, files not
+already owned by the new user are inaccessible and the pods fail to start.
+
+| Component      | Runs as before | Runs as now | `fsGroup` | Volume                  |
+| -------------- | -------------- | ----------- | --------- | ----------------------- |
+| Dovecot (CE)   | root           | `1000:102`  | `102`     | `/var/lib/dovecot`      |
+| Postfix (both) | root           | `100:101`   | `101`     | `/var/spool/postfix`    |
+| XWiki          | `100:101`      | `100:101`   | `101`     | `/usr/local/xwiki/data` |
+
+**Required action:**
+
+Before the upgrade, while the pods of the previous version still have the privileges to change ownership:
+
+- **Dovecot:**
+  - None. Only the master process ran as root; the mail processes ran as `vmail` (`1000:102`) all along and created
+    the mail data accordingly. Mail data restored or copied with another owner must be owned by `1000`.
+
+- **Postfix:**
+  - The queue volume contains root-owned directories (queue root, `pid`) that the unprivileged `master` cannot write to.
+    Change the ownership from within the 1.18 pods:
+
+    ```shell
+    kubectl -n <NAMESPACE> exec deploy/postfix -c postfix -- chown -R 100:101 /var/spool/postfix /var/lib/postfix
+    kubectl -n <NAMESPACE> exec deploy/postfix-ox -c postfix -- chown -R 100:101 /var/spool/postfix /var/lib/postfix
+    ```
+
+    Alternatively delete the persistent volume claims of both releases, but only with an empty queue (`postqueue -p`),
+    as queued mails would be lost.
+
+- **XWiki:**
+  - None for a volume already used by a previous version, its content is owned by `100:101`. Data restored or copied into
+    the volume must be owned by `100:101` before XWiki starts. As a temporary fallback re-enable the root init container
+    through an additional values file for the `xwiki` release (`customization.release.xwiki` in
+    [`customization.yaml.gotmpl`](../helmfile/environments/default/customization.yaml.gotmpl)) and remove it again once
+    the ownership is fixed, as a cluster enforcing the restricted profile rejects it:
+
+    ```yaml
+    volumePermissions:
+      enabled: true
+    ```
 
 #### Post-upgrade to versions ≥ v1.19.0
 
