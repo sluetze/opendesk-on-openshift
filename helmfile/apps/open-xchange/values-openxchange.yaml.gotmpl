@@ -769,8 +769,8 @@ appsuite:
       # Various Capability settings
       com.openexchange.capability.document_preview_xrechnung: "true"
       # Schedule Outgoing Mail
-      com.openexchange.capability.scheduled_mail: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
-      com.openexchange.mail.scheduled.enabled: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
+      com.openexchange.capability.scheduled_mail: "false"
+      com.openexchange.mail.scheduled.enabled: "false"
       com.openexchange.mail.scheduled.requireMasterAuth: "false"
       # PDF Export
       com.openexchange.capability.mail_export_pdf: "true"
@@ -1146,7 +1146,7 @@ appsuite:
       io.ox/core//features/managedResources: "true"
       # Features
       io.ox/core//features/categories: {{ .Values.functional.groupware.mail.categories.enabled | quote }}
-      io.ox/core//features/scheduleSend: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
+      io.ox/core//features/scheduleSend: "false"
       io.ox/core//features/signatureDesigner: "true"
       io.ox/core//categories/predefined: >
         [{ "name": "Predefined", "color": "orange", "icon": "bi/exclamation-circle.svg" }]

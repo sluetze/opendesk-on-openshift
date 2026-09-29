@@ -433,7 +433,9 @@ functional:
         # "Send later" feature allows users to schedule the sending of emails at a later time.
         # Ref.: https://documentation.open-xchange.com/8/middleware/mail/scheduled_mail.html
         sendLater:
-          enabled: true
+          # WARNING: The feature is currently not available. We are working with OX to make it
+          # available in future releases. The toggle therefore has no effect for now.
+          enabled: false
     quota:
       # Set the default mail storage quota for users in gigabyte.
       # Just provide the plain number without quoting. It will allow a quota grace of 10% and +20% in trash storage.
