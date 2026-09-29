@@ -262,6 +262,19 @@ ingress:
   ingressClassName: "haproxy"
 ```
 
+openDesk also needs to know which Ingress controller type is in use, as it renders controller-specific annotations
+and manifests. The default is `haproxy`. When using the deprecated `ingress-nginx`, you have to set both values:
+
+```yaml
+ingress:
+  controller: "nginx"
+  ingressClassName: "nginx" # or the ingressClassName of your ingress-nginx installation
+```
+
+> [!warning]
+> Setting only `ingressClassName: "nginx"` is not sufficient. With `controller` left at its default `haproxy`, the
+> generated Ingress objects are not suitable for `ingress-nginx`.
+
 > [!note]
 > Currently, the only Ingress controllers supported are `haproxy-ingress.github.io` and the deprecated `ingress-nginx`.
 > See [requirements.md](./requirements.md) for more details.
