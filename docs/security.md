@@ -1,4 +1,5 @@
 <!--
+SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -10,6 +11,7 @@ This document covers the current status of security measures.
 <!-- TOC -->
 * [Security](#security)
   * [Helm chart trust chain](#helm-chart-trust-chain)
+  * [Container image trust chain](#container-image-trust-chain)
   * [Kubernetes security enforcements](#kubernetes-security-enforcements)
   * [Network policies](#network-policies)
 <!-- TOC -->
@@ -28,6 +30,52 @@ All charts except the ones mentioned below are verified by Helmfile.
 | element                   |     no     |
 | neoboard                  |     no     |
 | open-xchange-repo         | cosign[^1] |
+
+## Container image trust chain
+
+Every container image used by openDesk is pinned by tag and digest in `helmfile/environments/default/images.yaml.gotmpl`
+(and `helmfile/environments/default-enterprise-overrides/images.yaml.gotmpl` for the Enterprise Edition). The
+`# providerResponsible: "openDesk"` annotation marks the images openDesk is responsible for. They fall into two groups:
+
+| Image group                                                                                      | Signed by openDesk | Verifiable |
+| ------------------------------------------------------------------------------------------------ | :----------------: | :--------: |
+| Built by openDesk (`registry.opencode.de/bmi/opendesk/components/platform-development/images/*`) |        yes         |   cosign   |
+| Mirrored or pulled from upstream (`.../images-mirror/*`, `registry-1.docker.io/*`)               |         no         |  upstream  |
+
+Images built by openDesk are signed with [cosign](https://docs.sigstore.dev/cosign/) using a fixed key pair. The
+corresponding public key is shipped in `helmfile/files/cosign-pubkeys/opendesk.pub`. Helmfile does not verify image
+signatures itself, so verification is a manual step (or an admission-time policy, see below).
+
+Mirrored images are unmodified copies of the upstream image and are not re-signed by openDesk; verify them against
+the upstream project's signatures, if any. Images provided by suppliers (`providerResponsible` other than
+`"openDesk"`) are the responsibility of the respective supplier.
+
+### Verifying an image
+
+Use the pinned image reference from `images.yaml.gotmpl` so that the signature is checked for exactly the digest
+openDesk deploys. Example with `opendesk-migrations`:
+
+```shell
+cosign verify \
+  --key helmfile/files/cosign-pubkeys/opendesk.pub \
+  --insecure-ignore-tlog=true \
+  registry.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-migrations:1.12.6@sha256:92705e1fd5daef1a6bbf4af505a38ed3e244a51ee818d79ff531176ecd8a2cfd
+```
+
+A successful run prints the checks performed and a JSON payload whose `critical.image.docker-manifest-digest` matches
+the pinned digest.
+
+`--insecure-ignore-tlog=true` is required because openDesk signatures are not uploaded to the public Rekor
+transparency log; without the flag cosign aborts with `not enough verified log entries from transparency log`. The
+flag only skips the transparency log lookup, the signature is still verified against the openDesk public key.
+
+### Enforcing verification in the cluster
+
+To reject unsigned or tampered openDesk images at admission time, configure your policy engine with the same public
+key, e.g. a Kyverno `verifyImages` rule or the sigstore
+[policy-controller](https://docs.sigstore.dev/policy-controller/overview/), scoped to
+`registry.opencode.de/bmi/opendesk/components/platform-development/images/*`. openDesk currently does not ship such
+a policy.
 
 ## Kubernetes security enforcements
 
