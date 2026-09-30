@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -29,6 +30,10 @@ theme:
     primary: "#571EFA"
     # OX AppSuite
     primary15: "#e7dffa"
+    # Neoboard
+    primary35: "#c7b3f3"
+    # Neoboard
+    primary65: "#9673e9"
     # OX AppSuite
     black: "#000000"
     # OX AppSuite, Xwiki
@@ -37,8 +42,6 @@ theme:
     secondaryGreyLight: "#f5f5f5"
 
     # Not in use yet
-    primary65: "#9673e9"
-    primary35: "#c7b3f3"
     secondaryBlue: "#52c1ff"
     secondaryBlueHighcontrast: "#0c3ff3"
     secondaryRed: "#ff529e"
@@ -51,9 +54,11 @@ theme:
   imagery:
     logoHeaderSvg: {{ readFile "./../../files/theme/_common/logoHeader.svg" | b64enc | quote }}
     logoHeaderInvertedSvg: {{ readFile "./../../files/theme/_common/logoHeaderInverted.svg" | b64enc | quote }}
+    logoHeaderWithIconSvg: {{ readFile "./../../files/theme/_common/logoHeaderWithIcon.svg" | b64enc | quote }}
 
     chat:
       faviconPng: {{ readFile "./../../files/theme/chat/favicon.png" | b64enc | quote }}
+      logoSvg: {{ readFile "./../../files/theme/chat/favicon.svg" | b64enc | quote }}
 
     files:
       faviconIco: {{ readFile "./../../files/theme/files/favicon.ico" | b64enc | quote }}
@@ -110,6 +115,7 @@ theme:
       realtimeCollaboration: {{ readFile "./../../files/theme/chat/favicon.svg" | b64enc | quote }}
       realtimeCollaborationAdmin: {{ readFile "./../../files/theme/chat-admin/favicon.svg" | b64enc | quote }}
       realtimeVideoconference: {{ readFile "./../../files/theme/videoconference/favicon.svg" | b64enc | quote }}
+      whiteboard: {{ readFile "./../../files/theme/whiteboard/favicon.svg" | b64enc | quote }}
       # links
       documentation: {{ readFile "./../../files/theme/link_documentation/favicon.svg" | b64enc | quote }}
       feedback: {{ readFile "./../../files/theme/link_feedback/favicon.svg" | b64enc | quote }}
@@ -147,6 +153,10 @@ theme:
 
     videoconference:
       faviconSvg: {{ readFile "./../../files/theme/videoconference/favicon.svg" | b64enc | quote }}
+
+    whiteboard:
+      faviconPng: {{ readFile "./../../files/theme/whiteboard/favicon.png" | b64enc | quote }}
+      faviconSvg: {{ readFile "./../../files/theme/whiteboard/favicon.svg" | b64enc | quote }}
 
   ## Where required define complete Stylesheets
   #

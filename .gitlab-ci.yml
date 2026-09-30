@@ -155,6 +155,12 @@ variables:
     options:
       - "yes"
       - "no"
+  DEPLOY_NEOBOARD:
+    description: "Enable Neoboard deployment."
+    value: "no"
+    options:
+      - "yes"
+      - "no"
   DEPLOY_OX:
     description: "Enable OX AppSuite8 deployment."
     value: "no"
@@ -801,6 +807,18 @@ element-deploy:
   variables:
     COMPONENT: "element"
 
+neoboard-deploy:
+  stage: "050-components"
+  extends: ".deploy-common"
+  rules:
+    - if: >
+          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ &&
+          $NAMESPACE =~ /.+/ &&
+          ($DEPLOY_ALL_COMPONENTS != "no" || $DEPLOY_NEOBOARD != "no")
+      when: "on_success"
+  variables:
+    COMPONENT: "neoboard"
+
 fetch-administrator-credentials:
   extends: ".deploy-common"
   stage: "post-prepare"
@@ -886,9 +904,9 @@ run-tests:
   parallel:
     matrix:
       - LANGUAGE: "en"
-        LANGUAGE_REGEX: '/\ben\b/'
+        LANGUAGE_REGEX: "/\\ben\\b/"
       - LANGUAGE: "de"
-        LANGUAGE_REGEX: '/\bde\b/'
+        LANGUAGE_REGEX: "/\\bde\\b/"
   script:
     - |
       if [ "${LANGUAGE}" = "de" ]; then

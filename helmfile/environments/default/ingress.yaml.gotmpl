@@ -16,21 +16,24 @@ ingress:
   parameters:
     bodySize:
       collabora: "100M"
-      element: "100M"
       nextcloud: "100M"
       notes: "100M"
       objectstorage: "4G"
       openproject: "100M"
       oxAppSuite: "100M"
+      # Sets also the maximum size of a Matrix media upload in Synapse.
+      synapse: "100M"
       xwiki: "100M"
     bodyTimeout:
       collabora: 600
-      element: 60
       jitsi: 3600
+      # MatrixRTC SFU/RTC signaling needs a longer timeout
+      matrixRTC: 120
       nextcloud: 600
       notes: 60
       notesYprovider: 86400
       openproject: 60
       oxAppSuite: 60
+      synapse: 60
       xwiki: 60
 ...

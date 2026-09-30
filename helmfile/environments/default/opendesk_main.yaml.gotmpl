@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -36,9 +36,15 @@ apps:
     enabled: true
     namespace: ~
   elementAdmin:
+    enabled: true
+    namespace: ~
+  # Element Enterprise components
+  # elementSupervision also enables elementWeb (the EE matrix-stack chart deploys
+  # Element Web whenever `supervision.enabled` is set, independent of `elementWeb.enabled`)
+  elementSupervision:
     enabled: false
     namespace: ~
-  elementGroupsync:
+  elementAuditbot:
     enabled: false
     namespace: ~
   home:
@@ -61,6 +67,9 @@ apps:
     namespace: ~
   seaweedfs:
     enabled: true
+    namespace: ~
+  neoboard:
+    enabled: false
     namespace: ~
   nextcloud:
     enabled: true

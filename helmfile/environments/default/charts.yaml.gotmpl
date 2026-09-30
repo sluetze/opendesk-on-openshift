@@ -91,20 +91,26 @@ charts:
     version: "4.2.6"
     verify: true
   element:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    # upstreamRegistry: "https://ghcr.io/element-hq/ess-helm"
+    # upstreamRepository: "matrix-stack"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["25", "11", "0"]
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/element/charts-mirror"
+    name: "matrix-stack"
+    version: "26.9.3"
+    verify: false
+  elementCustomization:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
+    # upstreamRegistry: "https://registry.opencode.de"
+    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element-customization/element-customization"
     registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-element"
-    version: "6.2.5"
-    verify: true
-  elementWellKnown:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-well-known"
-    version: "6.2.5"
+    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element-customization"
+    name: "element-customization"
+    version: "1.4.0"
     verify: true
   home:
     # providerCategory: "Platform"
@@ -126,7 +132,7 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/charts-mirror"
     name: "intercom-service"
-    version: "2.24.0"
+    version: "2.24.8"
     verify: true
   jitsi:
     # providerCategory: "Platform"
@@ -144,37 +150,37 @@ charts:
     name: "mariadb"
     version: "3.0.5"
     verify: true
-  matrixNeoboardWidget:
+  matrixNeoBoardWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neoboard-widget"
-    version: "3.6.4"
+    version: "3.6.5"
     verify: true
-  matrixNeochoiceWidget:
+  matrixNeoChoiceWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neochoice-widget"
-    version: "3.6.4"
+    version: "3.6.5"
     verify: true
-  matrixNeodatefixBot:
+  matrixNeoDateFixBot:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neodatefix-bot"
-    version: "3.6.4"
+    version: "3.6.5"
     verify: true
-  matrixNeodatefixWidget:
+  matrixNeoDateFixWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neodatefix-widget"
-    version: "3.6.4"
+    version: "3.6.5"
     verify: true
   matrixUserVerificationService:
     # providerCategory: "Platform"
@@ -198,7 +204,7 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-migrations"
     name: "opendesk-migrations"
-    version: "1.12.3"
+    version: "1.13.3"
     verify: true
   minio:
     # providerCategory: "Community"
@@ -208,6 +214,16 @@ charts:
     name: "minio"
     version: "16.0.11"
     verify: true
+  neoboard:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Nordeck"
+    # upstreamRegistry: "https://ghcr.io/nordeck/charts"
+    # upstreamRepository: "matrix-neoboard-standalone"
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/nordeck/charts-mirror"
+    name: "matrix-neoboard-standalone"
+    version: "0.0.10"
+    verify: false
   nextcloud:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -394,7 +410,7 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-postgresql"
     name: "postgresql"
-    version: "2.1.5"
+    version: "2.1.6"
     verify: true
   provisioningConnector:
     # providerCategory: "Platform"
@@ -402,7 +418,7 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-provisioning-connector"
     name: "opendesk-provisioning"
-    version: "1.2.8"
+    version: "1.2.9"
     verify: true
   redis:
     # providerCategory: "Community"
@@ -430,61 +446,13 @@ charts:
     name: "opendesk-seaweedfs-config"
     version: "2.2.2"
     verify: true
-  synapse:
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse"
-    version: "6.2.5"
-    verify: true
-  synapseAdmin:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-admin"
-    version: "6.2.5"
-    verify: true
-  synapseAdminbotWeb:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-adminbot-web"
-    version: "6.2.5"
-    verify: true
   synapseCreateAccount:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-create-account"
-    version: "6.2.5"
-    verify: true
-  synapseGroupsync:
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-groupsync"
-    version: "6.2.5"
-    verify: true
-  synapsePipe:
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-pipe"
-    version: "6.2.5"
-    verify: true
-  synapseWeb:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-web"
-    version: "6.2.5"
+    version: "6.2.7"
     verify: true
   xwiki:
     # providerCategory: "Supplier"

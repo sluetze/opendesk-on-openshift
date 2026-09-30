@@ -603,7 +603,7 @@ nubusPortalConsumer:
     extraEnvVars: []
     {{- end }}
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
     # The following two environment variables are required for AWS S3 compatible object storage to work with the AWS SDK v2
     # and are not yet set upstream (see https://forge.univention.org/bugzilla/show_bug.cgi?id=59716)
@@ -633,7 +633,7 @@ nubusPortalConsumer:
 
 nubusPortalServer:
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
   additionalAnnotations:
     {{- with .Values.annotations.nubusPortalServer.additional }}
@@ -963,7 +963,7 @@ nubusLicenseImport:
 nubusProvisioning:
   enabled: true
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
   additionalAnnotations:
     {{ .Values.annotations.nubusProvisioning.additional | toYaml | nindent 4 }}
@@ -1139,7 +1139,7 @@ nubusProvisioning:
           keyMapping:
             registration: "registration"
       {{- end }}
-      {{- if .Values.apps.element.enabled }}
+      {{- if (or .Values.apps.element.enabled .Values.apps.neoboard.enabled) }}
       provisioningSynapse:
         existingSecret:
           name: "opendesk-provisioning-synapse-provisioning"
@@ -1384,15 +1384,15 @@ nubusStackDataUms:
     portalEnforceLogin: {{ .Values.functional.portal.enforceLogin }}
     portalHeaderLogo: {{ toYaml .Values.theme.imagery.logoHeaderSvg | quote }}
     portalTiles: {{ toYaml .Values.theme.imagery.portalTiles | nindent 6 }}
-    portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.element .Values.global.domain }}
-    # {-- printf "https://%s.%s" .Values.global.hosts.elementAdmin .Values.global.domain --}}
-    portalRealtimeCollaborationAdminLinkBase: ~
+    portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.elementWeb .Values.global.domain }}
+    portalRealtimeCollaborationAdminLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.elementAdmin .Values.global.domain }}
     portalRealtimeVideoconferenceLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.jitsi .Values.global.domain }}
     portalManagementProjectLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.openproject .Values.global.domain }}
     portalManagementKnowledgeLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.xwiki .Values.global.domain }}
     portalGroupwareLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.openxchange .Values.global.domain }}
     portalFileshareLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.nextcloud .Values.global.domain }}
     portalNotesLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.notes .Values.global.domain }}
+    portalWhiteboardLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.whiteboard .Values.global.domain }}
     portalTitleDE: "Portal - {{ .Values.theme.texts.productName }}"
     portalTitleEN: "Portal - {{ .Values.theme.texts.productName }}"
     portalLinkLegalNotice: {{ .Values.functional.portal.linkLegalNotice | quote }}

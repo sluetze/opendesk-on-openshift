@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -72,6 +73,23 @@ spec:
           # chart hardcodes `replicas: 1` with a Recreate strategy and never reads `replicaCount`.
           - metadata:
               name: "*core-ui-middleware-updater"
+            spec:
+              replicas: 1
+          # Matrix stack singletons:
+          - metadata:
+              name: "element-synapse-main"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-synapse-media-repo"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-matrix-rtc-authorisation-service"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-matrix-rtc-sfu"
             spec:
               replicas: 1
           - spec:

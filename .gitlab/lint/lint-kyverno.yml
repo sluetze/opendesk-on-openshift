@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -19,6 +20,7 @@ helmfile-template:
           - "cryptpad"
           - "element"
           - "jitsi"
+          - "neoboard"
           - "nextcloud"
           - "notes"
           - "nubus"
@@ -39,7 +41,7 @@ helmfile-template:
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
     - >
-      printf 'apps:\n  notes:\n    enabled: true\n'
+      printf 'apps:\n  notes:\n    enabled: true\n  neoboard:\n    enabled: true\n'
       > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
     - >
       helmfile template
@@ -71,6 +73,9 @@ helmfile-template-diff:
     - "git fetch"
     - "git checkout develop"
     - >
+      test -d "${CI_PROJECT_DIR}/helmfile/apps/${APP}"
+      || { echo "App '${APP}' does not exist on develop yet, skipping diff."; exit 0; }
+    - >
       pushd "${CI_PROJECT_DIR}/helmfile/apps/${APP}"
     - >
       node /app/opendesk-ci-cli/src/index.js generate-kyverno-env
@@ -78,7 +83,7 @@ helmfile-template-diff:
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
     - >
-      printf 'apps:\n  notes:\n    enabled: true\n'
+      printf 'apps:\n  notes:\n    enabled: true\n  neoboard:\n    enabled: true\n'
       > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
     - >
       helmfile template
@@ -176,7 +181,6 @@ lint-kyverno-prefereable:
   parallel:
     matrix:
       - APP:
-          - "element"
           - "openproject"
           - "services-external"
 
@@ -188,6 +192,7 @@ lint-kyverno-prefereable-enforced:
       - APP:
           - "collabora"
           - "cryptpad"
+          - "element"
           - "jitsi"
           - "nextcloud"
           - "notes"

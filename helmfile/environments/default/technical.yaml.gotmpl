@@ -113,6 +113,101 @@ technical:
         # or "auto" (one worker per host CPU core; not cgroup-aware).
         workers: 2
 
+  # Matrix related settings
+  matrix:
+    # Migrate existing Synapse authentication to Matrix Authentication Service.
+    migration:
+      # Enable for both the dry-run and actual migration, then disable after success.
+      enabled: false
+      # Only used while migration is enabled. Set to false to execute the migration.
+      dryRun: true
+    # MatrixRTC SFU media ports, exposed with `service.type.matrixRTC`:
+    # - `LoadBalancer`: one shared LoadBalancer, whose IP the SFU announces.
+    # - `NodePort`: ports double as node ports, so they must be unique cluster-wide. The SFU announces
+    #   `cluster.networking.ingressGatewayIP`, if set, else the public IP discovered via a public STUN server.
+    sfu:
+      # Always enabled, fallback for clients without UDP.
+      rtcTCP:
+        port: 30000
+      # All UDP media on one port. Disable only if UDP cannot be exposed.
+      rtcMuxedUDP:
+        enabled: true
+        port: 30001
+    # openDesk Enterprise only: Autoscaling of the Matrix components, a feature of the Element Pro chart that the
+    # Community Edition ignores. When enabled, a horizontal pod autoscaler manages a component's replicas between
+    # `minReplicas` and `maxReplicas` instead of its static replica count from `replicas.yaml.gotmpl`. The values
+    # are the chart's defaults.
+    autoscaling:
+      haproxy:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 20
+        targetCPUUtilizationPercentage: 200
+      matrixAuthenticationService:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 20
+        targetCPUUtilizationPercentage: 200
+      # Synapse workers take parts of the work off the main Synapse process, which is a singleton. A worker is only
+      # deployed once it is scaled, i.e. its replica count (`replicas.synapse<Worker>`) is above 1 or its
+      # autoscaling below is enabled; until then its work stays in the main process. The federation workers are
+      # additionally only deployed with `functional.externalServices.matrix.federation.enabled`. The media
+      # repository is the exception: it always runs as a separate, single worker.
+      #
+      # Workers without autoscaling support are scaled through their replica count only: `deviceLists` (E2EE
+      # device-list and key-upload endpoints), `eventPersister` (persists new events), `federationSender` (sends
+      # outbound events to other homeservers), `pusher` (push notifications) and `receipts` (read receipts and
+      # read markers).
+      synapse:
+        # Generic client REST API requests (non-sync, e.g. room state reads).
+        clientReader:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # Message sending, room state changes, joins/invites/bans, and room creation.
+        eventCreator:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # Incoming federation transactions pushed by other homeservers.
+        federationInbound:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # Federation event/state lookup requests from other homeservers.
+        federationReader:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # The legacy /initialSync client endpoint.
+        initialSynchrotron:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # /_synapse/mas/ internal requests used by the Matrix Authentication Service.
+        masHelper:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # The simplified sliding-sync (MSC3575) client API.
+        slidingSync:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+        # The standard long-polling /_matrix/client/.../sync endpoint.
+        synchrotron:
+          enabled: false
+          minReplicas: 2
+          maxReplicas: 20
+          targetCPUUtilizationPercentage: 200
+
   # Nubus related settings
   nubus:
     # Keycloak acts as the identity provider in Nubus.

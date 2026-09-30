@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,7 +16,9 @@ seLinuxOptions:
   cryptpad: {}
   dkimpy: {}
   dovecot: {}
-  element: {}
+  elementAdmin: {}
+  elementCustomization: {}
+  elementWeb: {}
   freshclam: {}
   icap: {}
   intercom: {}
@@ -28,16 +31,24 @@ seLinuxOptions:
   jitsiPatchJVB: {}
   jvb: {}
   mariadb: {}
+  matrixAuditbot: {}
+  matrixAuthenticationService: {}
+  matrixHaproxy: {}
+  matrixInitSecrets: {}
   matrixNeoBoardWidget: {}
   matrixNeoChoiceWidget: {}
   matrixNeoDateFixBot: {}
   matrixNeoDateFixWidget: {}
+  matrixRTC: {}
+  matrixRTCSfu: {}
+  matrixSupervision: {}
   matrixUserVerificationService: {}
   memcached: {}
   migrations: {}
   milter: {}
   minio: {}
   seaweedfs: {}
+  neoboard: {}
   nextcloud: {}
   nextcloudExporter: {}
   nextcloudManagement: {}
@@ -73,7 +84,6 @@ seLinuxOptions:
   synapse: {}
   synapseCreateUser: {}
   synapseGuestModule: {}
-  synapseWeb: {}
   umsGuardianAuthorizationApi: {}
   umsGuardianManagementApi: {}
   umsGuardianManagementUi: {}
@@ -98,6 +108,5 @@ seLinuxOptions:
   umsUdmRestApi: {}
   umsUmcGateway: {}
   umsUmcServer: {}
-  wellKnown: {}
   xwiki: {}
 ...

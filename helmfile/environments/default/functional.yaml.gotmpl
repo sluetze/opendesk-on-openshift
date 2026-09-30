@@ -214,9 +214,20 @@ functional:
         # display name to inform e.g. about availability.
         # The setting below allows to toggle this option.
         allowUsersToUpdateDisplayname: true
-
         # If the LDAP entryUUID should be used for the localpart of user's Matrix IDs following setting must be `true`.
         useImmutableIdentifierForLocalpart: false
+      clients:
+        # Enterprise only: restrict OIDC client registration and login to the clients configured below.
+        # Disable to omit the client URI allowlist. An enabled but empty allowlist blocks all clients.
+        restrictAllowedClients: true
+        # Enterprise only: block legacy Matrix compatibility logins, independently of the OIDC allowlist.
+        denyLegacyClients: true
+        # Enterprise only: allow Element X (mobile) and Element Desktop Pro, including QR sign-in.
+        # When restrictAllowedClients is false, this only controls the device code grant (QR sign-in).
+        allowElementDesktopClients: true
+        # Enterprise only: Additional client URIs MAS accepts when restrictAllowedClients is true, e.g. "https://my-client.example.com/".
+        # A trailing "*" allows any path below the URI, see `allowed_client_uris` in the Element documentation.
+        additionalAllowedClientUris: []
 
   dataProtection:
     matrixAccountErasure:

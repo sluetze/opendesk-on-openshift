@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 additionalAnnotations:
@@ -16,18 +16,6 @@ serviceAccount:
 
 migrations:
   stage: "POST"
-  secretFiles:
-  {{- if and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
-    - name: "synapse-db-password"
-      secret:
-        name: {{ .Values.databases.synapse.password.name | quote }}
-        key: {{ .Values.databases.synapse.password.key | quote }}
-    # The Synapse access token of the provisioning admin, created by the
-    # `opendesk-provisioning-admin-bootstrap` release. The same account the provisioning
-    # connector uses, so no second admin account is needed for the migration.
-    - name: "synapse-admin-token"
-      secret:
-        name: "provisioning-admin-account"
-        key: "access_token"
-  {{- end }}
+  # No post-stage action of this release needs a credential.
+  secretFiles: []
 ...

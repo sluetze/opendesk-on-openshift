@@ -1,4 +1,5 @@
 <!--
+SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -29,3 +30,6 @@ You can just update the files in [helmfile/files/theme](../../helmfile/files/the
 ## Known limitations
 
 - Portal and Keycloak screen styles, especially colors, must be applied in the [`portalStylesheets.css`](../../helmfile/files/theme/portalStylesheet.css),
+- Element Web and Element Web Pro use the `openDesk` custom light theme by default, with `openDesk Dark` also
+  available. An init container copies the bundled modern light/dark stylesheets into Element's custom-theme
+  entrypoints, which otherwise use legacy styling.

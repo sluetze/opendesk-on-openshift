@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -918,7 +918,7 @@ appsuite:
       # Element integration
       com.openexchange.conference.element.enabled: {{ .Values.apps.element.enabled | quote }}
       com.openexchange.conference.element.meetingHostUrl: http://matrix-neodatefix-bot
-      com.openexchange.conference.element.matrixLoginUrl: http://opendesk-synapse-web:8008/_matrix/client/v3/login
+      com.openexchange.conference.element.matrixLoginUrl: http://element-synapse:8008/_matrix/client/v3/login
       com.openexchange.conference.element.matrixUuidClaimName: {{ ternary "opendesk_objectid" "opendesk_username" .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}
       # GDPR
       com.openexchange.gdpr.dataexport.enabled: "false"

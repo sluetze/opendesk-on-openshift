@@ -39,6 +39,8 @@ SPDX-License-Identifier: Apache-2.0
     * [`ox_shared_accounts_import`](#ox_shared_accounts_import)
     * [`flush_intercom_sessions`](#flush_intercom_sessions)
     * [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)
+    * [`configmap_create`](#configmap_create)
+    * [`synapse_signing_key_export`](#synapse_signing_key_export)
     * [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)
   * [Development](#development)
 <!-- TOC -->
@@ -182,8 +184,10 @@ removed it again.
 
 | Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered  |
 | ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ----------------- |
+| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x           |
+| [`synapse_signing_key_export`](#synapse_signing_key_export)                   | -                | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
+| [`configmap_create`](#configmap_create)                                       | Element markers  | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
 | [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)                       | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
-| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
 | [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
 | [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
 | [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
@@ -603,9 +607,18 @@ Reconciles Matrix accounts against the LDAP directory and deactivates any Matrix
 
 The action only affects Matrix accounts that are no longer backed by a leading IAM object in the LDAP. All other accounts that live in the LDAP are reconciled by the openDesk Provisioning Connector introduced with openDesk 1.19.0.
 
+It is the first action of the upgrade from v1.18 and runs in `migrations-pre` before the Element release of the upgrade and `syn2mas` move the users to the Matrix Authentication Service (MAS). `syn2mas` carries a deactivated account over as a deactivated MAS user without sessions, so the cleanup in Synapse is all it takes. The action never acts on a Synapse behind MAS, where deactivating only in Synapse would leave the MAS user active.
+
+Whether it only reports the affected accounts (dry run, the default) or deactivates them is set in `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` ([`migrations.yaml.gotmpl`](../helmfile/environments/default/migrations.yaml.gotmpl)). Its version window closes once the first upgrade deployment completed its `migrations-post` stage, as only that advances the recorded release. Until then the `migrations-pre` stage can be deployed on its own, so the dry run can be reviewed before the upgrade applies the cleanup.
+
 Whether the data is erased along with the deactivation can be set using `functional.dataProtection.matrixAccountErasure.enabled` in [`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl). This is a shared setting also used by the openDesk Provisioning Connector.
 
 Set it to `false` to only deactivate the accounts and keep their data.
+
+As `syn2mas` does not migrate guest accounts, the action also turns every Synapse guest
+account into a deactivated regular account, directly in the Synapse database
+(`UPDATE users SET is_guest = 0, deactivated = 1 WHERE is_guest <> 0;`).
+The dry run mode only lists the affected guest accounts.
 
 ```yaml
 - id: "synapse_deactivate_orphaned_users"
@@ -628,9 +641,16 @@ Set it to `false` to only deactivate the accounts and keep their data.
       maxOrphanPercent: 25
 ```
 
-Its credentials are mounted through the stage's [`secretFiles`](#secretfiles). The admin token is the Synapse
-access token of the `provisioning-admin` account the provisioning connector already uses, created by the
-`opendesk-provisioning-admin-bootstrap` release, so the migration needs no admin account of its own:
+The action registers the admin it acts as through the previous Synapse's registration shared secret, so it needs no
+admin account prepared for it. Every run registers its own temporary admin (`odmigs-<timestamp>-<random>`) and
+deactivates it again at the end - on a dry run as well, which therefore leaves one deactivated account in Synapse.
+
+The shared secret is read from the configuration of the previous Synapse (`/config/homeserver.yaml` in
+`opendesk-synapse-0`) and not mounted, so the action always uses the value that Synapse actually runs with. It
+resolves it the way Synapse does: the inline `registration_shared_secret` (set by openDesk Enterprise), otherwise
+the file `registration_shared_secret_path` points to (generated by Synapse itself in openDesk Community Edition).
+
+Its database password is mounted through the stage's [`secretFiles`](#secretfiles):
 
 ```yaml
 secretFiles:
@@ -638,10 +658,50 @@ secretFiles:
     secret:
       name: "database-synapse-password"
       key: "password"
-  - name: "synapse-admin-token"
-    secret:
-      name: "provisioning-admin-account"
-      key: "access_token"
+```
+
+### `configmap_create`
+
+Creates the ConfigMap named in `configmap.name` with the key/value pairs of `configmap.data` and the labels of
+`configmap.labels` in an idempotent way.
+
+```yaml
+- id: "configmap_create"
+  tag: "v1.19.0"
+  runMode: "apply"
+  config:
+    configmap:
+      name: "element-markers"
+      data:
+        MATRIX_STACK_MSC3861: "legacy_auth"
+      labels:
+        app.kubernetes.io/managed-by: "matrix-tools-deployment-markers"
+```
+
+### `synapse_signing_key_export`
+
+Carries the signing key of the running Synapse over into the Secret the Synapse that replaces it reads its key from.
+The signing key is the homeserver's identity towards other servers and clients: A Synapse coming up with a new key
+signs with a key nobody has seen before, and what was signed with the old one can no longer be verified against it.
+
+The action never replaces a key. If the Secret already carries a different signing key, the action fails and
+leaves the decision to the operator. If it carries the same key, the action has nothing to do. Only the key's
+algorithm and key id are logged, never the key itself.
+
+```yaml
+- id: "synapse_signing_key_export"
+  tag: "v1.19.0"
+  runMode: "apply"
+  config:
+    source:
+      pod: "opendesk-synapse-0"
+      container: "synapse"
+      path: "/media/generatedSecrets/signingKey"
+    target:
+      secret: "element-generated"
+      key: "SYNAPSE_SIGNING_KEY"
+      labels:
+        app.kubernetes.io/managed-by: "matrix-tools-init-secrets"
 ```
 
 ### `udm_remove_legacy_hashes`

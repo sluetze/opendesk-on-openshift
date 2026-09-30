@@ -9,9 +9,10 @@ global:
 additionalAnnotations:
   {{ .Values.annotations.provisioningSynapse.additional | toYaml | nindent 2 }}
 
-# The provisioning image and chart are generic; this release runs the Synapse
-# module. Further modules get their own release of the same chart.
-module: "synapse"
+# The provisioning image and chart are generic; this release runs the mas-synapse
+# module, which drives the user lifecycle through MAS (and the display name through
+# Synapse). Further modules get their own release of the same chart.
+module: "mas-synapse"
 
 image:
   registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.provisioningConnector.registry | quote }}
@@ -29,15 +30,25 @@ provisioningApi:
     # an existingSecret. See the note in environments/default/secrets.yaml.gotmpl.
     password: {{ .Values.secrets.nubus.provisioning.synapse.apiPassword.value | quote }}
 
-synapse:
-  connection:
-    url: {{ printf "http://%s.%s.svc.%s:8008" "opendesk-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
-  serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
-  auth:
-    existingSecret:
-      name: "provisioning-admin-account"
-      keyMapping:
-        adminToken: "access_token"
+masSynapse:
+  mas:
+    connection:
+      # The internal `web` listener, which serves the `adminapi` and `oauth` resources.
+      url: {{ printf "http://%s.%s.svc.%s:8080" "element-matrix-authentication-service" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+    upstreamProviderId: {{ .Values.platform.matrixMasProviderId | quote }}
+    auth:
+      clientId: {{ .Values.platform.matrixProvisioningMasClientId | quote }}
+      existingSecret:
+        name: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.name | quote }}
+        keyMapping:
+          clientSecret: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.key | quote }}
+  synapse:
+    connection:
+      url: {{ printf "http://%s.%s.svc.%s:8008" "element-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+    serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+    # MAS service user the connector creates and mints short-lived Synapse admin tokens for, which
+    # it needs to keep display names in sync (MAS has no API for them).
+    adminUsername: "provisioning-admin"
   config:
     disableAction: "lock"
     eraseOnDelete: {{ .Values.functional.dataProtection.matrixAccountErasure.enabled }}
@@ -75,3 +86,4 @@ serviceAccount:
   create: true
   annotations:
     {{ .Values.annotations.provisioningSynapse.serviceAccount | toYaml | nindent 4 }}
+...

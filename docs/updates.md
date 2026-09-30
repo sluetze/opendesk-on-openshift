@@ -18,13 +18,19 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Template `group` in `issuerRef`](#template-group-in-issuerref)
       * [Allow overriding of `opendesk-certificates` chart options](#allow-overriding-of-opendesk-certificates-chart-options)
       * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
+    * [`customization.yaml.gotmpl`](#customizationyamlgotmpl)
+      * [Additional release customization hooks](#additional-release-customization-hooks)
     * [`deployment.yaml.gotmpl`](#deploymentyamlgotmpl)
       * [Timeouts of the Helm releases](#timeouts-of-the-helm-releases)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
+      * [Enterprise Matrix client access policy](#enterprise-matrix-client-access-policy)
       * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
       * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
       * [Nubus password quality options](#nubus-password-quality-options)
+    * [`opendesk_main.yaml.gotmpl`](#opendesk_mainyamlgotmpl)
+      * [Standalone NeoBoard whiteboard](#standalone-neoboard-whiteboard)
     * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
+      * [Autoscaling of the Matrix components](#autoscaling-of-the-matrix-components)
       * [Configure Nubus extensions](#configure-nubus-extensions)
       * [Configure LDAP indices](#configure-ldap-indices)
       * [Notes API rate limits](#notes-api-rate-limits)
@@ -149,6 +155,28 @@ trust:
 Read more in [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section of
 [enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
 
+### `customization.yaml.gotmpl`
+
+#### Additional release customization hooks
+
+Additional releases now accept custom values files through these keys:
+
+```yaml
+customization:
+  release:
+    opendeskElementCustomization: {}
+    neoboard: {}
+    provisioningSynapse: {}
+    opendeskTrust: {}
+```
+
+These customize the Element configuration generation, standalone NeoBoard, Synapse provisioning connector, and
+trust bundle releases, respectively. Each entry is a map of names to values-file paths, following the existing
+customization convention; adding a customization does not enable the corresponding component.
+
+Renamed and removed Matrix customization keys require action and are documented in
+[the migration requirements](./migrations-manual.md#changed-helmfile-structure-matrix-release-customizations).
+
 ### `deployment.yaml.gotmpl`
 
 The file is added with openDesk 1.19.0.
@@ -179,9 +207,39 @@ becomes `opendeskNextcloud`). The two migration releases are not listed; their t
 
 ### `functional.yaml.gotmpl`
 
+#### Enterprise Matrix client access policy
+
+Enterprise deployments can configure MAS client access through the following options:
+
+```yaml
+functional:
+  chat:
+    matrix:
+      clients:
+        restrictAllowedClients: true
+        denyLegacyClients: true
+        allowElementDesktopClients: true
+        additionalAllowedClientUris: []
+```
+
+With `restrictAllowedClients: true`, the OIDC client URI allowlist includes enabled Element Web, Element Admin
+and NeoBoard clients, the Element URI pattern when `allowElementDesktopClients` is enabled, and any entries in
+`additionalAllowedClientUris`. Additional entries can use a trailing `*` wildcard. If no clients are configured,
+the rendered allowlist is explicitly empty and no clients are allowed by that policy.
+
+Set `restrictAllowedClients: false` to omit the allowlist and allow any client URI. Independently,
+`denyLegacyClients: true` blocks legacy Matrix compatibility logins; set it to `false` to lift that policy block.
+Disabling the allowlist does not enable legacy logins automatically.
+
+Setting `allowElementDesktopClients: false` also disables the device code grant used for QR sign-in. This remains
+in effect even when URI restrictions are disabled. These options configure Enterprise policy only; they do not
+add a Pro policy to Community Edition.
+
 #### Erasure of the Matrix account data of deleted users
 
-With openDesk 1.19.0 the Matrix accounts follow the central identity management: A user deleted there has their Matrix account revoked. Whether the account's data is erased along with the deactivation can now be configured:
+Deleting a user in central identity management now also deactivates their Matrix account. The openDesk
+Provisioning Connector does this through the Matrix Authentication Service, which deactivates the account in
+Synapse as well. The following option controls whether deactivation also erases the account's data:
 
 ```yaml
 functional:
@@ -232,7 +290,50 @@ functional:
         mspolicy: "false"
 ```
 
+### `opendesk_main.yaml.gotmpl`
+
+#### Standalone NeoBoard whiteboard
+
+NeoBoard is now available as a standalone whiteboard application, deployed as a release of its own and served at
+`https://whiteboard.<domain>`. The component is not enabled by default:
+
+```yaml
+apps:
+  neoboard:
+    enabled: false
+```
+
+Set `enabled: true` to deploy it. The standalone application is independent of the NeoBoard widget used inside
+Element rooms: The widget continues to ship with the Element release (`apps.element`) and is not affected by this
+toggle, and the standalone application does not require the widget, so it can also be enabled on deployments that
+run without Element.
+
 ### `technical.yaml.gotmpl`
+
+#### Autoscaling of the Matrix components
+
+openDesk Enterprise only: The Element Pro HAProxy, the Matrix Authentication Service and the Synapse workers can be
+scaled by a HorizontalPodAutoscaler instead of their static replica counts from `replicas.yaml.gotmpl`. All are
+disabled by default; the Community Edition ignores the settings.
+
+```yaml
+technical:
+  matrix:
+    autoscaling:
+      haproxy:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 20
+        targetCPUUtilizationPercentage: 200
+      matrixAuthenticationService:
+        enabled: false
+        # ...
+      synapse:
+        # One entry per worker, e.g. `clientReader`, `eventCreator`, `federationInbound`, `synchrotron`.
+        clientReader:
+          enabled: false
+          # ...
+```
 
 #### Configure Nubus extensions
 

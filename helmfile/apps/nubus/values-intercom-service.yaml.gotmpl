@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -67,9 +67,13 @@ ics:
         clientSecret: {{ .Values.secrets.keycloak.clientSecret.intercom.key | quote }}
   matrix:
     subdomain: {{ .Values.global.hosts.synapse | quote }}
-    serverName: "{{ .Values.global.hosts.synapse }}.{{ .Values.global.domain }}"
+    serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+    url: "https://{{ .Values.global.hosts.synapse }}.{{ .Values.global.domain }}"
     auth:
-      applicationServiceSecret: {{ .Values.secrets.intercom.synapseAsToken.value | quote }}
+      existingSecret:
+        name: {{ .Values.secrets.intercom.synapseAsToken.name | quote }}
+        keyMapping:
+          password: {{ .Values.secrets.intercom.synapseAsToken.key | quote }}
   nordeck:
     subdomain: {{ .Values.global.hosts.matrixNeoDateFixBot | quote }}
   portal:

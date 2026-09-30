@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-License-Identifier: Apache-2.0
 -->
 
@@ -10,10 +10,9 @@ SPDX-License-Identifier: Apache-2.0
   * [Example configuration](#example-configuration)
     * [Mail domain](#mail-domain)
   * [Matrix domain](#matrix-domain)
-    * [DNS](#dns)
     * [Webserver](#webserver)
       * [Content Security Policy](#content-security-policy)
-      * [.well-known](#well-known)
+      * [`.well-known`](#well-known)
 <!-- TOC -->
 
 As communication over mail and chat can go beyond the borders of your openDesk installation, you may want to use different domains for the mail and/or Matrix.
@@ -42,11 +41,11 @@ export MAIL_DOMAIN=my_organization.tld
 
 Of course, this requires the domain's MX record to point to the mail host for your openDesk deployment. You can optionally add the SPF and DMARC records.
 
-| Record name                | Type | Value                                            |
+| Record name                | Type | Value                                            |
 | -------------------------- | ---- | ------------------------------------------------ |
-| my_organization.tld        | MX   | `10 mail.opendesk.domain.tld` |
-| my_organization.tld        | TXT  | `v=spf1 +a +mx +a:mail.opendesk.domain.tld ~all` |
-| _dmarc.my_organization.tld | TXT  | `v=DMARC1; p=quarantine` |
+| my_organization.tld        | MX   | `10 mail.opendesk.domain.tld`                    |
+| my_organization.tld        | TXT  | `v=spf1 +a +mx +a:mail.opendesk.domain.tld ~all` |
+| _dmarc.my_organization.tld | TXT  | `v=DMARC1; p=quarantine`                         |
 
 ## Matrix domain
 
@@ -63,23 +62,13 @@ or via environment variable
 export MATRIX_DOMAIN=my_organization.tld
 ```
 
-### DNS
-
-The following changes apply to the standard DNS:
-
-| Record name                      | Type | Value                                  | Comment                                                                                |
-| -------------------------------- | ---- | -------------------------------------- | -------------------------------------------------------------------------------------- |
-| _matrix._tcp.my_organization.tld | SRV  | `1 10 PORT matrix.opendesk.domain.tld` | `PORT` is your NodePort/LoadBalancer port of the `opendesk-synapse-federation` service |
-
-*Note:* `matrix.opendesk.domain.tld` in the "Value" column can also be the IP address synapse TLS port listens to.
-
 ### Webserver
 
 #### Content Security Policy
 
 The `my_organization.tld` webserver should add `*.opendesk.domain.tld` to its CSP header.
 
-#### .well-known
+#### `.well-known`
 
 If you want to use other Matrix clients,
 e.g., Element Messenger for [iOS](https://apps.apple.com/de/app/element-messenger/id1083446067)
@@ -97,3 +86,12 @@ you need to create a JSON file with the following contents that is served from
 
 The above configuration ensures clients know where to find the Matrix protocol endpoint when users specify `my_organization.tld`
 as their homeserver.
+
+For federation with other Matrix servers to work, also serve the following from
+`https://my_organization.tld/.well-known/matrix/server`:
+
+```json
+{
+  "m.server": "matrix.opendesk.domain.tld:443"
+}
+```

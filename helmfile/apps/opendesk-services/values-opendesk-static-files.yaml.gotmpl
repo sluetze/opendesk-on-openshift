@@ -36,14 +36,8 @@ assets:
       - path: "/robots.txt"
         data: {{ .Values.theme.other.robotsTxt | quote }}
   {{- if .Values.apps.element.enabled }}
-  adminbot:
-    subdomain: {{ .Values.global.hosts.adminBot | quote }}
-    pathType: "ImplementationSpecific"
-    paths:
-      - path: "/robots.txt"
-        data: {{ .Values.theme.other.robotsTxt | quote }}
   element:
-    subdomain: {{ .Values.global.hosts.element | quote }}
+    subdomain: {{ .Values.global.hosts.elementWeb | quote }}
     pathType: "ImplementationSpecific"
     paths:
       - path: "/vector-icons/24.97ab000.png"
@@ -60,6 +54,40 @@ assets:
         data: {{ .Values.theme.imagery.chat.faviconPng | quote }}
       - path: "/robots.txt"
         data: {{ .Values.theme.other.robotsTxt | quote }}
+  synapse:
+    subdomain: {{ .Values.global.hosts.synapse | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  matrix-authentication-service:
+    subdomain: {{ .Values.global.hosts.matrixAuthenticationService | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  matrix-rtc:
+    subdomain: {{ .Values.global.hosts.matrixRTC | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  {{- if .Values.apps.elementSupervision.enabled }}
+  element-supervision:
+    subdomain: {{ .Values.global.hosts.elementSupervision | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  {{- end }}
+  {{- if .Values.apps.elementAdmin.enabled }}
+  element-admin:
+    subdomain: {{ .Values.global.hosts.elementAdmin | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  {{- end }}
   {{- end }}
   {{- if .Values.apps.collabora.enabled }}
   collabora:
@@ -150,6 +178,18 @@ assets:
         data: {{ .Values.theme.imagery.groupware.faviconIco | quote }}
       - path: "/appsuite/favicon.svg"
         data: {{ .Values.theme.imagery.groupware.faviconSvg | quote }}
+      - path: "/robots.txt"
+        data: {{ .Values.theme.other.robotsTxt | quote }}
+  {{- end }}
+  {{- if .Values.apps.neoboard.enabled }}
+  whiteboard:
+    subdomain: {{ .Values.global.hosts.whiteboard | quote }}
+    pathType: "ImplementationSpecific"
+    paths:
+      - path: "/opendesk-static-files/whiteboard/favicon.svg"
+        data: {{ .Values.theme.imagery.whiteboard.faviconSvg | quote }}
+      - path: "/opendesk-static-files/whiteboard/favicon.png"
+        data: {{ .Values.theme.imagery.whiteboard.faviconPng | quote }}
       - path: "/robots.txt"
         data: {{ .Values.theme.other.robotsTxt | quote }}
   {{- end }}

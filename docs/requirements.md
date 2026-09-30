@@ -18,6 +18,7 @@ This section covers the internal system requirements and external service requir
       * [haproxy-ingress.github.io](#haproxy-ingressgithubio)
       * [Ingress nginx](#ingress-nginx)
         * [Minimal configuration](#minimal-configuration)
+  * [MatrixRTC SFU](#matrixrtc-sfu)
   * [Volume provisioner](#volume-provisioner)
   * [Certificate management](#certificate-management)
   * [External services](#external-services)
@@ -35,6 +36,8 @@ openDesk is a Kubernetes-only solution and requires an existing Kubernetes (K8s)
   - [haproxy-ingress.github.io](https://haproxy-ingress.github.io)
   - [Ingress nginx](https://github.com/kubernetes/ingress-nginx/) >= [4.11.5/1.11.5](https://github.com/kubernetes/ingress-nginx/releases) - [now deprecated](https://www.kubernetes.dev/blog/2025/11/12/ingress-nginx-retirement/)
   - See section [Ingress controller](#ingress-controller) for more details.
+- Media ports of the MatrixRTC SFU (calls in Element) reachable for the clients; with `LoadBalancer` services, a
+  provider supporting TCP and UDP on one LoadBalancer. See section [MatrixRTC SFU](#matrixrtc-sfu).
 - Deployment tools
   - [Helm](https://helm.sh/) >= v3.17.3 and < v4.x[^1] but not
     - v3.18.0[^2]
@@ -127,6 +130,27 @@ controller:
 ```
 
 See the [`allowSnippetAnnotations` documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#allow-snippet-annotations) for context.
+
+## MatrixRTC SFU
+
+Calls in Element send their media to the MatrixRTC SFU, not through the ingress controller. The SFU listens on one TCP
+and one UDP port (`technical.matrix.sfu.rtcTCP.port` and `technical.matrix.sfu.rtcMuxedUDP.port`, default `30000` and
+`30001`), which must be reachable for the clients at the single IP the SFU announces. Allow both ports in your
+firewalls. How the ports are exposed depends on `service.type.matrixRTC`, falling back to `cluster.service.type`:
+
+- `LoadBalancer`: openDesk creates one LoadBalancer for both ports and announces its IP. The provider must
+  - support TCP and UDP on the same LoadBalancer (mixed protocols),
+  - assign a single IP address; hostname-only (e.g. AWS ELB) or multiple-address LoadBalancers are not supported.
+
+  If your provider does not support mixed protocols, set `technical.matrix.sfu.rtcMuxedUDP.enabled: false`. Media
+  then uses TCP only, which works but degrades call quality on lossy networks.
+- `NodePort`: each port is also used as node port, so it must be within the node port range and unique in the
+  cluster. The SFU announces `cluster.networking.ingressGatewayIP`, if set, otherwise the IP of the node it runs on.
+
+With `LoadBalancer`, keep a single SFU replica (`replicas.matrixRTCSfu: 1`, the default): the LoadBalancer cannot
+route the media of a call to the replica handling it. Clients that cannot reach the media ports at all
+need a TURN server, preferably with TLS on port 443 (`turn.tls`), see
+[TURN configuration](./getting-started.md#turn-configuration).
 
 ## Volume provisioner
 

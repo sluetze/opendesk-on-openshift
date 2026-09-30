@@ -1,0 +1,357 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+cleanup:
+  deletePodsOnSuccess: {{ .Values.debug.cleanup.deletePodsOnSuccess }}
+  deletePodsOnSuccessTimeout: {{ .Values.debug.cleanup.deletePodsOnSuccessTimeout }}
+
+commonAnnotations:
+  {{ .Values.annotations.elementCustomization.common | toYaml | nindent 2 }}
+
+image:
+  {{- $tagdata := splitn "@" 2 .Values.images.elementCustomization.tag }}
+  registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.elementCustomization.registry | quote }}
+  repository: {{ .Values.images.elementCustomization.repository | quote }}
+  tag: {{ $tagdata._0 | quote }}
+  digest: {{ $tagdata._1 | quote }}
+  pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+
+imagePullSecrets:
+  {{ .Values.global.imagePullSecrets | toYaml | nindent 2 }}
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 101
+  runAsNonRoot: true
+  runAsUser: 101
+  seccompProfile:
+    type: "RuntimeDefault"
+  seLinuxOptions:
+    {{ .Values.seLinuxOptions.elementCustomization | toYaml | nindent 4 }}
+
+podAnnotations:
+  intents.otterize.com/service-name: "opendesk-element-customization"
+  {{- with .Values.annotations.elementCustomization.job }}
+  {{ . | toYaml | nindent 2 }}
+  {{- end }}
+
+resources:
+  {{ .Values.resources.elementCustomization | toYaml | nindent 2 }}
+
+serviceAccount:
+  annotations:
+    {{ .Values.annotations.elementCustomization.serviceAccount | toYaml | nindent 4 }}
+
+{{- if eq (coalesce .Values.service.type.matrixRTC .Values.cluster.service.type) "LoadBalancer" }}
+{{- $releaseTimeout := int (.Values.deployment.timeouts.releases.opendeskElementCustomization | default .Values.deployment.timeouts.default) }}
+# The Job waits for the LoadBalancer IP until its deadline, 90% of the release timeout.
+activeDeadlineSeconds: {{ div (mul $releaseTimeout 9) 10 }}
+sfuLoadBalancer:
+  enabled: true
+  annotations: {{ merge
+    (.Values.annotations.matrixRTC.serviceExternal | default dict)
+    (.Values.annotations.matrixRTC.common | default dict)
+    | toYaml | nindent 4 }}
+  ipFamilyPolicy: {{ ternary "PreferDualStack" "SingleStack" (eq .Values.cluster.networking.ipFamilies "DualStack") | quote }}
+  ipFamily: {{ ternary "IPv6" "IPv4" (eq .Values.cluster.networking.ipFamilies "IPv6") | quote }}
+  # Must match the SFU pod labels the Matrix chart derives from the `element` release name; a mismatch is not
+  # detected and silently drops media at the LoadBalancer.
+  selector:
+    app.kubernetes.io/instance: "element-matrix-rtc-sfu"
+  # Must equal the SFU's listening ports, which it advertises together with the discovered IP.
+  ports:
+    {{- with .Values.technical.matrix.sfu }}
+    rtc-tcp:
+      port: {{ .rtcTCP.port }}
+    {{- if .rtcMuxedUDP.enabled }}
+    rtc-muxed-udp:
+      port: {{ .rtcMuxedUDP.port }}
+    {{- else }}
+    rtc-muxed-udp: null
+    {{- end }}
+    {{- end }}
+{{- end }}
+
+targetSecret: "opendesk-element-customization"
+restartSelector: "opendesk.eu/element-customization=enabled"
+
+{{- if ne (env "OPENDESK_ENTERPRISE") "true" }}
+# The community chart has no chart native S3 media storage and thereby no cleanup of the local copy that stays on the
+# media PVC. This job also moves media from a PVC that is migrated from the former openDesk chart into S3.
+mediaCleanup:
+  enabled: true
+  podSelector: "app.kubernetes.io/instance=element-synapse-media-repository"
+  podNames:
+    - "element-synapse-media-repo-0"
+{{- end }}
+
+secretEnvVars:
+  - name: "INTERCOM_SERVICE_AS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.intercom.synapseAsToken.name | quote }}
+        key: {{ .Values.secrets.intercom.synapseAsToken.key | quote }}
+  - name: "OX_APPSUITE_AS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.oxAppSuite.synapseAsToken.name | quote }}
+        key: {{ .Values.secrets.oxAppSuite.synapseAsToken.key | quote }}
+  - name: "SMTP_PASSWORD"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.postfix.opendeskSystemPassword.name | quote }}
+        key: {{ .Values.secrets.postfix.opendeskSystemPassword.key | quote }}
+  {{- if .Values.technical.matrix.migration.enabled }}
+  - name: "SYNAPSE_LEGACY_OIDC_CLIENT_SECRET"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.keycloak.clientSecret.matrix.name | quote }}
+        key: {{ .Values.secrets.keycloak.clientSecret.matrix.key | quote }}
+  {{- end }}
+  {{- if or .Values.turn.server.host .Values.turn.tls.host }}
+  - name: "TURN_SHARED_SECRET"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.turn.sharedSecret.name | quote }}
+        key: {{ .Values.secrets.turn.sharedSecret.key | quote }}
+  {{- end }}
+  {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
+  {{- if .Values.apps.elementAuditbot.enabled }}
+  - name: "ELEMENT_AUDITBOT_AS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.elementAuditbot.synapseAsToken.name | quote }}
+        key: {{ .Values.secrets.elementAuditbot.synapseAsToken.key | quote }}
+  - name: "ELEMENT_AUDITBOT_HS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.elementAuditbot.hsToken.name | quote }}
+        key: {{ .Values.secrets.elementAuditbot.hsToken.key | quote }}
+  {{- end }}
+  {{- if .Values.apps.elementSupervision.enabled }}
+  - name: "ELEMENT_SUPERVISION_AS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.elementSupervision.synapseAsToken.name | quote }}
+        key: {{ .Values.secrets.elementSupervision.synapseAsToken.key | quote }}
+  - name: "ELEMENT_SUPERVISION_HS_TOKEN"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.elementSupervision.hsToken.name | quote }}
+        key: {{ .Values.secrets.elementSupervision.hsToken.key | quote }}
+  {{- end }}
+  {{- else }}
+  - name: "S3_SECRET_ACCESS_KEY"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.objectstores.synapse.secretKey.name | quote }}
+        key: {{ .Values.objectstores.synapse.secretKey.key | quote }}
+  {{- if or (not .Values.secrets.synapse.s3EncryptionCustomerKey.create) .Values.secrets.synapse.s3EncryptionCustomerKey.value }}
+  - name: "S3_ENCRYPTION_CUSTOMER_KEY"
+    valueFrom:
+      secretKeyRef:
+        name: {{ .Values.secrets.synapse.s3EncryptionCustomerKey.name | quote }}
+        key: {{ .Values.secrets.synapse.s3EncryptionCustomerKey.key | quote }}
+  {{- end }}
+  {{- end }}
+
+elementWebUrl: "https://{{ .Values.global.hosts.elementWeb }}.{{ .Values.global.domain }}"
+logoPortalBackgroundSvg: ""
+home:
+  {{- if eq .Values.functional.internationalization.defaultLanguage "de_DE" }}
+  welcomeTitle: "Willkommen"
+  scheduleOpenText: "Terminplaner öffnen"
+  {{- else }}
+  welcomeTitle: "Welcome"
+  scheduleOpenText: "Open meeting planner"
+  {{- end }}
+  # Primary action button, styled like openDesk's primary buttons. The dark
+  # variant uses the lighter brand tint so the button stays legible on Element's
+  # dark surfaces.
+  scheduleOpenButton:
+    backgroundColor: {{ .Values.theme.colors.primary | quote }}
+    textColor: {{ .Values.theme.colors.white | quote }}
+    backgroundColorDark: {{ .Values.theme.colors.primary65 | quote }}
+    textColorDark: {{ .Values.theme.colors.black | quote }}
+welcomeUserId: "@meetings-bot:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+
+templates:
+  "intercom-service.yaml":
+    as_token: "${INTERCOM_SERVICE_AS_TOKEN}"
+    hs_token: "${INTERCOM_SERVICE_AS_TOKEN}"
+    id: "intercom-service"
+    sender_localpart: "intercom-service"
+    url: null
+    namespaces:
+      users:
+        - exclusive: false
+          regex: '@.*'
+  "ox-appsuite.yaml":
+    as_token: "${OX_APPSUITE_AS_TOKEN}"
+    hs_token: "${OX_APPSUITE_AS_TOKEN}"
+    id: "ox-appsuite"
+    sender_localpart: "ox-appsuite"
+    url: null
+    namespaces:
+      users:
+        - exclusive: false
+          regex: '@.*'
+  {{- if .Values.technical.matrix.migration.enabled }}
+  # Only present while migrating from legacy Synapse auth to MAS: syn2mas needs to see this
+  # provider on both sides (MAS's synapse_idp_id and this) to link existing users. Remove
+  # synapse.additional configuration referencing this once the migration is finalized
+  # (technical.matrix.migration.enabled: false) - see docs/syn2mas.md step 3.
+  "synapse-legacy-oidc.yaml":
+    oidc_providers:
+      - idp_id: "oidc"
+        idp_name: "OIDC"
+        issuer: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
+        client_id: "opendesk-matrix"
+        client_secret: "${SYNAPSE_LEGACY_OIDC_CLIENT_SECRET}"
+        scopes:
+          - "openid"
+          - "opendesk-matrix-scope"
+        allow_existing_users: true
+        user_mapping_provider:
+          config:
+            subject_template: "{{`{{`}} user.opendesk_objectid {{`}}`}}"
+            display_name_template: "{{`{{ user.name }}`}}"
+            localpart_template: "{{`{{`}} user.opendesk_username {{`}}`}}"
+            email_template: "{{`{{ user.email }}`}}"
+        backchannel_logout_enabled: true
+        backchannel_logout_ignore_sub: true
+  {{- end }}
+  "email.yaml":
+    email:
+      enable_notifs: true
+      enable_tls: false
+      force_tls: false
+      require_transport_security: false
+      notif_from: "{{ .Values.smtp.localpartNoReply }}@{{ .Values.global.mailDomain | default .Values.global.domain }}"
+      smtp_host: {{ printf "%s.%s.svc.%s" "postfix" (.Values.apps.postfix.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+      smtp_port: 25
+      smtp_user: {{ printf "%s@%s" "opendesk-system" ( .Values.global.mailDomain | default .Values.global.domain ) }}
+      smtp_pass: "${SMTP_PASSWORD}"
+  {{- if or .Values.turn.server.host .Values.turn.tls.host }}
+  "external-turn.yaml":
+    rtc:
+      turn_servers:
+        {{- if .Values.turn.server.host }}
+        - host: {{ .Values.turn.server.host | quote }}
+          port: {{ .Values.turn.server.port | int }}
+          protocol: {{ .Values.turn.transport | quote }}
+          secret: "${TURN_SHARED_SECRET}"
+          ttl: 14400
+        {{- end }}
+        {{- if .Values.turn.tls.host }}
+        - host: {{ .Values.turn.tls.host | quote }}
+          port: {{ .Values.turn.tls.port | int }}
+          protocol: "tls"
+          secret: "${TURN_SHARED_SECRET}"
+          ttl: 14400
+        {{- end }}
+  {{- end }}
+  {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
+  {{- if .Values.apps.elementAuditbot.enabled }}
+  "auditbot.yaml":
+    rate_limited: false
+    namespaces:
+      rooms:
+        - regex: "!.*:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+          exclusive: false
+        - regex: "^![^:]+$"
+          exclusive: false
+      users:
+        - regex: "@.*:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+          exclusive: false
+    id: auditbot
+    as_token: "${ELEMENT_AUDITBOT_AS_TOKEN}"
+    hs_token: "${ELEMENT_AUDITBOT_HS_TOKEN}"
+    url: "http://element-auditbot:10010"
+    sender_localpart: auditbot-sendernotinuse
+    de.sorunome.msc2409.push_ephemeral: true
+    receive_ephemeral: true
+    org.matrix.msc3202: true
+  {{- end }}
+  {{- if .Values.apps.elementSupervision.enabled }}
+  "supervision.yaml":
+    rate_limited: false
+    namespaces:
+      rooms:
+        - regex: "!.*:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+          exclusive: false
+        - regex: "^![^:]+$"
+          exclusive: false
+      users:
+        - regex: "@.*:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+          exclusive: false
+    id: adminbot
+    as_token: "${ELEMENT_SUPERVISION_AS_TOKEN}"
+    hs_token: "${ELEMENT_SUPERVISION_HS_TOKEN}"
+    url: "http://element-adminbot:10010"
+    sender_localpart: adminbot-sendernotinuse
+    de.sorunome.msc2409.push_ephemeral: true
+    receive_ephemeral: true
+    org.matrix.msc3202: true
+  {{- end }}
+  {{- else }}
+  "storage.yaml":
+    media_storage_providers:
+      - module: s3_storage_provider.S3StorageProviderBackend
+        store_local: True
+        store_remote: True
+        store_synchronous: True
+        config:
+          bucket: {{ .Values.objectstores.synapse.bucket | quote }}
+          # All of the below options are optional, for use with non-AWS S3-like
+          # services, or to specify access tokens here instead of some external method.
+          region_name: {{ .Values.objectstores.synapse.region | quote }}
+          {{- if .Values.objectstores.synapse.endpoint }}
+          endpoint_url: {{ printf "https://%s" .Values.objectstores.synapse.endpoint | quote }}
+          {{- else if .Values.apps.minio.enabled }}
+          endpoint_url: {{ printf "https://%s.%s" .Values.global.hosts.minioApi .Values.global.domain | quote }}
+          {{- else if .Values.apps.seaweedfs.enabled }}
+          endpoint_url: {{ printf "https://%s.%s" .Values.global.hosts.seaweedfs .Values.global.domain | quote }}
+          {{- else }}
+          {{- fail "No objectstorage endpoint for synapse found!" }}
+          {{- end }}
+          access_key_id: {{ .Values.objectstores.synapse.username | quote }}
+          secret_access_key: "${S3_SECRET_ACCESS_KEY}"
+          #session_token: <S3_SESSION_TOKEN>
+
+          {{- if or (not .Values.secrets.synapse.s3EncryptionCustomerKey.create) .Values.secrets.synapse.s3EncryptionCustomerKey.value }}
+          # Server Side Encryption for Customer-provided keys
+          sse_customer_key: "${S3_ENCRYPTION_CUSTOMER_KEY}"
+          {{- end }}
+          # Your SSE-C algorithm is very likely AES256
+          # Default is AES256.
+          #sse_customer_algo: <S3_SSEC_ALGO>
+
+          # The object storage class used when uploading files to the bucket.
+          # Default is STANDARD.
+          #storage_class: "STANDARD_IA"
+
+          # Prefix for all media in bucket, can't be changed once media has been uploaded
+          # Useful if sharing the bucket between Synapses
+          # Blank if not provided
+          #prefix: "prefix/to/files/in/bucket"
+
+          # The maximum number of concurrent threads which will be used to connect
+          # to S3. Each thread manages a single connection. Default is 40.
+          #
+          #threadpool_size: 20
+
+          # Set request_checksum_calculation or response_checksum_validation.
+          # Depending on your S3 provider you may need to set these values,
+          # especially if you are using a self-hosted system that does not
+          # support the functionality provided by AWS.
+          # Default is 'when_required'
+          # request_checksum_calculation: "when_supported" | "when_required"
+          # response_checksum_validation: "when_supported" | "when_required"
+  {{- end }}
+...

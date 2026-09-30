@@ -1,0 +1,51 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+elementWeb:
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.elementWeb.registry | quote }}
+  # Element's custom theme entrypoints use legacy styling. As workaround we Copy the image's modern
+  # built-in styles into those entrypoints so custom themes only override colors but inherit the modern styling.
+  extraInitContainers:
+    - name: "prepare-opendesk-themes"
+      image: "{{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.elementWeb.registry }}/{{ .Values.images.elementWeb.repository }}:{{ .Values.images.elementWeb.tag }}"
+      imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+      command:
+        - "/bin/sh"
+        - "-ec"
+        - |
+          cp -R /app/bundles/. /themes/
+          for mode in light dark; do
+            find /themes -name "theme-${mode}.css" > /tmp/theme-files
+            test -s /tmp/theme-files
+            while IFS= read -r builtin; do
+              custom="${builtin%.css}-custom.css"
+              test -f "$custom"
+              cp "$builtin" "$custom"
+            done < /tmp/theme-files
+          done
+      securityContext:
+        allowPrivilegeEscalation: false
+        privileged: false
+        capabilities:
+          drop: ["ALL"]
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 10010
+        runAsGroup: 10010
+        seccompProfile:
+          type: "RuntimeDefault"
+        seLinuxOptions: {{ .Values.seLinuxOptions.elementWeb | toYaml | nindent 10 }}
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      volumeMounts:
+        - name: "opendesk-theme-bundles"
+          mountPath: "/themes"
+        - name: "opendesk-theme-tmp"
+          mountPath: "/tmp"
+...

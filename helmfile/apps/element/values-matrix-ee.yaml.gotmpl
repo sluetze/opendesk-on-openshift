@@ -1,0 +1,364 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+{{- if .Values.trust.secret.mount }}
+# Add the trust bundle to EE's chart-managed CA store.
+certificateAuthorities:
+  - secret: {{ .Values.trust.secret.name | quote }}
+    secretKey: "ca.crt"
+{{- end }}
+adminUser:
+  enabled: false
+advancedIdentityManagement:
+  enabled: false
+auditbot:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  appserviceRegistration:
+    secret: "opendesk-element-customization"
+    secretKey: "auditbot.yaml"
+  additional:
+    outputs.yaml:
+      config: |
+        outputs:
+        - type: file
+          file: /storage/matrix-pipeline.log
+          size: 100M
+          keep: 3
+  enabled: {{ .Values.apps.elementAuditbot.enabled }}
+  replicas: {{ .Values.replicas.elementAuditbot }}
+  encryption:
+    backupPassphrase:
+      secret: {{ .Values.secrets.elementAuditbot.backupPassphrase.name | quote }}
+      secretKey: {{ .Values.secrets.elementAuditbot.backupPassphrase.key | quote }}
+  user:
+    password:
+      secret: {{ .Values.secrets.elementAuditbot.password.name | quote }}
+      secretKey: {{ .Values.secrets.elementAuditbot.password.key | quote }}
+  {{- if .Values.debug.enabled }}
+  extraEnv:
+    - name: "DEBUG_RENDERING"
+      value: "1"
+  {{- end }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.elementPipe.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.elementPipe.registry | quote }}
+    repository: {{ .Values.images.elementPipe.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10007
+    runAsGroup: 10007
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixAuditbot | toYaml | nindent 6 }}
+  serviceAccount:
+    annotations: {{ .Values.annotations.matrixAuditbot.serviceAccount | default dict | toYaml | nindent 6 }}
+## Authentication configuration for the Matrix Stack
+authentication:
+  {{- if .Values.technical.matrix.migration.enabled }}
+  # The shared raw provider supplies the legacy Synapse ID during migration.
+  # Suppress generation here to avoid duplicate MAS providers with the same ULID.
+  oidc: []
+  {{- else }}
+  oidc:
+    - idpId: {{ .Values.platform.matrixMasProviderId | quote }}
+      idpName: "OIDC"
+      #idpBrand: ""
+      issuer: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
+      clientId: "opendesk-matrix"
+      clientSecret:
+        secret: {{ .Values.secrets.keycloak.clientSecret.matrix.name | quote }}
+        secretKey: {{ .Values.secrets.keycloak.clientSecret.matrix.key | quote }}
+      clientAuthMethod: "client_secret_basic"
+      scopes:
+        - openid
+        - opendesk-matrix-scope
+      endpointsDiscovery:
+      # Set to true to skip metadata verification (avoid in production)
+        skipVerification: false
+      #  # Configure `id_token_signing_alg_values_supported`. Only a single value is supported with Matrix Authentication Service
+      #  idTokenSigningAlgValuesSupported: ['RS256']
+      backchannelLogout: "logout_all"
+      claimImports:
+        skipConfirmation: true
+        localpart:
+          action: "require"
+          onConflict: "replace"
+          template: "{{`{{`}} user.{{ if .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}opendesk_objectid{{ else }}opendesk_username{{ end }} | lower {{`}}`}}"
+        displayName:
+          action: "force"
+          template: "{{`{{ user.name }}`}}"
+        email:
+          action: "force"
+          template: "{{`{{ user.email }}`}}"
+        subject:
+          template: "{{`{{ user.opendesk_objectid }}`}}"
+  {{- end }}
+haproxy:
+  horizontalAutoscaling:
+    enabled: {{ .Values.technical.matrix.autoscaling.haproxy.enabled }}
+    minReplicas: {{ .Values.technical.matrix.autoscaling.haproxy.minReplicas }}
+    maxReplicas: {{ .Values.technical.matrix.autoscaling.haproxy.maxReplicas }}
+    metrics:
+      targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.haproxy.targetCPUUtilizationPercentage }}
+matrixAuthenticationService:
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixAuthenticationService.registry | quote }}
+  syn2mas:
+    image:
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixSyn2Mas.registry | quote }}
+  matrixToolsOIDCClientSecret:
+    secret: {{ .Values.secrets.matrixAuthenticationService.matrixToolsOIDCClientSecret.name | quote }}
+    secretKey: {{ .Values.secrets.matrixAuthenticationService.matrixToolsOIDCClientSecret.key | quote }}
+  additional:
+    # https://docs.element.io/latest/element-server-suite-pro/configuring-components/authentication/configuring/#restricting-allowed-clients
+    99-restrictClients:
+      config: |
+        policy:
+          data:
+            pro:
+              {{- if .Values.functional.chat.matrix.clients.restrictAllowedClients }}
+              {{- $allowedClientUris := list }}
+              {{- if .Values.functional.chat.matrix.clients.allowElementDesktopClients }}
+              {{- $allowedClientUris = append $allowedClientUris "https://element.io/*" }}
+              {{- end }}
+              {{- if .Values.apps.element.enabled }}
+              {{- $allowedClientUris = append $allowedClientUris (printf "https://%s.%s/" .Values.global.hosts.elementWeb .Values.global.domain) }}
+              {{- end }}
+              {{- if .Values.apps.elementAdmin.enabled }}
+              {{- $allowedClientUris = append $allowedClientUris (printf "https://%s.%s/" .Values.global.hosts.elementAdmin .Values.global.domain) }}
+              {{- end }}
+              {{- if .Values.apps.neoboard.enabled }}
+              {{- $allowedClientUris = append $allowedClientUris (printf "https://%s.%s/" .Values.global.hosts.matrixNeoBoardWidget .Values.global.domain) }}
+              {{- $allowedClientUris = append $allowedClientUris (printf "https://%s.%s/" .Values.global.hosts.whiteboard .Values.global.domain) }}
+              {{- end }}
+              {{- range .Values.functional.chat.matrix.clients.additionalAllowedClientUris }}
+              {{- $allowedClientUris = append $allowedClientUris . }}
+              {{- end }}
+              allowed_client_uris:{{ $allowedClientUris | toYaml | nindent 16 }}
+              {{- end }}
+              deny_legacy_clients: {{ .Values.functional.chat.matrix.clients.denyLegacyClients }}
+        {{- if not .Values.functional.chat.matrix.clients.allowElementDesktopClients }}
+        oauth:
+          device_code_grant_enabled: false
+        {{- end }}
+  horizontalAutoscaling:
+    enabled: {{ .Values.technical.matrix.autoscaling.matrixAuthenticationService.enabled }}
+    minReplicas: {{ .Values.technical.matrix.autoscaling.matrixAuthenticationService.minReplicas }}
+    maxReplicas: {{ .Values.technical.matrix.autoscaling.matrixAuthenticationService.maxReplicas }}
+    metrics:
+      targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.matrixAuthenticationService.targetCPUUtilizationPercentage }}
+  dex:
+    containersSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      privileged: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: "RuntimeDefault"
+    image:
+      {{- $tagdata := splitn "@" 2 .Values.images.matrixDex.tag }}
+      digest: {{ $tagdata._1 | quote }}
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixDex.registry | quote }}
+      repository: {{ .Values.images.matrixDex.repository | quote }}
+      pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      tag: {{ $tagdata._0 | quote }}
+matrixRTC:
+  sfu:
+    image:
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixLivekitServer.registry | quote }}
+matrixTools:
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixTools.registry | quote }}
+supervision:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  appserviceRegistration:
+    secret: "opendesk-element-customization"
+    secretKey: "supervision.yaml"
+  enabled: {{ .Values.apps.elementSupervision.enabled }}
+  replicas: {{ .Values.replicas.elementSupervision }}
+  encryption:
+    backupPassphrase:
+      secret: {{ .Values.secrets.elementSupervision.backupPassphrase.name | quote }}
+      secretKey: {{ .Values.secrets.elementSupervision.backupPassphrase.key | quote }}
+  user:
+    password:
+      secret: {{ .Values.secrets.elementSupervision.password.name | quote }}
+      secretKey: {{ .Values.secrets.elementSupervision.password.key | quote }}
+  acceptedOrigins:
+    - {{ printf "https://%s.%s" .Values.global.hosts.elementAdmin .Values.global.domain | quote }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.elementPipe.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.elementPipe.registry | quote }}
+    repository: {{ .Values.images.elementPipe.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  {{- if .Values.debug.enabled }}
+  extraEnv:
+    - name: "DEBUG_RENDERING"
+      value: "1"
+  {{- end }}
+  ingress:
+    annotations: {{ merge
+      (.Values.annotations.matrixSupervision.ingress | default dict)
+      (.Values.annotations.matrixSupervision.common | default dict)
+      | toYaml | nindent 6 }}
+    host: "{{ .Values.global.hosts.elementSupervision }}.{{ .Values.global.domain }}"
+    service:
+      annotations: {{ merge
+        (.Values.annotations.matrixSupervision.service | default dict)
+        (.Values.annotations.matrixSupervision.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10007
+    runAsGroup: 10007
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixSupervision | toYaml | nindent 6 }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.matrixSupervision.serviceAccount | default dict)
+      (.Values.annotations.matrixSupervision.common | default dict)
+      | toYaml | nindent 6 }}
+synapse:
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.synapse.registry | quote }}
+  {{- if or (not .Values.technical.matrix.migration.enabled) (not .Values.technical.matrix.migration.dryRun) }}
+  # QR sign-in requires MAS to handle auth, Synapse rejects it while a syn2mas dry run keeps legacy auth.
+  additional:
+    99-restrictClients:
+      config: |
+        experimental_features:
+          msc4108_enabled: {{ .Values.functional.chat.matrix.clients.allowElementDesktopClients }}
+  {{- end }}
+  workersReplicationSecret:
+    secret: {{ .Values.secrets.synapse.workersReplicationSecret.name | quote }}
+    secretKey: {{ .Values.secrets.synapse.workersReplicationSecret.key | quote }}
+  formSecret:
+    secret: {{ .Values.secrets.synapse.formSecret.name | quote }}
+    secretKey: {{ .Values.secrets.synapse.formSecret.key | quote }}
+  media:
+    s3:
+      enabled: true
+      authentication:
+        accessKeyId:
+          value: {{ .Values.objectstores.synapse.username | quote }}
+        secretAccessKey:
+          secret: {{ .Values.objectstores.synapse.secretKey.name | quote }}
+          secretKey: {{ .Values.objectstores.synapse.secretKey.key | quote }}
+      bucket: {{ .Values.objectstores.synapse.bucket | quote }}
+      {{- if .Values.objectstores.synapse.endpoint }}
+      endpointUrl: {{ printf "https://%s" .Values.objectstores.synapse.endpoint | quote }}
+      {{- else if .Values.apps.minio.enabled }}
+      endpointUrl: {{ printf "https://%s.%s" .Values.global.hosts.minioApi .Values.global.domain | quote }}
+      {{- else if .Values.apps.seaweedfs.enabled }}
+      endpointUrl: {{ printf "https://%s.%s" .Values.global.hosts.seaweedfs .Values.global.domain | quote }}
+      {{- else }}
+      {{- fail "No objectstorage endpoint for synapse found!" }}
+      {{- end }}
+      {{- if or (not .Values.secrets.synapse.s3EncryptionCustomerKey.create) .Values.secrets.synapse.s3EncryptionCustomerKey.value }}
+      serverSideEncryption:
+        enabled: true
+        customerKey:
+          secret: {{ .Values.secrets.synapse.s3EncryptionCustomerKey.name | quote }}
+          secretKey: {{ .Values.secrets.synapse.s3EncryptionCustomerKey.key | quote }}
+      {{- end }}
+  proImage:
+    {{- $tagdata := splitn "@" 2 .Values.images.synapseProWorker.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.synapseProWorker.registry | quote }}
+    repository: {{ .Values.images.synapseProWorker.repository | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  workers:
+    client-reader:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.clientReader.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.clientReader.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.clientReader.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.clientReader.targetCPUUtilizationPercentage }}
+    event-creator:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.eventCreator.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.eventCreator.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.eventCreator.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.eventCreator.targetCPUUtilizationPercentage }}
+    federation-inbound:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.federationInbound.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.federationInbound.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.federationInbound.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.federationInbound.targetCPUUtilizationPercentage }}
+    federation-reader:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.federationReader.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.federationReader.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.federationReader.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.federationReader.targetCPUUtilizationPercentage }}
+    initial-synchrotron:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.initialSynchrotron.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.initialSynchrotron.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.initialSynchrotron.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.initialSynchrotron.targetCPUUtilizationPercentage }}
+    mas-helper:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.masHelper.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.masHelper.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.masHelper.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.masHelper.targetCPUUtilizationPercentage }}
+    sliding-sync:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.slidingSync.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.slidingSync.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.slidingSync.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.slidingSync.targetCPUUtilizationPercentage }}
+    synchrotron:
+      horizontalAutoscaling:
+        enabled: {{ .Values.technical.matrix.autoscaling.synapse.synchrotron.enabled }}
+        minReplicas: {{ .Values.technical.matrix.autoscaling.synapse.synchrotron.minReplicas }}
+        maxReplicas: {{ .Values.technical.matrix.autoscaling.synapse.synchrotron.maxReplicas }}
+        metrics:
+          targetCPUUtilizationPercentage: {{ .Values.technical.matrix.autoscaling.synapse.synchrotron.targetCPUUtilizationPercentage }}
+telemetry:
+  enabled: false
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.matrixTelemetry.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDeEnterprise .Values.global.imageRegistry .Values.images.matrixTelemetry.registry | quote }}
+    repository: {{ .Values.images.matrixTelemetry.repository | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    tag: {{ $tagdata._0 | quote }}
+...

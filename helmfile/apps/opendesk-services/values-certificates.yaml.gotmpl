@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -11,19 +11,26 @@ global:
     {{- if .Values.apps.cryptpad.enabled }}
     cryptpad: {{ .Values.global.hosts.cryptpad }}
     {{- end }}
+    {{- if or .Values.apps.element.enabled .Values.apps.neoboard.enabled }}
+    matrixAuthenticationService: {{ .Values.global.hosts.matrixAuthenticationService }}
+    matrixRTC: {{ .Values.global.hosts.matrixRTC }}
+    synapse: {{ .Values.global.hosts.synapse }}
     {{- if .Values.apps.element.enabled }}
-    element: {{ .Values.global.hosts.element }}
+    elementWeb: {{ .Values.global.hosts.elementWeb }}
     matrixNeoBoardWidget: {{ .Values.global.hosts.matrixNeoBoardWidget }}
     matrixNeoChoiceWidget: {{ .Values.global.hosts.matrixNeoChoiceWidget }}
     matrixNeoDateFixBot: {{ .Values.global.hosts.matrixNeoDateFixBot }}
     matrixNeoDateFixWidget: {{ .Values.global.hosts.matrixNeoDateFixWidget }}
-    synapse: {{ .Values.global.hosts.synapse }}
-    synapseFederation: {{ .Values.global.hosts.synapseFederation }}
-    whiteboard: {{ .Values.global.hosts.whiteboard }}
     {{- end }}
     {{- if .Values.apps.elementAdmin.enabled }}
-    adminBot: {{ .Values.global.hosts.adminBot }}
-    synapseAdmin: {{ .Values.global.hosts.synapseAdmin }}
+    elementAdmin: {{ .Values.global.hosts.elementAdmin }}
+    {{- end }}
+    {{- if .Values.apps.elementSupervision.enabled }}
+    elementSupervision: {{ .Values.global.hosts.elementSupervision }}
+    {{- end }}
+    {{- if .Values.apps.neoboard.enabled }}
+    whiteboard: {{ .Values.global.hosts.whiteboard }}
+    {{- end }}
     {{- end }}
     {{- if .Values.apps.jitsi.enabled }}
     jitsi: {{ .Values.global.hosts.jitsi }}

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 #
@@ -26,6 +26,8 @@ helmfiles:
   - path: "helmfile/apps/jitsi/helmfile-defaults.yaml.gotmpl"
     values: *values
   - path: "helmfile/apps/element/helmfile-defaults.yaml.gotmpl"
+    values: *values
+  - path: "helmfile/apps/neoboard/helmfile-defaults.yaml.gotmpl"
     values: *values
   - path: "helmfile/apps/openproject/helmfile-defaults.yaml.gotmpl"
     values: *values

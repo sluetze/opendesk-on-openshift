@@ -1,0 +1,914 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+{{- $rtcServiceType := coalesce .Values.service.type.matrixRTC .Values.cluster.service.type }}
+{{- /* With the shared LoadBalancer (created in values-element-customization), the SFU's own Services stay internal. */}}
+{{- $sfuLoadBalancer := eq $rtcServiceType "LoadBalancer" }}
+{{- $rtcPortType := ternary "ClusterIP" $rtcServiceType $sfuLoadBalancer }}
+{{- /* Otherwise, like Jitsi's JVB, the SFU is reachable at and advertises the ingress gateway IP, if set. */}}
+{{- $sfuExternalIP := ternary "" .Values.cluster.networking.ingressGatewayIP $sfuLoadBalancer }}
+{{- if .Values.global.imagePullSecrets }}
+image:
+  pullSecrets:
+    {{- range .Values.global.imagePullSecrets }}
+    - name: "{{ . }}"
+    {{- end }}
+{{- end }}
+
+deploymentMarkers:
+  enabled: true
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+initSecrets:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10010
+    runAsGroup: 10010
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixInitSecrets | toYaml | nindent 6 }}
+  annotations: {{ .Values.annotations.matrixInitSecrets.pod | default dict | toYaml | nindent 4 }}
+  serviceAccount:
+    annotations: {{ .Values.annotations.matrixInitSecrets.serviceAccount | default dict | toYaml | nindent 6 }}
+elementAdmin:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10104
+    runAsGroup: 10104
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.elementAdmin | toYaml | nindent 6 }}
+  enabled: {{ .Values.apps.elementAdmin.enabled }}
+  replicas: {{ .Values.replicas.elementAdmin }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.elementAdmin.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.elementAdmin.registry | quote }}
+    repository: {{ .Values.images.elementAdmin.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  annotations: {{ merge
+    (.Values.annotations.elementAdmin.pod | default dict)
+    (.Values.annotations.elementAdmin.common | default dict)
+    | toYaml | nindent 4 }}
+  ingress:
+    host: "{{ .Values.global.hosts.elementAdmin }}.{{ .Values.global.domain }}"
+    annotations: {{ merge
+      (.Values.annotations.elementAdmin.ingress | default dict)
+      (.Values.annotations.elementAdmin.common | default dict)
+      | toYaml | nindent 6 }}
+    service:
+      annotations: {{ merge
+        (.Values.annotations.elementAdmin.service | default dict)
+        (.Values.annotations.elementAdmin.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsEnabled: true
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.elementAdmin.serviceAccount | default dict)
+      (.Values.annotations.elementAdmin.common | default dict)
+      | toYaml | nindent 6 }}
+elementWeb:
+  enabled: false
+haproxy:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixHaproxy | toYaml | nindent 6 }}
+  annotations: {{ .Values.annotations.matrixHaproxy.pod | default dict | toYaml | nindent 4 }}
+  replicas: {{ .Values.replicas.matrixHaproxy }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.matrixHaproxy.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.matrixHaproxy.registry | quote }}
+    repository: {{ .Values.images.matrixHaproxy.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  serviceAccount:
+    annotations: {{ .Values.annotations.matrixHaproxy.serviceAccount | default dict | toYaml | nindent 6 }}
+ingress:
+  annotations: {{ .Values.annotations.matrixStack.ingress | default dict | toYaml | nindent 4 }}
+  className: {{ .Values.ingress.ingressClassName | quote }}
+  {{- if eq .Values.ingress.controller "nginx" }}
+  controllerType: "ingress-nginx"
+  {{- end }}
+  service:
+    annotations: {{ .Values.annotations.matrixStack.service | default dict | toYaml | nindent 6 }}
+matrixAuthenticationService:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10005
+    runAsGroup: 10005
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixAuthenticationService | toYaml | nindent 6 }}
+  enabled: true
+  additional:
+    0-customConfig:
+      config: |
+        passwords:
+        {{- if .Values.technical.matrix.migration.enabled }}
+          # Only needed while migrating from legacy Synapse auth: syn2mas imports Synapse's
+          # bcrypt password hashes and needs a matching scheme to import them into. Remove once
+          # the migration is finalized (technical.matrix.migration.enabled: false).
+          enabled: true
+          schemes:
+            - version: 1
+              algorithm: bcrypt
+        {{- else }}
+          enabled: false
+        {{- end }}
+        # Admin API client used by the Synapse guest module to register and deactivate guest users
+        # https://github.com/element-hq/element-modules/tree/main/modules/restricted-guests/synapse
+        clients:
+          - client_id: {{ .Values.platform.matrixGuestModuleMasClientId | quote }}
+            client_auth_method: client_secret_basic
+            client_secret_file: "/secrets/guest-module-mas-client-secret/{{ .Values.secrets.matrixAuthenticationService.guestModuleClientSecret.key }}"
+          {{- if .Values.apps.nubus.enabled }}
+          # Admin API client of the openDesk Provisioning Connector, which reflects the IAM (Nubus)
+          # user lifecycle in MAS (and through it in Synapse), so only needed along with Nubus
+          - client_id: {{ .Values.platform.matrixProvisioningMasClientId | quote }}
+            client_auth_method: "client_secret_basic"
+            client_secret_file: "/secrets/provisioning-mas-client-secret/{{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.key }}"
+          {{- end }}
+        policy:
+          data:
+            admin_clients:
+              - {{ .Values.platform.matrixGuestModuleMasClientId | quote }}
+              {{- if .Values.apps.nubus.enabled }}
+              - {{ .Values.platform.matrixProvisioningMasClientId | quote }}
+              {{- end }}
+    {{- if or (ne (env "OPENDESK_ENTERPRISE") "true") .Values.technical.matrix.migration.enabled }}
+    99-keycloakConfig:
+      config: |
+        upstream_oauth2:
+          providers:
+            - id: {{ .Values.platform.matrixMasProviderId | quote }}
+              # Legacy openDesk Synapse used idp_id "oidc", which Synapse keeps unprefixed.
+              synapse_idp_id: "oidc"
+              issuer: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
+              token_endpoint_auth_method: "client_secret_basic"
+              client_id: "opendesk-matrix"
+              client_secret_file: "/secrets/keycloak-matrix-client-secret/{{ .Values.secrets.keycloak.clientSecret.matrix.key }}"
+              on_backchannel_logout: logout_all
+              scope: "openid opendesk-matrix-scope"
+              claims_imports:
+                skip_confirmation: true
+                localpart:
+                  action: require
+                  on_conflict: replace
+                  template: "{{`{{`}} user.{{ if .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}opendesk_objectid{{ else }}opendesk_username{{ end }} | lower {{`}}`}}"
+                displayname:
+                  action: force
+                  template: "{{`{{ user.name }}`}}"
+                email:
+                  action: force
+                  template: "{{`{{ user.email }}`}}"
+                subject:
+                  template: "{{`{{ user.opendesk_objectid }}`}}"
+    {{- end }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.matrixAuthenticationService.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.matrixAuthenticationService.registry | quote }}
+    repository: {{ .Values.images.matrixAuthenticationService.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  annotations: {{ merge
+    (.Values.annotations.matrixAuthenticationService.pod | default dict)
+    (.Values.annotations.matrixAuthenticationService.common | default dict)
+    | toYaml | nindent 4 }}
+  ingress:
+    annotations: {{- merge
+      (.Values.annotations.matrixAuthenticationService.ingress | default dict)
+      (.Values.annotations.matrixAuthenticationService.common | default dict)
+      | toYaml | nindent 6 }}
+    host: "{{ .Values.global.hosts.matrixAuthenticationService }}.{{ .Values.global.domain }}"
+    service:
+      annotations: {{ merge
+        (.Values.annotations.matrixAuthenticationService.service | default dict)
+        (.Values.annotations.matrixAuthenticationService.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.matrixAuthenticationService.serviceAccount | default dict)
+      (.Values.annotations.matrixAuthenticationService.common | default dict)
+      | toYaml | nindent 6 }}
+  extraVolumes:
+    - name: "guest-module-mas-client-secret-volume"
+      secret:
+        secretName: {{ .Values.secrets.matrixAuthenticationService.guestModuleClientSecret.name | quote }}
+    {{- if .Values.apps.nubus.enabled }}
+    - name: "provisioning-mas-client-secret-volume"
+      secret:
+        secretName: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.name | quote }}
+    {{- end }}
+    {{- if or (ne (env "OPENDESK_ENTERPRISE") "true") .Values.technical.matrix.migration.enabled }}
+    - name: "keycloak-matrix-client-secret-volume"
+      secret:
+        secretName: {{ .Values.secrets.keycloak.clientSecret.matrix.name | quote }}
+    {{- end }}
+    # CE mounts the bundle directly; EE uses certificateAuthorities in values-matrix-ee.yaml.gotmpl.
+    {{- if and .Values.trust.secret.mount (ne (env "OPENDESK_ENTERPRISE") "true") }}
+    - name: "trusted-cert-secret-volume"
+      secret:
+        secretName: {{ .Values.trust.secret.name | quote }}
+        items:
+          - key: "ca.crt"
+            path: "ca-certificates.crt"
+    {{- end }}
+  extraVolumeMounts:
+    - name: "guest-module-mas-client-secret-volume"
+      mountPath: "/secrets/guest-module-mas-client-secret"
+      readOnly: true
+    {{- if .Values.apps.nubus.enabled }}
+    - name: "provisioning-mas-client-secret-volume"
+      mountPath: "/secrets/provisioning-mas-client-secret"
+      readOnly: true
+    {{- end }}
+    {{- if or (ne (env "OPENDESK_ENTERPRISE") "true") .Values.technical.matrix.migration.enabled }}
+    - name: "keycloak-matrix-client-secret-volume"
+      mountPath: "/secrets/keycloak-matrix-client-secret"
+      readOnly: true
+    {{- end }}
+    {{- if and .Values.trust.secret.mount (ne (env "OPENDESK_ENTERPRISE") "true") }}
+    - name: "trusted-cert-secret-volume"
+      mountPath: "/etc/ssl/certs/ca-certificates.crt"
+      subPath: "ca-certificates.crt"
+    {{- end }}
+  postgres:
+    database: {{ .Values.databases.matrixAuthenticationService.name | quote }}
+    host: {{ .Values.databases.matrixAuthenticationService.host | quote }}
+    port: {{ .Values.databases.matrixAuthenticationService.port }}
+    sslMode: {{ .Values.databases.matrixAuthenticationService.sslmode | quote }}
+    password:
+      secret: {{ .Values.databases.matrixAuthenticationService.password.name | quote }}
+      secretKey: {{ .Values.databases.matrixAuthenticationService.password.key | quote }}
+    user: {{ .Values.databases.matrixAuthenticationService.username | quote }}
+  encryptionSecret:
+    secret: {{ .Values.secrets.matrixAuthenticationService.encryptionSecret.name | quote }}
+    secretKey: {{ .Values.secrets.matrixAuthenticationService.encryptionSecret.key | quote }}
+  synapseSharedSecret:
+    secret: {{ .Values.secrets.matrixAuthenticationService.synapseSharedSecret.name | quote }}
+    secretKey: {{ .Values.secrets.matrixAuthenticationService.synapseSharedSecret.key | quote }}
+  {{- $masPrivateKeyRSA := .Values.secrets.matrixAuthenticationService.privateKeyRSA }}
+  {{- $masPrivateKeyECDSAPrime256v1 := .Values.secrets.matrixAuthenticationService.privateKeyECDSAPrime256v1 }}
+  {{- if or (or (not $masPrivateKeyRSA.create) $masPrivateKeyRSA.value) (or (not $masPrivateKeyECDSAPrime256v1.create) $masPrivateKeyECDSAPrime256v1.value) }}
+  privateKeys:
+    {{- if or (not $masPrivateKeyRSA.create) $masPrivateKeyRSA.value }}
+    rsa:
+      secret: {{ $masPrivateKeyRSA.name | quote }}
+      secretKey: {{ $masPrivateKeyRSA.key | quote }}
+    {{- end }}
+    {{- if or (not $masPrivateKeyECDSAPrime256v1.create) $masPrivateKeyECDSAPrime256v1.value }}
+    ecdsaPrime256v1:
+      secret: {{ $masPrivateKeyECDSAPrime256v1.name | quote }}
+      secretKey: {{ $masPrivateKeyECDSAPrime256v1.key | quote }}
+    {{- end }}
+  {{- end }}
+  replicas: {{ .Values.replicas.matrixAuthenticationService }}
+  # https://github.com/element-hq/ess-helm/blob/main/docs/syn2mas.md
+  syn2mas:
+    enabled: {{ .Values.technical.matrix.migration.enabled }}
+    dryRun: {{ .Values.technical.matrix.migration.dryRun }}
+    containersSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      privileged: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: "RuntimeDefault"
+    image:
+      {{- $tagdata := splitn "@" 2 .Values.images.matrixSyn2Mas.tag }}
+      digest: {{ $tagdata._1 | quote }}
+      pullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.matrixSyn2Mas.registry | quote }}
+      repository: {{ .Values.images.matrixSyn2Mas.repository | quote }}
+      tag: {{ $tagdata._0 | quote }}
+    # The syn2mas Job doesn't inherit matrixAuthenticationService.extraVolumes/extraVolumeMounts
+    # above - it needs its own copy of every secret file referenced by matrixAuthenticationService
+    # .additional (client_secret_file for the guest module, the provisioning connector and the raw
+    # Keycloak upstream provider) since its config sync reads them directly.
+    extraVolumes:
+      - name: "guest-module-mas-client-secret-volume"
+        secret:
+          secretName: {{ .Values.secrets.matrixAuthenticationService.guestModuleClientSecret.name | quote }}
+      {{- if .Values.apps.nubus.enabled }}
+      - name: "provisioning-mas-client-secret-volume"
+        secret:
+          secretName: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.name | quote }}
+      {{- end }}
+      {{- if or (ne (env "OPENDESK_ENTERPRISE") "true") .Values.technical.matrix.migration.enabled }}
+      - name: "keycloak-matrix-client-secret-volume"
+        secret:
+          secretName: {{ .Values.secrets.keycloak.clientSecret.matrix.name | quote }}
+      {{- end }}
+      {{- if .Values.trust.secret.mount }}
+      - name: "trusted-cert-secret-volume"
+        secret:
+          secretName: {{ .Values.trust.secret.name | quote }}
+          items:
+            - key: "ca.crt"
+              path: "ca-certificates.crt"
+      {{- end }}
+    extraVolumeMounts:
+      - name: "guest-module-mas-client-secret-volume"
+        mountPath: "/secrets/guest-module-mas-client-secret"
+        readOnly: true
+      {{- if .Values.apps.nubus.enabled }}
+      - name: "provisioning-mas-client-secret-volume"
+        mountPath: "/secrets/provisioning-mas-client-secret"
+        readOnly: true
+      {{- end }}
+      {{- if or (ne (env "OPENDESK_ENTERPRISE") "true") .Values.technical.matrix.migration.enabled }}
+      - name: "keycloak-matrix-client-secret-volume"
+        mountPath: "/secrets/keycloak-matrix-client-secret"
+        readOnly: true
+      {{- end }}
+      {{- if .Values.trust.secret.mount }}
+      - name: "trusted-cert-secret-volume"
+        mountPath: "/etc/ssl/certs/ca-certificates.crt"
+        subPath: "ca-certificates.crt"
+      {{- end }}
+
+matrixRTC:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10033
+    runAsGroup: 10033
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.matrixRTC | toYaml | nindent 6 }}
+  enabled: true
+  replicas: {{ .Values.replicas.matrixRTC }}
+  image:
+      {{- $tagdata := splitn "@" 2 .Values.images.matrixLkJwtService.tag }}
+      digest: {{ $tagdata._1 | quote }}
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.matrixLkJwtService.registry | quote }}
+      repository: {{ .Values.images.matrixLkJwtService.repository | quote }}
+      pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      tag: {{ $tagdata._0 | quote }}
+  livekitAuth:
+    key: "matrix-rtc"
+    secret:
+      secret: {{ .Values.secrets.matrixRTC.livekitAuthSecret.name | quote }}
+      secretKey: {{ .Values.secrets.matrixRTC.livekitAuthSecret.key | quote }}
+  redisOrValkey:
+    host: {{ .Values.cache.matrixRTC.host | quote }}
+    port: {{ .Values.cache.matrixRTC.port }}
+    tls: {{ .Values.cache.matrixRTC.tls }}
+    password:
+      secret: {{ .Values.cache.matrixRTC.password.name | quote }}
+      secretKey: {{ .Values.cache.matrixRTC.password.key | quote }}
+  annotations: {{ merge
+    (.Values.annotations.matrixRTC.pod | default dict)
+    (.Values.annotations.matrixRTC.common | default dict)
+    | toYaml | nindent 4 }}
+  ingress:
+    annotations: {{- merge
+      (dict)
+      (.Values.annotations.matrixRTC.ingress | default dict)
+      (.Values.annotations.matrixRTC.common | default dict)
+      (dict "nginx.ingress.kubernetes.io/proxy-read-timeout" (.Values.ingress.parameters.bodyTimeout.matrixRTC | toString))
+      (dict "nginx.ingress.kubernetes.io/proxy-send-timeout" (.Values.ingress.parameters.bodyTimeout.matrixRTC | toString))
+      (dict "haproxy-ingress.github.io/timeout-server" (printf "%ds" .Values.ingress.parameters.bodyTimeout.matrixRTC))
+      (dict "haproxy-ingress.github.io/timeout-tunnel" (printf "%ds" .Values.ingress.parameters.bodyTimeout.matrixRTC))
+      | toYaml | nindent 6 }}
+    host: "{{ .Values.global.hosts.matrixRTC }}.{{ .Values.global.domain }}"
+    service:
+      annotations: {{ merge
+        (.Values.annotations.matrixRTC.service | default dict)
+        (.Values.annotations.matrixRTC.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.matrixRTC.serviceAccount | default dict)
+      (.Values.annotations.matrixRTC.common | default dict)
+      | toYaml | nindent 6 }}
+  sfu:
+    containersSecurityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      privileged: false
+      readOnlyRootFilesystem: true
+      seccompProfile:
+        type: "RuntimeDefault"
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 10030
+      runAsGroup: 10030
+      seccompProfile:
+        type: "RuntimeDefault"
+      seLinuxOptions:
+        {{ .Values.seLinuxOptions.matrixRTCSfu | toYaml | nindent 8 }}
+    labels:
+      opendesk.eu/element-customization: "enabled"
+    redisOrValkey:
+      host: {{ .Values.cache.matrixRTC.host | quote }}
+      port: {{ .Values.cache.matrixRTC.port }}
+      tls: {{ .Values.cache.matrixRTC.tls }}
+      password:
+        secret: {{ .Values.cache.matrixRTC.password.name | quote }}
+        secretKey: {{ .Values.cache.matrixRTC.password.key | quote }}
+    {{- if or .Values.turn.server.host .Values.turn.tls.host }}
+    additional:
+      external-turn:
+        configSecret: "opendesk-element-customization"
+        configSecretKey: "external-turn.yaml"
+    {{- end }}
+    annotations: {{ merge
+      (.Values.annotations.matrixRTC.sfuPod | default dict)
+      (.Values.annotations.matrixRTC.common | default dict)
+      | toYaml | nindent 6 }}
+    serviceAccount:
+      annotations: {{ merge
+        (.Values.annotations.matrixRTC.sfuServiceAccount | default dict)
+        (.Values.annotations.matrixRTC.common | default dict)
+        | toYaml | nindent 8 }}
+    replicas: {{ .Values.replicas.matrixRTCSfu }}
+    exposedServices:
+      {{- with .Values.technical.matrix.sfu.rtcTCP }}
+      rtcTcp:
+        enabled: true
+        annotations: {{ merge
+          ($.Values.annotations.matrixRTC.serviceRtcTCP | default dict)
+          ($.Values.annotations.matrixRTC.common | default dict)
+          | toYaml | nindent 10 }}
+        {{- with $sfuExternalIP }}
+        externalIPs:
+          - {{ . | quote }}
+        {{- end }}
+        port: {{ .port }}
+        portType: {{ $rtcPortType | quote }}
+      {{- end }}
+      {{- with .Values.technical.matrix.sfu.rtcMuxedUDP }}
+      rtcMuxedUdp:
+        enabled: {{ .enabled }}
+        annotations: {{ merge
+          ($.Values.annotations.matrixRTC.serviceRtcMuxedUDP | default dict)
+          ($.Values.annotations.matrixRTC.common | default dict)
+          | toYaml | nindent 10 }}
+        {{- with $sfuExternalIP }}
+        externalIPs:
+          - {{ . | quote }}
+        {{- end }}
+        port: {{ .port }}
+        portType: {{ $rtcPortType | quote }}
+      {{- end }}
+      # The UDP port range is not supported, as each port has to be exposed individually; UDP media uses `rtcMuxedUdp`.
+      rtcUdp:
+        enabled: false
+      # openDesk requires an external TURN server (see `turn.yaml.gotmpl`), so the built-in TURN servers stay disabled.
+      turnTLS:
+        enabled: false
+      turn:
+        enabled: false
+    image:
+      {{- $tagdata := splitn "@" 2 .Values.images.matrixLivekitServer.tag }}
+      digest: {{ $tagdata._1 | quote }}
+      registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.matrixLivekitServer.registry | quote }}
+      repository: {{ .Values.images.matrixLivekitServer.repository | quote }}
+      pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      tag: {{ $tagdata._0 | quote }}
+    {{- if $sfuLoadBalancer }}
+    # The IP of the shared LoadBalancer, discovered by opendesk-element-customization. Rendered by the SFU's config
+    # init container, not by Helmfile.
+    useStunToDiscoverPublicIP: false
+    manualIP: {{ "{{ readfile `/secrets/sfu-node-ip/ip` }}" | quote }}
+    extraVolumes:
+      - name: sfu-node-ip
+        secret:
+          secretName: opendesk-element-customization
+          items:
+            - key: sfu-node-ip
+              path: ip
+    extraVolumeMounts:
+      - name: sfu-node-ip
+        mountPath: /secrets/sfu-node-ip
+        readOnly: true
+    {{- else if $sfuExternalIP }}
+    useStunToDiscoverPublicIP: false
+    manualIP: {{ $sfuExternalIP | quote }}
+    {{- else }}
+    useStunToDiscoverPublicIP: true
+    {{- end }}
+
+matrixTools:
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.matrixTools.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.matrixTools.registry | quote }}
+    repository: {{ .Values.images.matrixTools.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+networking:
+  ipFamily: {{ if eq .Values.cluster.networking.ipFamilies "IPv4" }}"ipv4"{{ else if eq .Values.cluster.networking.ipFamilies "IPv6" }}"ipv6"{{ else }}"dual-stack"{{ end }}
+
+clusterDomain: {{ .Values.cluster.networking.domain | quote }}
+serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+synapse:
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10091
+    runAsGroup: 10091
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.synapse | toYaml | nindent 6 }}
+  resources: {{ .Values.resources.synapse | toYaml | nindent 4 }}
+  labels:
+    opendesk.eu/element-customization: "enabled"
+  replicas: {{ .Values.replicas.synapse }}
+  additional:
+    0-customConfig:
+      config: |
+        # Not needed under MAS anymore
+        # allow_guest_access: true
+        allow_public_rooms_over_federation: false
+        allow_public_rooms_without_auth: false
+        default_room_version: "12"
+        enable_set_displayname: {{ .Values.functional.chat.matrix.profile.allowUsersToUpdateDisplayname }}
+        # MSC4354: Sticky Events
+        # https://github.com/matrix-org/matrix-spec-proposals/pull/4354
+        experimental_features:
+          msc4354_enabled: true
+        {{- if .Values.functional.externalServices.matrix.federation.enabled }}
+        {{- if .Values.functional.externalServices.matrix.federation.domainAllowList }}
+        federation_domain_whitelist:
+          {{ .Values.functional.externalServices.matrix.federation.domainAllowList | toYaml | nindent 10 }}
+        {{- end }}
+        {{- else }}
+        # An empty federation_domain_whitelist disables federation
+        # (Omitting federation_domain_whitelist allows unrestricted federation)
+        federation_domain_whitelist: []
+        {{- end }}
+        limit_profile_requests_to_users_who_share_rooms: false
+        modules: # throws error in check config
+          - module: synapse_guest_module.GuestModule
+            config:
+              display_name_suffix: ' (Gast)'
+              mas:
+                admin_api_base_url: "https://{{ .Values.global.hosts.matrixAuthenticationService }}.{{ .Values.global.domain }}"
+                oauth_base_url: "https://{{ .Values.global.hosts.matrixAuthenticationService }}.{{ .Values.global.domain }}"
+                client_id: {{ .Values.platform.matrixGuestModuleMasClientId | quote }}
+                client_secret_filepath: "/secrets/guest-module-mas-client-secret/{{ .Values.secrets.matrixAuthenticationService.guestModuleClientSecret.key }}"
+        presence:
+          enabled: {{ .Values.functional.dataProtection.matrixPresence.enabled }}
+        use_presence: {{ .Values.functional.dataProtection.matrixPresence.enabled }}
+        # To allow intercom service logins for the users and also allow proper testautomation we want to raise the
+        # ratelimit in a reasonable manner.
+        # https://matrix-org.github.io/synapse/v1.59/usage/configuration/config_documentation.html#ratelimiting
+        rc_login:
+          account:
+            per_second: 2
+            burst_count: 8
+          address:
+            per_second: 2
+            burst_count: 12
+        # Set higher limits for messages and media due to non-chat Matrix apps and widgets (such as NeoBoard)
+        # https://github.com/nordeck/matrix-neoboard/blob/main/docs/configuration.md#rate-limiting-settings
+        rc_media_create:
+          per_second: 20
+          burst_count: 100
+        rc_message:
+          per_second: 5
+          burst_count: 25
+        # Allow local users to publish rooms in CE (EE sets this explicitly in the Helm chart).
+        room_list_publication_rules:
+          - action: "allow"
+            user_id: "@*:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
+        room_prejoin_state:
+          additional_event_types:
+            - "m.space.parent"
+            - "net.nordeck.meetings.metadata"
+            - "m.room.power_levels"
+        user_directory:
+          enabled: true
+          search_all_users: true
+    1-emailConfig:
+      configSecret: "opendesk-element-customization"
+      configSecretKey: "email.yaml"
+    {{- if ne (env "OPENDESK_ENTERPRISE") "true" }}
+    2-storageConfig:
+      configSecret: "opendesk-element-customization"
+      configSecretKey: "storage.yaml"
+    {{- end }}
+    {{- if .Values.technical.matrix.migration.enabled }}
+    3-legacyOidcConfig:
+      configSecret: "opendesk-element-customization"
+      configSecretKey: "synapse-legacy-oidc.yaml"
+    {{- end }}
+  annotations: {{ merge
+    (dict "intents.otterize.com/service-name" "opendesk-synapse" )
+    (.Values.annotations.synapse.pod | default dict)
+    (.Values.annotations.synapse.common | default dict)
+    | toYaml | nindent 4 }}
+  appservices:
+    - secret: "opendesk-element-customization"
+      secretKey: "intercom-service.yaml"
+    - secret: "opendesk-element-customization"
+      secretKey: "ox-appsuite.yaml"
+  checkConfigHook:
+    {{- if and .Values.technical.matrix.migration.enabled (not .Values.technical.matrix.migration.dryRun) }}
+    # Step 2 of syn2mas (real migration) activates MSC3861 delegation while
+    # synapse-legacy-oidc.yaml (see matrixAuthenticationService.additional / synapse.additional)
+    # is still present - Synapse's own check rejects that combination ("SSO cannot be enabled
+    # when OAuth delegation is enabled"). Re-enabled once the migration finalizes
+    # (technical.matrix.migration.enabled: false), when that config is gone again.
+    # https://github.com/element-hq/ess-helm/blob/main/docs/syn2mas.md
+    enabled: false
+    {{- else }}
+    enabled: true
+    {{- end }}
+  extraEnv:
+    - name: "PYTHONPATH"
+      value: "/modules"
+    {{- if .Values.trust.secret.mount }}
+    - name: "REQUESTS_CA_BUNDLE"
+      value: "/etc/ssl/certs/ca-certificates.crt"
+    - name: "SSL_CERT_FILE"
+      value: "/etc/ssl/certs/ca-certificates.crt"
+    {{- end }}
+  extraInitContainers:
+    - image: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.synapseGuestModule.registry }}/{{ .Values.images.synapseGuestModule.repository }}:{{ .Values.images.synapseGuestModule.tag }}"
+      imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      name: "install-guest-module"
+      resources: {{ .Values.resources.synapse | toYaml | nindent 8 }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - "ALL"
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 10991
+        runAsGroup: 10991
+        seccompProfile:
+          type: "RuntimeDefault"
+        seLinuxOptions: {{ .Values.seLinuxOptions.synapse | toYaml | nindent 10 }}
+      volumeMounts:
+        - mountPath: "/modules"
+          name: "synapse-modules"
+    {{- if ne (env "OPENDESK_ENTERPRISE") "true" }}
+    - image: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.synapseS3StorageProvider.registry }}/{{ .Values.images.synapseS3StorageProvider.repository }}:{{ .Values.images.synapseS3StorageProvider.tag }}"
+      imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+      name: "install-s3storageprovider-module"
+      resources: {{ .Values.resources.synapse | toYaml | nindent 8 }}
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop:
+            - "ALL"
+        privileged: false
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 10991
+        runAsGroup: 10991
+        seccompProfile:
+          type: "RuntimeDefault"
+        seLinuxOptions: {{ .Values.seLinuxOptions.synapse | toYaml | nindent 10 }}
+      volumeMounts:
+        - mountPath: "/modules"
+          name: "synapse-modules"
+    {{- end }}
+  extraVolumes:
+    - name: "synapse-modules"
+      emptyDir:
+        medium: "Memory"
+        sizeLimit: "50Mi"
+    - name: "guest-module-mas-client-secret-volume"
+      secret:
+        secretName: {{ .Values.secrets.matrixAuthenticationService.guestModuleClientSecret.name | quote }}
+    {{- if and .Values.trust.secret.mount (ne (env "OPENDESK_ENTERPRISE") "true") }}
+    - name: "trusted-cert-secret-volume"
+      secret:
+        secretName: {{ .Values.trust.secret.name | quote }}
+        items:
+          - key: "ca.crt"
+            path: "ca-certificates.crt"
+    {{- end }}
+  extraVolumeMounts:
+    - mountPath: "/modules"
+      name: "synapse-modules"
+    - name: "guest-module-mas-client-secret-volume"
+      mountPath: "/secrets/guest-module-mas-client-secret"
+      readOnly: true
+    {{- if and .Values.trust.secret.mount (ne (env "OPENDESK_ENTERPRISE") "true") }}
+    - name: "trusted-cert-secret-volume"
+      mountPath: "/etc/ssl/certs/ca-certificates.crt"
+      subPath: "ca-certificates.crt"
+    {{- end }}
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.synapse.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.synapse.registry | quote }}
+    repository: {{ .Values.images.synapse.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  ingress:
+    annotations: {{- merge
+      (dict)
+      (.Values.annotations.synapse.ingress | default dict)
+      (.Values.annotations.synapse.common | default dict)
+      (dict "nginx.ingress.kubernetes.io/proxy-read-timeout" (.Values.ingress.parameters.bodyTimeout.synapse | toString))
+      (dict "nginx.ingress.kubernetes.io/proxy-send-timeout" (.Values.ingress.parameters.bodyTimeout.synapse | toString))
+      (dict "haproxy-ingress.github.io/proxy-body-size" (.Values.ingress.parameters.bodySize.synapse | toString))
+      (dict "haproxy-ingress.github.io/timeout-server" (printf "%ds" .Values.ingress.parameters.bodyTimeout.synapse))
+      | toYaml | nindent 6 }}
+    host: "{{ .Values.global.hosts.synapse }}.{{ .Values.global.domain }}"
+    service:
+      annotations: {{ merge
+        (.Values.annotations.synapse.service | default dict)
+        (.Values.annotations.synapse.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  logging:
+    {{- if .Values.debug.enabled }}
+    rootLevel: "DEBUG"
+    {{- else }}
+    rootLevel: "INFO"
+    {{- end }}
+  macaroon:
+    secret: {{ .Values.secrets.synapse.macaroonSecretKey.name | quote }}
+    secretKey: {{ .Values.secrets.synapse.macaroonSecretKey.key | quote }}
+  media:
+    maxUploadSize: {{ .Values.ingress.parameters.bodySize.synapse | quote}}
+    storage:
+    {{- if .Values.persistence.storages.synapse.existingClaim }}
+      existingClaim: {{ .Values.persistence.storages.synapse.existingClaim | quote }}
+    {{- else }}
+      size: {{ .Values.persistence.storages.synapse.size | quote }}
+      storageClassName: {{ coalesce .Values.persistence.storages.synapse.storageClassName .Values.persistence.storageClassNames.RWO | default "" | quote }}
+    {{- end }}
+  postgres:
+    database: {{ .Values.databases.synapse.name | quote }}
+    host: {{ .Values.databases.synapse.host | quote }}
+    port: {{ .Values.databases.synapse.port }}
+    sslMode: {{ .Values.databases.synapse.sslmode | quote }}
+    password:
+      secret: {{ .Values.databases.synapse.password.name | quote }}
+      secretKey: {{ .Values.databases.synapse.password.key | quote }}
+    user: {{ .Values.databases.synapse.username | quote }}
+  redisOrValkey:
+    host: {{ .Values.cache.synapse.host | quote }}
+    port: {{ .Values.cache.synapse.port }}
+    tls: {{ .Values.cache.synapse.tls }}
+    password:
+      secret: {{ .Values.cache.synapse.password.name | quote }}
+      secretKey: {{ .Values.cache.synapse.password.key | quote }}
+  registrationSharedSecret:
+    secret: {{ .Values.secrets.synapse.registrationSharedSecret.name | quote }}
+    secretKey: {{ .Values.secrets.synapse.registrationSharedSecret.key | quote }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.synapse.serviceAccount | default dict)
+      (.Values.annotations.synapse.common | default dict)
+      | toYaml | nindent 6 }}
+  {{- if or (not .Values.secrets.synapse.signingKey.create) .Values.secrets.synapse.signingKey.value }}
+  signingKey:
+    secret: {{ .Values.secrets.synapse.signingKey.name | quote }}
+    secretKey: {{ .Values.secrets.synapse.signingKey.key | quote }}
+  {{- end }}
+  # A worker is only deployed once it is scaled - its replica count is above 1 or its autoscaling (openDesk
+  # Enterprise only) is enabled - as it otherwise just moves work off the main process without adding capacity.
+  # The media repository always runs as a separate, single worker. See `technical.matrix.autoscaling.synapse`.
+  {{- $enterprise := eq (env "OPENDESK_ENTERPRISE") "true" }}
+  {{- $federation := .Values.functional.externalServices.matrix.federation.enabled }}
+  workers:
+    client-reader:
+      enabled: {{ or (gt (int .Values.replicas.synapseClientReader) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.clientReader.enabled) }}
+      replicas: {{ .Values.replicas.synapseClientReader }}
+    device-lists:
+      enabled: {{ gt (int .Values.replicas.synapseDeviceLists) 1 }}
+      replicas: {{ .Values.replicas.synapseDeviceLists }}
+    event-creator:
+      enabled: {{ or (gt (int .Values.replicas.synapseEventCreator) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.eventCreator.enabled) }}
+      replicas: {{ .Values.replicas.synapseEventCreator }}
+    event-persister:
+      enabled: {{ gt (int .Values.replicas.synapseEventPersister) 1 }}
+      replicas: {{ .Values.replicas.synapseEventPersister }}
+    federation-inbound:
+      enabled: {{ and $federation (or (gt (int .Values.replicas.synapseFederationInbound) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.federationInbound.enabled)) }}
+      replicas: {{ .Values.replicas.synapseFederationInbound }}
+    federation-reader:
+      enabled: {{ and $federation (or (gt (int .Values.replicas.synapseFederationReader) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.federationReader.enabled)) }}
+      replicas: {{ .Values.replicas.synapseFederationReader }}
+    federation-sender:
+      enabled: {{ and $federation (gt (int .Values.replicas.synapseFederationSender) 1) }}
+      replicas: {{ .Values.replicas.synapseFederationSender }}
+    initial-synchrotron:
+      enabled: {{ or (gt (int .Values.replicas.synapseInitialSynchrotron) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.initialSynchrotron.enabled) }}
+      replicas: {{ .Values.replicas.synapseInitialSynchrotron }}
+    mas-helper:
+      enabled: {{ or (gt (int .Values.replicas.synapseMasHelper) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.masHelper.enabled) }}
+      replicas: {{ .Values.replicas.synapseMasHelper }}
+    media-repository:
+      enabled: true
+      replicas: {{ .Values.replicas.synapseMediaRepository }}
+    pusher:
+      enabled: {{ gt (int .Values.replicas.synapsePusher) 1 }}
+      replicas: {{ .Values.replicas.synapsePusher }}
+    receipts:
+      enabled: {{ gt (int .Values.replicas.synapseReceipts) 1 }}
+      replicas: {{ .Values.replicas.synapseReceipts }}
+    sliding-sync:
+      enabled: {{ or (gt (int .Values.replicas.synapseSlidingSync) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.slidingSync.enabled) }}
+      replicas: {{ .Values.replicas.synapseSlidingSync }}
+    synchrotron:
+      enabled: {{ or (gt (int .Values.replicas.synapseSynchrotron) 1) (and $enterprise .Values.technical.matrix.autoscaling.synapse.synchrotron.enabled) }}
+      replicas: {{ .Values.replicas.synapseSynchrotron }}
+
+wellKnownDelegation:
+  enabled: true
+  baseDomainRedirect:
+    enabled: false
+  ingress:
+    annotations: {{ merge
+      (.Values.annotations.matrixWellKnownDelegation.ingress | default dict)
+      (.Values.annotations.matrixWellKnownDelegation.common | default dict)
+      | toYaml | nindent 6 }}
+    service:
+      annotations: {{ merge
+        (.Values.annotations.matrixWellKnownDelegation.service | default dict)
+        (.Values.annotations.matrixWellKnownDelegation.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsEnabled: true
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+...

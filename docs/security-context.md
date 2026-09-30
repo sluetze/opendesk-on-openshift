@@ -154,10 +154,9 @@ This list gives you an overview of templated security settings and if they compl
 | **element**/matrix-neodatefix-bot | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-bot-bootstrap | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-element | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
+| **element**/element | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/opendesk-matrix-user-verification-service | :x: | no | no | no | yes | 1000 | 1000 | yes | yes |
 | **element**/opendesk-matrix-user-verification-service-bootstrap | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-provisioning-admin-bootstrap | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/opendesk-synapse | :white_check_mark: | no | no | yes | yes | 10991 | 10991 | yes | yes |
 | **element**/opendesk-synapse-web | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/opendesk-well-known | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |

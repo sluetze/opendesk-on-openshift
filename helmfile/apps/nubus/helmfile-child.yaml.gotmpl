@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 repositories:
@@ -88,7 +88,7 @@ releases:
       {{- end }}
     needs:
       - "ums"
-    installed: {{ and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
+    installed: {{ and .Values.apps.nubus.enabled (or .Values.apps.element.enabled .Values.apps.neoboard.enabled) }}
     timeout: {{ .Values.deployment.timeouts.releases.opendeskProvisioningSynapse | default .Values.deployment.timeouts.default }}
 
 commonLabels:

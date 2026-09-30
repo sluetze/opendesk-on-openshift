@@ -13,8 +13,17 @@ serviceAccount:
 
 migrations:
   stage: "PRE"
-  # No pre-stage action of this release needs a credential. The stage can only mount Secrets
-  # that already exist before any component of this release is deployed - see
-  # ../../../docs/migrations-automated.md#secretfiles.
-  secretFiles: []
+  # The stage can only mount Secrets that already exist before any component of this release is
+  # deployed - see ../../../docs/migrations-automated.md#secretfiles. The one below is created by the
+  # `opendesk-secrets` release, which this one needs.
+  secretFiles:
+  {{- if and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
+    # For `synapse_deactivate_orphaned_users`, which reads the previous Synapse's database.
+    - name: "synapse-db-password"
+      secret:
+        name: {{ .Values.databases.synapse.password.name | quote }}
+        key: {{ .Values.databases.synapse.password.key | quote }}
+  {{- else }}
+    []
+  {{- end }}
 ...

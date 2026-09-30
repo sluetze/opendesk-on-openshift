@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 pod:
-  - name: "require-tag-and-digest"
-    rule: "require-tag-and-digest"
+  - name: "require-digest"
+    rule: "require-digest"
     type: "required"
     kinds:
       - "StatefulSet"

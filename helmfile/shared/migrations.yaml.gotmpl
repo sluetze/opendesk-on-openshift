@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 global:
@@ -81,38 +81,45 @@ migrations:
     # Executed before the deployment, in the order listed. An action is only declared when the
     # components it works on are actually installed - the same conditions that gate the
     # corresponding releases.
-    pre: []
-    # Executed after the deployment, in the order listed.
-    post:
-    {{- if and .Values.apps.nubus.enabled .Values.apps.element.enabled }}
+    pre:
+    {{- if .Values.apps.element.enabled }}
+    {{- if .Values.apps.nubus.enabled }}
       # Deactivates the Matrix accounts of users that were deleted from the directory before the
       # openDesk Provisioning Connector existed to react to it - the connector handles this on the
       # fly from now on, this is the one-time catch-up. See
       # ../../docs/migrations-automated.md#synapse_deactivate_orphaned_users
       #
       # Reads the LDAP (Nubus) and acts on Synapse (Element), so it is only declared when both are
-      # installed. In `migrations-post` because it uses the access token of the provisioning
-      # admin account, which the `opendesk-provisioning-admin-bootstrap` release of *this*
-      # deployment creates.
+      # installed. The first action of all, in `migrations-pre` and only for deployments still on
+      # v1.18: it acts on the previous Synapse while that still runs its own authentication, before
+      # the Element release of *this* deployment and syn2mas move the users to the Matrix
+      # Authentication Service. syn2mas carries a deactivated account over as a deactivated MAS user
+      # without sessions, so cleaning up Synapse is all it takes, and the action never acts on a
+      # Synapse behind MAS - which would leave the MAS user active. It registers the admin it acts
+      # as through Synapse's registration shared secret, which only the legacy authentication offers.
       #
       # The only action whose `runMode` is not a literal: deactivation cannot be undone, so it
       # defaults to a dry run that reports every account it would touch, and applies only once the
       # per-deployment option `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` in
       # `migrations.yaml.gotmpl` was consciously set to `false`. Changing the option changes the
-      # footprint, which is exactly what makes the same tagged work run once more, in apply mode.
+      # footprint, which is what makes the same tagged work run once more, in apply mode. As only a
+      # completed `migrations-post` advances the recorded release, operators can deploy just this
+      # stage for the dry run, review it and then upgrade with the option set - the window stays
+      # open until the first upgrade deployment went through.
       - id: "synapse_deactivate_orphaned_users"
         tag: "v1.19.0"
         runMode: {{ if .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun }}"dry-run"{{ else }}"apply"{{ end }}
         versions:
           minimum: "v1.18"
           from: "v1.18"
-          to: "v1"
+          to: "v1.18"
         config:
           ldap:
             pod: "ums-ldap-server-primary-0"
             container: "main"
           synapse:
             connection:
+              # The previous (legacy) Synapse, which the Element release of this deployment replaces.
               url: {{ printf "http://%s.%s.svc.%s:8008" "opendesk-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
             dryRun: {{ .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun }}
             erase: {{ .Values.functional.dataProtection.matrixAccountErasure.enabled }}
@@ -129,6 +136,60 @@ migrations:
             # property of that deployment.
             maxOrphanPercent: {{ .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.maxOrphanPercent }}
     {{- end }}
+      # Marks an existing Matrix deployment as running Synapse's own (legacy) authentication, see
+      # ../../docs/migrations-automated.md#configmap_create
+      #
+      # The Element chart's matrix-tools read this marker to tell an upgraded deployment from a
+      # fresh installation, and refuse to switch an existing one to Matrix Authentication Service
+      # (MSC3861) delegation other than through syn2mas. In `migrations-pre` because it has to be
+      # in place before the Element release of *this* deployment is applied. A fresh installation
+      # never gets it, as the migrations skip fresh installations altogether.
+      - id: "configmap_create"
+        tag: "v1.19.0"
+        runMode: "apply"
+        versions:
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1.18"
+        config:
+          configmap:
+            name: "element-markers"
+            data:
+              MATRIX_STACK_MSC3861: "legacy_auth"
+            labels:
+              app.kubernetes.io/managed-by: "matrix-tools-deployment-markers"
+      {{- if and .Values.secrets.synapse.signingKey.create (not .Values.secrets.synapse.signingKey.value) }}
+      # Carries the signing key the previous Synapse generated on its volume over to the Element
+      # chart, which would otherwise generate a new one and give the homeserver a new identity. See
+      # ../../docs/migrations-automated.md#synapse_signing_key_export
+      #
+      # In `migrations-pre` because the key is read from the previous Synapse pod, which is
+      # replaced once the Element release of *this* deployment is applied. Only declared while no
+      # key is configured (`SYNAPSE_SIGNING_KEY`): a configured key is what the Element chart
+      # uses, and the Secret written here would not be read.
+      - id: "synapse_signing_key_export"
+        tag: "v1.19.0"
+        runMode: "apply"
+        versions:
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1.18"
+        config:
+          source:
+            pod: "opendesk-synapse-0"
+            container: "synapse"
+            path: "/media/generatedSecrets/signingKey"
+          target:
+            secret: "element-generated"
+            key: "SYNAPSE_SIGNING_KEY"
+            labels:
+              app.kubernetes.io/managed-by: "matrix-tools-init-secrets"
+      {{- end }}
+    {{- else }}
+      []
+    {{- end }}
+    # Executed after the deployment, in the order listed.
+    post:
     {{- if .Values.apps.nubus.enabled }}
       # Removes the NT password hashes and the weak Kerberos keys Nubus 1.22.0 stopped writing
       # from every account still carrying them, with the two cleanup tools that release ships.

@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -32,8 +33,10 @@ apps:
     enabled: {{ .Values.apps.element.enabled }}
   elementAdmin:
     enabled: {{ .Values.apps.elementAdmin.enabled }}
-  elementGroupsync:
-    enabled: {{ .Values.apps.elementGroupsync.enabled }}
+  elementSupervision:
+    enabled: {{ .Values.apps.elementSupervision.enabled }}
+  elementAuditbot:
+    enabled: {{ .Values.apps.elementAuditbot.enabled }}
   home:
     enabled: {{ .Values.apps.home.enabled }}
   jitsi:

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -143,7 +143,12 @@ jitsi:
       TURN_HOST: {{ .Values.turn.server.host | quote }}
       TURN_PORT: {{ .Values.turn.server.port | quote }}
       TURN_TRANSPORT: {{ .Values.turn.transport | quote }}
-      TURN_CREDENTIALS: {{ .Values.turn.credentials | quote }}
+    extraSecrets:
+      - name: "TURN_CREDENTIALS"
+        valueFrom:
+          secretKeyRef:
+            name: {{ .Values.secrets.turn.sharedSecret.name | quote }}
+            key: {{ .Values.secrets.turn.sharedSecret.key | quote }}
     resources:
       {{ .Values.resources.prosody | toYaml | nindent 6 }}
     securityContext:

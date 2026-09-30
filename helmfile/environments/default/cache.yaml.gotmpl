@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -82,6 +83,16 @@ cache:
       name: "cache-notes-password"
       key: "password"
     tls: false
+  matrixRTC:
+    host: "redis-headless"
+    port: 6379
+    username: "default" # username not supported
+    password:
+      value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-matrix-rtc-password"
+      key: "password"
+    tls: false
   openproject:
     host: "memcached"
     port: 11211
@@ -94,6 +105,16 @@ cache:
     # Value-only: OX App Suite inlines the password into its properties.
     password:
       value: {{ $redisDefaultPassword | quote }}
+    tls: false
+  synapse:
+    host: "redis-headless"
+    port: 6379
+    username: "default" # username not supported
+    password:
+      value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-synapse-password"
+      key: "password"
     tls: false
   umsSelfservice:
     host: "memcached"

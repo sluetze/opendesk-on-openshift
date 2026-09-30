@@ -1,12 +1,9 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 #
 # This file provides you with an overview of all available annotation options for the different components.
 # You can use it as a template for your own annotations file, or as a reference for the available annotations.
 # The values are set to null (~) by default, which means that they will not be applied.
-#
-# For haproxy-ingress.github.io support openDesk makes use of some Ingress annotations via the file
-# `annotations_haproxy.yaml.gotmpl`.
 ---
 annotations:
   cassandra:
@@ -26,70 +23,77 @@ annotations:
     ingress: ~
     pod: ~
     serviceAccount: ~
-  element:
+  elementAdmin:
     common: ~
     ingress: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixNeoboardWidget:
+  elementCustomization:
+    common: ~
+    job: ~
+    serviceAccount: ~
+  elementWeb:
+    common: ~
+    ingress: ~
+    pod: ~
+    service: ~
+    serviceAccount: ~
+  matrixStack:
+    ingress: ~
+    service: ~
+  matrixHaproxy:
+    pod: ~
+    serviceAccount: ~
+  matrixInitSecrets:
+    pod: ~
+    serviceAccount: ~
+  matrixNeoBoardWidget:
     additional: ~
     ingress: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixNeochoiceWidget:
+  matrixNeoChoiceWidget:
     additional: ~
     ingress: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixNeodatefixBot:
+  matrixNeoDateFixBot:
     additional: ~
     ingress: ~
     persistence: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixNeodatefixBotBootstrap:
+  matrixNeoDateFixBotBootstrap:
     pod: ~
     serviceAccount: ~
-  elementMatrixNeodatefixWidget:
+  matrixNeoDateFixWidget:
     additional: ~
     ingress: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixUserVerificationService:
+  matrixUserVerificationService:
     additional: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementMatrixUserVerificationServiceBootstrap:
+  matrixUserVerificationServiceBootstrap:
     pod: ~
     serviceAccount: ~
-  elementProvisioningAdminBootstrap:
-    pod: ~
-    serviceAccount: ~
-  elementSynapse:
-    common: ~
-    federationIngress: ~
-    persistence: ~
-    pod: ~
-    service: ~
-    serviceAccount: ~
-  elementSynapseWeb:
+  synapse:
     common: ~
     ingress: ~
     pod: ~
     service: ~
     serviceAccount: ~
-  elementWellKnown:
+  matrixWellKnownDelegation:
     common: ~
     ingress: ~
-    pod: ~
     service: ~
-    serviceAccount: ~
   jitsi:
     pod: ~
     serviceAccount: ~
@@ -113,6 +117,37 @@ annotations:
   jitsiWeb:
     ingress: ~
     pod: ~
+  matrixAuthenticationService:
+    common: ~
+    ingress: ~
+    pod: ~
+    service: ~
+    serviceAccount: ~
+  matrixRTC:
+    common: ~
+    ingress: ~
+    pod: ~
+    service: ~
+    # The shared TCP/UDP LoadBalancer of the SFU, created with service type `LoadBalancer`.
+    serviceExternal: ~
+    serviceRtcTCP: ~
+    serviceRtcMuxedUDP: ~
+    serviceAccount: ~
+    sfuPod: ~
+    sfuServiceAccount: ~
+  matrixAuditbot:
+    serviceAccount: ~
+  matrixSupervision:
+    common: ~
+    ingress: ~
+    service: ~
+    serviceAccount: ~
+  neoboard:
+    additional: ~
+    ingress: ~
+    pod: ~
+    service: ~
+    serviceAccount: ~
   nextcloudAio:
     additional: ~
     ingress: ~

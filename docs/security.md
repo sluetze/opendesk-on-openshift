@@ -25,6 +25,8 @@ All charts except the ones mentioned below are verified by Helmfile.
 | Repository                | Verifiable |
 | ------------------------- | :--------: |
 | collabora-controller-repo |     no     |
+| element                   |     no     |
+| neoboard                  |     no     |
 | open-xchange-repo         | cosign[^1] |
 
 ## Kubernetes security enforcements

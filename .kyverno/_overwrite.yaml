@@ -1,6 +1,11 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 replicas:
+  matrixRTC: 1
+  matrixRTCSfu: 1
+  synapse: 1
+  synapseMediaRepository: 1
   umsLdapServerPrimary: 2
 ...
