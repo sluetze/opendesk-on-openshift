@@ -3,6 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 replicas:
+  elementAuditbot: 1
+  elementSupervision: 1
   matrixRTC: 1
   matrixRTCSfu: 1
   synapse: 1
