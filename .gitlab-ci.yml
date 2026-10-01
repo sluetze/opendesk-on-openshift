@@ -4,6 +4,10 @@
 ---
 .opendesk-env-ref-anchor: &opendesk_env_ref "env-v3"
 
+workflow:
+  auto_cancel:
+    on_new_commit: "conservative"
+
 include:
   - project: "bmi/opendesk/tooling/gitlab-config"
     ref: "v2.6.9"

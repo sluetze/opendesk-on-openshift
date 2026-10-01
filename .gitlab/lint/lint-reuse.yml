@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 reuse-linter:
+  interruptible: true
   allow_failure: false
   rules:
     - if: "$JOB_REUSE_LINTER_ENABLED == 'false' || $CI_PIPELINE_SOURCE =~ 'tags|web|merge_request_event'"

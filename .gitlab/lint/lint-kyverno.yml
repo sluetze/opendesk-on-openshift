@@ -6,6 +6,7 @@ include:
   - local: "/.gitlab/lint/lint-common.yml"
 
 helmfile-template:
+  interruptible: true
   allow_failure: false
   artifacts:
     paths:
@@ -56,6 +57,7 @@ helmfile-template:
       Is the app enabled in the 'test' environment?"; exit 1; }
 
 helmfile-template-diff:
+  interruptible: true
   allow_failure: true
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
@@ -100,6 +102,7 @@ helmfile-template-diff:
     GIT_STRATEGY: "clone"
 
 lint-kyverno-required:
+  interruptible: true
   allow_failure: false
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
@@ -142,6 +145,7 @@ lint-kyverno-required:
 # stay in `lint-kyverno-prefereable` as non-blocking warnings. When an app's
 # warnings reach zero, move it from the warning matrix to the enforced one.
 .lint-kyverno-prefereable-base:
+  interruptible: true
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
   needs:
