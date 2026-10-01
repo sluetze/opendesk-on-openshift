@@ -19,12 +19,13 @@ deployment:
       matrixNeodatefixBot: ~
       matrixNeodatefixBotBootstrap: ~
       matrixNeodatefixWidget: ~
-      # Includes waiting for the MatrixRTC SFU LoadBalancer IP (up to 90% of this timeout).
+      # Includes waiting for the MatrixRTC SFU LoadBalancer IP.
       opendeskElementCustomization: 1200
       opendeskMatrixUserVerificationService: ~
       opendeskMatrixUserVerificationServiceBootstrap: 600
       # jitsi
-      jitsi: ~
+      # Includes waiting for the JVB LoadBalancer IP.
+      jitsi: 1200
       # neoboard
       matrixNeoboardStandalone: ~
       # nextcloud
