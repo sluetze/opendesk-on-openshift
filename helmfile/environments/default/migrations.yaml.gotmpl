@@ -47,9 +47,8 @@ migrations:
   objectStore:
     # Set to the path of a mounted CA certificate when your object store's certificate is issued by
     # a CA the migrations image does not know. Mount it through the migration releases'
-    # `extraVolumes`/`extraVolumeMounts`. When `certificate.selfSigned` is true, openDesk already
-    # mounts Secret `opendesk-certificates-ca-tls` `ca.crt` at this path (same as OpenProject).
-    caBundle: {{ if .Values.certificate.selfSigned }}"/etc/ssl/certs/ca-certificates.crt"{{ else }}""{{ end }}
+    # `extraVolumes`/`extraVolumeMounts`.
+    caBundle: ""
     # Only for test deployments with a self-signed certificate. Switching this off means the
     # handover between the two stages travels over a connection nothing authenticates.
     verifySSL: true

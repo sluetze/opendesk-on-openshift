@@ -82,6 +82,12 @@ certificate:
   # ocp22 archive of Option 2a path: docs/openshift-legacy-selfsigned-ca/
   selfSigned: true
 
+# Public objectstorage HTTPS uses the BYO/RH CA. Migrations Python/OpenSSL
+# does not ship that issuer; same Secret/path as OpenProject.
+migrations:
+  objectStore:
+    caBundle: "/etc/ssl/certs/ca-certificates.crt"
+
 secrets:
   # Hard chart requirement: Java trustStorePassword (OX/XWiki) + Secret
   # opendesk-certificates-keystore-jks. Must match whatever password was used
