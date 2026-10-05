@@ -30,8 +30,11 @@ requiredDropCapabilities:
 - ALL
 runAsUser:
   type: RunAsAny
+# 1.19 helmfile uses empty seLinuxOptions {} which MustRunAs rejects
+# (`level: ""`). RunAsAny matches the empty map; MCS still applied by default
+# when the pod omits seLinuxOptions.
 seLinuxContext:
-  type: MustRunAs
+  type: RunAsAny
 seccompProfiles:
 - runtime/default
 supplementalGroups:
