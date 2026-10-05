@@ -71,7 +71,8 @@ deployment:
       postfix: ~
       postgresql: ~
       redis: ~
-      seaweedfs: ~
+      # Bucket hook waits on master gRPC per identity (ocp22 ~34m for many buckets).
+      seaweedfs: 2400
       seaweedfsConfig: ~
       # xwiki
       xwiki: 600
