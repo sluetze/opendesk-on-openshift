@@ -15,6 +15,16 @@ images:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/community/images-mirror/os-shell"
     tag: "12-debian-12-r44@sha256:e0eab38c4e2e2ebfc9043bc9bc482109ec5cca3123154c1af8e040ea23c5ce98"
+  busybox:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Nordeck"
+    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRepository: "library/busybox"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["1", "38", "0"]
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/busybox"
+    tag: "1.38.0@sha256:1cfa4e2b09e127b9c4ed43578d3f3c18e7d44ea47b9ea98475c0cbe9086525f8"
   cassandra:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
@@ -63,11 +73,11 @@ images:
     # providerResponsible: "XWiki"
     # upstreamRegistry: "https://registry-1.docker.io"
     # upstreamRepository: "cryptpad/cryptpad"
-    # upstreamMirrorTagFilterRegEx: '^version-(\d+)\.(\d+)\.(\d+)$'
-    # upstreamMirrorStartFrom: ["2025", "6", "0"]
+    # upstreamMirrorTagFilterRegEx: '^\w+-(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["2026", "8", "4"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/xwiki/images-mirror/cryptpad"
-    tag: "version-2025.9.0@sha256:484492964391231863b21e8735e5b168230dcc6906b58f320526a46c78dfa53b"
+    tag: "opendesk-2026.08.04@sha256:127bd5c8c659c976b1320db1da8bc5be298874b2b308bd8831755106df7fc04c"
   dkimpy:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -170,43 +180,43 @@ images:
   jibri:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/jibri"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["8922"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/jibri"
-    tag: "stable-11031@sha256:5f95b700c109b736cde843e4945b2a4546dd8ede5c1081f13f6950f275e5439a"
+    tag: "stable-11146-1@sha256:4df4c547e148fad5f5f5449e4da079667f13afb370ef95ee3da7cd71303457a3"
   jicofo:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/jicofo"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["8922"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/jicofo"
-    tag: "stable-11031@sha256:7098bac47273e4af312e9f424994ef97606b8cc1df8570d3ef8f055ec8d41dbe"
+    tag: "stable-11146-1@sha256:e97f3e568ccdc361bf1521321cf0d5a14202ecbee965fd3d28d804847364f387"
   jigasi:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/jigasi"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["9955"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/jigasi"
-    tag: "stable-11031@sha256:3d65671bbd6ac4b5abf0b4a8bf73fc64bf424144cad5143fb3e0bd129a681bf2"
+    tag: "stable-11146-1@sha256:268ed5e89cf59c7773da794cb0301dac77e9cf35d685d3bf86e8a2c4bde5f236"
   jitsi:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/web"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["8922"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/web"
-    tag: "stable-11031@sha256:ac0a93f236e5b4b5f65e03d1d2373ca491636009263653d02bc51054b043eee1"
+    tag: "stable-11146-1@sha256:e60202d77b2f98ef2d275fc030817501702c6f74ca2a9685d1ee1b8a9117735e"
   jitsiKeycloakAdapter:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
@@ -230,13 +240,13 @@ images:
   jvb:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/jvb"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["8922"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/jvb"
-    tag: "stable-11031@sha256:dffc0702c73b307e9a4fcca2853af539c92c27f39638b73d20e080012c58cc10"
+    tag: "stable-11146-1@sha256:5bf72ce5125700870037534e8992148b37bdd6c669913c547e9220655343b956"
   mariadb:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
@@ -312,7 +322,7 @@ images:
     # upstreamRepository: "bmi/opendesk/components/platform-development/images/opendesk-migrations"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-migrations"
-    tag: "1.9.0@sha256:b4e19a2a478d9f70a5d10c3217d4de70c1fd6c51275e720c32d1c9e2d224640e"
+    tag: "1.10.0@sha256:27f1098022db644a17a8165563d4e1da1b13e398a00c12f76175e4d9c0c796fa"
   milter:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
@@ -338,7 +348,7 @@ images:
     # upstreamRepository: "bmi/opendesk/components/platform-development/images/opendesk-nextcloud"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-nextcloud"
-    tag: "33.0.7@sha256:16828dac1e8467cadc0760d256a2d7e1686d3cd9e31f24b6529e9ede849f823c"
+    tag: "33.0.9@sha256:ccefc78be482a207033e030b53caa7b105a1a71bc645d3b32cd3e5503bd9459b"
   nextcloudExporter:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -469,16 +479,6 @@ images:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/images-mirror/ldap-server-elector"
     tag: "0.48.2@sha256:144dc6318862764db090694035180f5b53a4ea67c4f4982cfc65a078ef76c8b7"
-  nubusLdapUpdateUniventionObjectIdentifier:
-    # providerCategory: "Supplier"
-    # providerResponsible: "Univention"
-    # upstreamRegistry: "https://artifacts.software-univention.de"
-    # upstreamRepository: "nubus/images/ldap-update-univention-object-identifier"
-    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
-    # upstreamMirrorStartFrom: ["0", "34", "2"]
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/supplier/univention/images-mirror/ldap-update-univention-object-identifier"
-    tag: "0.44.2@sha256:fbb781eb5b51ed84c13bf827fa0fd639e9c1ccd0e69ac66c2841674abe526e5e"
   nubusNats:
     # providerCategory: 'Community'
     # providerResponsible: 'Univention'
@@ -520,7 +520,7 @@ images:
     # upstreamRepository: "bmi/opendesk/components/platform-development/images/opendesk-nubus"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/images/opendesk-nubus"
-    tag: "1.16.3@sha256:059928b2db49af2bbccca195bae7edd40a35e61d536c3ffafd5acd527c914ea1"
+    tag: "1.17.2@sha256:3c470ed5f102da15b3ac6474c83a68e2bdbd18f75443bf369ae6d5caae744b2e"
   nubusOpendeskExtensionA2gMapper:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -538,7 +538,7 @@ images:
     # upstreamMirrorStartFrom: ["0", "10", "0"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/images-mirror/ox-extension"
-    tag: "0.41.0@sha256:0d0a0bd3f7e057aa960975fab6ce0c5e0117b3a6ddda8f785d88c0c6a512c328"
+    tag: "0.42.1@sha256:d632656df059fb525d47d91d22ddf9ab6167df40099a441708721bae153b1a71"
   nubusPortalAssetLoader:
     # providerCategory: "Supplier"
     # providerResponsible: "Univention"
@@ -722,7 +722,7 @@ images:
     # upstreamMirrorStartFrom: ["13", "1", "1"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/openproject/images-mirror/open_desk"
-    tag: "17.6.0@sha256:3e9bf15d64b99ff3ea589f5250869204cf5f145feb01aaf328ab8568df044187"
+    tag: "17.7.2@sha256:9c2181c8fcf4de44e18aa502473d0034c2c8ce714db8a1d1d1ee8530244d66cc"
   openprojectBootstrap:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -748,7 +748,7 @@ images:
     # upstreamMirrorStartFrom: ["17", "6", "0"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/openproject/images-mirror/hocuspocus"
-    tag: "17.6.0@sha256:b235ceb3f4353b1288806824f9fa7d582300765e2268f8be2fb103746ba35d44"
+    tag: "17.7.2@sha256:3905e4ee420d7be38c21d465b7c0b142cbfa9986dd740fc05827ff150db17d62"
   openxchangeBootstrap:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
@@ -776,7 +776,7 @@ images:
     # upstreamMirrorStartFrom: ["8", "20", "51"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/middleware-public-sector"
-    tag: "8.50.131@sha256:7868c4c0cd6dbab8207defc35aa1413147538c5240e02feff6a674e138d7deb6"
+    tag: "8.51.129@sha256:d144e969a262d2cc563e6b5bbe40a2ce54950e2cef702b34baf402101768fc82"
   openxchangeCoreUI:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -786,7 +786,7 @@ images:
     # upstreamMirrorStartFrom: ["8", "20", "1"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/core-ui"
-    tag: "8.50.4@sha256:7f7413f551cc990b1000e8b10b4c25326ea50a691b0de145210da266ed3d5df3"
+    tag: "8.51.3@sha256:d391bb09eecbad2cf647c3ed273a90f2fa294ac04380954c81dd1ce7c8652f1b"
   openxchangeCoreUIMiddleware:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -796,7 +796,7 @@ images:
     # upstreamMirrorStartFrom: ["2", "0", "0"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/core-ui-middleware"
-    tag: "2.3.4@sha256:eaacd62f56b7de9940662328264a950b3af73c3c1ea5a43d53f3d3e906cbb282"
+    tag: "3.1.2@sha256:75cd00e82279824f7265af1fd183b3f638f53e5615c52cdce98ec0ef1d8c41a1"
   openxchangeCoreUserGuide:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -806,7 +806,7 @@ images:
     # upstreamMirrorStartFrom: ["8", "20", "799279"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/core-user-guide"
-    tag: "8.50.2578709745@sha256:e6d898196479e14dcc9b0587a7743b966ba534c15018d5cc11d97e5049252a61"
+    tag: "8.51.2699713927@sha256:ec7f7e0e051d1c9076d421596b8a63114ded3776581884672fd7a0ff2045c60f"
   openxchangeDocumentConverter:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -816,7 +816,7 @@ images:
     # upstreamMirrorStartFrom: ["8", "20", "50"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/documentconverter"
-    tag: "8.50.2108@sha256:a5a3dc5536c81907713f05476a559496dc05a6f3c3583262084723419f67de13"
+    tag: "8.51.2111@sha256:1a98ac8038e2c7aa100cb31273f8151c13c91144f4e69aff736cafc63ccd6ed5"
   openxchangeGotenberg:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -836,7 +836,7 @@ images:
     # upstreamMirrorStartFrom: ["4", "2", "2"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/guard-ui"
-    tag: "8.50.0@sha256:ed038435227528787ff01aa3f9bd7bdcdd33869e5e59723ceb23ec8c0178e349"
+    tag: "8.51.0@sha256:236a5ae3cc372191c0201c083312c01f2d12da7e715cb364679d06fefaf029d4"
   openxchangeImageConverter:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -846,7 +846,7 @@ images:
     # upstreamMirrorStartFrom: ["8", "20", "50"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/images-mirror/imageconverter"
-    tag: "8.50.2591@sha256:bb247e913c1d213e1eef89bd6e9c009c64d4887e466348d7617e008cc6df19e2"
+    tag: "8.51.2597@sha256:93390cfdf2f36815a2d572f56736fe428d27aaef227713f0979a2fefbf03e690"
   openxchangeNextcloudIntegrationUI:
     # providerCategory: "Supplier"
     # providerResponsible: "Open-Xchange"
@@ -873,10 +873,10 @@ images:
     # upstreamRegistry: "https://artifacts.software-univention.de"
     # upstreamRepository: "nubus/images/ox-connector-standalone"
     # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
-    # upstreamMirrorStartFrom: ["0", "4", "2"]
+    # upstreamMirrorStartFrom: ["0", "41", "1"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/images-mirror/ox-connector-standalone"
-    tag: "0.41.0@sha256:896bba84488bf5623c4990b688aff182c361d663c14bca33f562799c9f818e13"
+    tag: "0.42.1@sha256:16a17bf4d2ca2074d16ec708798012c9543091028cd3bc5a10e1c8be4fb14a64"
   postfix:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
@@ -904,13 +904,13 @@ images:
   prosody:
     # providerCategory: "Supplier"
     # providerResponsible: "Nordeck"
-    # upstreamRegistry: "https://registry-1.docker.io"
+    # upstreamRegistry: "https://ghcr.io"
     # upstreamRepository: "jitsi/prosody"
     # upstreamMirrorTagFilterRegEx: '^stable-(\d+)-?\d?$'
-    # upstreamMirrorStartFrom: ["8922"]
+    # upstreamMirrorStartFrom: ["11146"]
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/nordeck/images-mirror/prosody"
-    tag: "stable-11031@sha256:854ce431820b7a3e507f4505b0f1eea90dcb75e93f1da544ee3c44b5ad985e69"
+    tag: "stable-11146-1@sha256:4f4a1bb1386585561ea152020073db40a8b839ac98fb81c0bd2be2b9706385fb"
   redis:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"

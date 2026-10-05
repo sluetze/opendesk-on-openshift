@@ -51,7 +51,7 @@ configuration:
       username:
         value: {{ .Values.cache.nextcloud.username }}
       password:
-        value: {{ .Values.cache.nextcloud.password.value | default .Values.secrets.redis.password.value | quote }}
+        value: {{ .Values.cache.nextcloud.password.value | default .Values.cache.redis.password.value | quote }}
     host: {{ .Values.cache.nextcloud.host | quote }}
     port: {{ .Values.cache.nextcloud.port | quote }}
     tls: {{ .Values.cache.nextcloud.tls }}
@@ -119,6 +119,10 @@ configuration:
     dn: "uid=ldapsearch_nextcloud,cn=users,{{ .Values.ldap.baseDn }}"
     password:
       value: {{ .Values.secrets.nubus.ldapSearch.nextcloud.value | quote }}
+    ldapLoginFilter: "(&(opendeskFileshareEnabled=TRUE)(univentionObjectIdentifier=%uid))"
+    # Semicolon separated, as the image ships it (`sn;givenname;uid`) and as it joins a list.
+    ldapAttributesForUserSearch: "sn;givenname;uid;univentionObjectIdentifier"
+    ldapExpertUsernameAttr: "univentionObjectIdentifier"
     adminGroupName: "managed-by-attribute-FileshareAdmin"
 
   objectstore:
@@ -144,6 +148,7 @@ configuration:
     useSSL: {{ .Values.objectstores.nextcloud.useSSL | quote }}
 
   oidc:
+    mappingUid: "opendesk_objectid"
     username:
       value: "opendesk-nextcloud"
     password:
@@ -275,7 +280,7 @@ theme:
     pngBase64: {{ .Values.theme.imagery.files.faviconPng | quote }}
 
   logo:
-    svgBase64: {{ .Values.theme.imagery.logoHeaderSvgB64 | quote }}
+    svgBase64: {{ .Values.theme.imagery.logoHeaderSvg | quote }}
 
   # Overwrites the header color of Nextcloud with the value set in the `integration_swp` app
   # This can *intentionally* only be adjusted via customizing

@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 additionalAnnotations:
@@ -66,7 +66,12 @@ global:
             domain-admins: __DELETE_KEY__
             iam-api-full-access: "cn=IAM API - Full Access,cn=groups,{{ .Values.ldap.baseDn }}"
         web:
+          sizelimit: {{ .Values.functional.admin.portal.listViews.sizelimit }}
           modules:
+            groups:
+              group:
+                search:
+                  autosearch: {{ if .Values.functional.admin.portal.listViews.autosearch }}"True"{{ else }}"False"{{ end }}
             users:
               user:
                 add:
@@ -81,7 +86,7 @@ global:
                   username:
                     syntax: "uid"
                 search:
-                  autosearch: "True"
+                  autosearch: {{ if .Values.functional.admin.portal.listViews.autosearch }}"True"{{ else }}"False"{{ end }}
                 wizard:
                   property:
                     invite:
@@ -97,9 +102,9 @@ global:
     ldap:
       index:
         eq:
-          # Currently, we need to define all LDAP indices again in order to add a new index (https://forge.univention.org/bugzilla/show_bug.cgi?id=58993)
-          # Upstream indices at the time of writing start at "aRecord".
-          univentionFreeAttribute1,aRecord,automountInformation,cNAMERecord,cn,description,dhcpHWAddress,displayName,entryUUID,gidNumber,givenName,homeDirectory,krb5PrincipalName,macAddress,mail,mailAlternativeAddress,mailPrimaryAddress,memberUid,objectClass,ou,pTRRecord,relativeDomainName,sambaAcctFlags,sambaDomainName,sambaGroupType,sambaPrimaryGroupSID,sambaSID,sambaSIDList,secretary,shadowExpire,sn,uid,uidNumber,uniqueMember,univentionCanonicalRecipientRewriteEnabled,univentionDataType,univentionInventoryNumber,univentionLicenseModule,univentionLicenseObject,univentionMailHomeServer,univentionNagiosHostname,univentionObjectFlag,univentionObjectType,univentionPolicyReference,univentionServerRole,univentionService,univentionShareGid,univentionShareSambaName,univentionShareWriteable,univentionUDMOptionModule,univentionUDMPropertyCLIName,univentionUDMPropertyCopyable,univentionUDMPropertyDefault,univentionUDMPropertyDeleteObjectClass,univentionUDMPropertyDoNotSearch,univentionUDMPropertyHook,univentionUDMPropertyLayoutOverwritePosition,univentionUDMPropertyLayoutOverwriteTab,univentionUDMPropertyLayoutPosition,univentionUDMPropertyLayoutTabAdvanced,univentionUDMPropertyLayoutTabName,univentionUDMPropertyLdapMapping,univentionUDMPropertyLongDescription,univentionUDMPropertyModule,univentionUDMPropertyMultivalue,univentionUDMPropertyObjectClass,univentionUDMPropertyOptions,univentionUDMPropertyShortDescription,univentionUDMPropertySyntax,univentionUDMPropertyTranslationLongDescription,univentionUDMPropertyTranslationShortDescription,univentionUDMPropertyTranslationTabName,univentionUDMPropertyValueMayChange,univentionUDMPropertyValueRequired,univentionUDMPropertyVersion,zoneName,univentionObjectIdentifier
+          # Currently, we need to define all LDAP indices again to add a new index (https://forge.univention.org/bugzilla/show_bug.cgi?id=58993)
+          # Upstream indices at the time of writing start at "aRecord", the openDesk specific ones are added before that.
+          univentionFreeAttribute1,univentionFreeAttribute2,aRecord,automountInformation,cNAMERecord,cn,description,dhcpHWAddress,displayName,entryUUID,gidNumber,givenName,homeDirectory,krb5PrincipalName,macAddress,mail,mailAlternativeAddress,mailPrimaryAddress,memberUid,objectClass,ou,pTRRecord,relativeDomainName,sambaAcctFlags,sambaDomainName,sambaGroupType,sambaPrimaryGroupSID,sambaSID,sambaSIDList,secretary,shadowExpire,sn,uid,uidNumber,uniqueMember,univentionCanonicalRecipientRewriteEnabled,univentionDataType,univentionInventoryNumber,univentionLicenseModule,univentionLicenseObject,univentionMailHomeServer,univentionNagiosHostname,univentionObjectFlag,univentionObjectType,univentionPolicyReference,univentionServerRole,univentionService,univentionShareGid,univentionShareSambaName,univentionShareWriteable,univentionUDMOptionModule,univentionUDMPropertyCLIName,univentionUDMPropertyCopyable,univentionUDMPropertyDefault,univentionUDMPropertyDeleteObjectClass,univentionUDMPropertyDoNotSearch,univentionUDMPropertyHook,univentionUDMPropertyLayoutOverwritePosition,univentionUDMPropertyLayoutOverwriteTab,univentionUDMPropertyLayoutPosition,univentionUDMPropertyLayoutTabAdvanced,univentionUDMPropertyLayoutTabName,univentionUDMPropertyLdapMapping,univentionUDMPropertyLongDescription,univentionUDMPropertyModule,univentionUDMPropertyMultivalue,univentionUDMPropertyObjectClass,univentionUDMPropertyOptions,univentionUDMPropertyShortDescription,univentionUDMPropertySyntax,univentionUDMPropertyTranslationLongDescription,univentionUDMPropertyTranslationShortDescription,univentionUDMPropertyTranslationTabName,univentionUDMPropertyValueMayChange,univentionUDMPropertyValueRequired,univentionUDMPropertyVersion,zoneName,univentionObjectIdentifier
 
     ucs:
       web:
@@ -110,7 +115,6 @@ global:
       web:
         sso:
           enabled: false
-
       cookie-banner:
         show: "false"
       login:
@@ -640,6 +644,12 @@ nubusPortalConsumer:
   extraEnvVars:
     - name: AWS_DEFAULT_REGION
       value: {{ .Values.objectstores.nubus.region | quote }}
+    # The following two environment variables are required for AWS S3 compatible object storage to work with the AWS SDK v2
+    # and are not yet set upstream (see https://forge.univention.org/bugzilla/show_bug.cgi?id=59716)
+    - name: "AWS_REQUEST_CHECKSUM_CALCULATION"
+      value: "when_required"
+    - name: "AWS_RESPONSE_CHECKSUM_VALIDATION"
+      value: "when_required"
   {{- if .Values.certificate.selfSigned }}
   extraVolumes:
     - name: "trusted-cert-secret-volume"
@@ -842,12 +852,7 @@ nubusUdmRestApi:
       repository: {{ .Values.images.nubusBlocklistCleanup.repository }}
       tag: {{ .Values.images.nubusBlocklistCleanup.tag }}
   ldapUpdateUniventionObjectIdentifier:
-    enabled: true
-    suspend: false
-    image:
-      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusLdapUpdateUniventionObjectIdentifier.registry | quote }}
-      repository: {{ .Values.images.nubusLdapUpdateUniventionObjectIdentifier.repository }}
-      tag: {{ .Values.images.nubusLdapUpdateUniventionObjectIdentifier.tag }}
+    enabled: false
   persistence:
     annotations:
       {{ .Values.annotations.nubusUdmRestApi.persistence | toYaml | nindent 6 }}
@@ -1159,6 +1164,8 @@ nubusProvisioning:
   registerConsumers:
     additionalAnnotations:
       intents.otterize.com/service-name: "ums-provisioning-register-consumers"
+      argocd.argoproj.io/hook: "Sync"
+      argocd.argoproj.io/hook-delete-policy: "BeforeHookCreation"
       {{- with .Values.annotations.nubusProvisioning.registerConsumersAdditional }}
       {{ . | toYaml | nindent 6 }}
       {{- end }}
@@ -1393,7 +1400,7 @@ nubusStackDataUms:
     portalDirectDocsExtensionPresentation: "odp"
     {{- end }}
     portalEnforceLogin: {{ .Values.functional.portal.enforceLogin }}
-    portalHeaderLogo: {{ toYaml .Values.theme.imagery.logoHeaderSvgB64 | quote }}
+    portalHeaderLogo: {{ toYaml .Values.theme.imagery.logoHeaderSvg | quote }}
     portalTiles: {{ toYaml .Values.theme.imagery.portalTiles | nindent 6 }}
     portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.element .Values.global.domain }}
     portalRealtimeVideoconferenceLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.jitsi .Values.global.domain }}
@@ -1652,6 +1659,11 @@ nubusKeycloakBootstrap:
         alwaysReadFromLdap: true
       oxContextIDNum:
         alwaysReadFromLdap: true
+      univentionObjectIdentifier:
+        # This is a read-only attribute, just for openDesk 1.18.0 it will be updated.
+        # We keep it always read from LDAP to avoid any issues with the attribute being out of sync.
+        # But that can be changed to "false" with 1.19+
+        alwaysReadFromLdap: true
     twoFactorAuthentication:
       enabled: true
   config:
@@ -1740,6 +1752,9 @@ extraSecrets:
 {{- if .Values.apps.oxAppSuite.enabled }}
   - name: "ums-ox-connector-provisioning-api"
     stringData:
+      # The sequence of topics matters, as they are subscribed in the order they are listed.
+      # So independed objects must be listed before dependent objects, e.g.
+      # `shared_account_permission` before `shared_account`, as the shared account references permissions.
       registration: |-
         {
           "name": "ox-connector",
@@ -1749,8 +1764,8 @@ extraSecrets:
             {"realm": "udm", "topic": "users/user"},
             {"realm": "udm", "topic": "oxresources/oxresources"},
             {"realm": "udm", "topic": "groups/group"},
-            {"realm": "udm", "topic": "oxmail/shared_account"},
-            {"realm": "udm", "topic": "oxmail/shared_account_permission"}
+            {"realm": "udm", "topic": "oxmail/shared_account_permission"},
+            {"realm": "udm", "topic": "oxmail/shared_account"}
           ],
           "request_prefill": true,
           "password": "{{ .Values.secrets.oxConnector.provisioningApiPassword.value }}"

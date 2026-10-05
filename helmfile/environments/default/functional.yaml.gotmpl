@@ -9,6 +9,15 @@ functional:
         # Set to `false` to disable to not provide and update openDesk deployment timestamp for admins in the portal.
         # This is helpful in GitOps deployments as with the timestamp there will always be a change detected.
         enabled: true
+      listViews:
+        # The maximum number of items to be shown in the list views of the admin portal. The list views are used for
+        # example in the "Users" and "Groups" tiles. When the limit is hit, use the search function to narrow down
+        # the result set.
+        sizelimit: 500
+        # Set to `false` to avoid loading all records of a list view up to the limit specified above when accessing a
+        # list view page (affects only users and groups views). The lists are then only populated after the search has
+        # been triggered manually.
+        autosearch: true
     logging:
       auditLogs:
         # Some components offer the option to generate specific audit logs. Enable these logs with the toggle below:
@@ -315,8 +324,13 @@ functional:
       # Expose mail submission with implicit TLS (port 465).
       exposeSubmissions: false
       # FQDN of the IMAP endpoint. If unset, `<.Values.global.domain>` is used.
+      #
+      # A FQDN below `<.Values.global.domain>` is added to openDesk's certificate, e.g.
+      # `imap.example.org` when the domain is `example.org`, but be sure just to use a single level
+      # below the domain. This is only relevant for non-wildcard certificates.
       fqdnImap: ~
-      # FQDN of the SMTP endpoint. If unset, `<.Values.global.domain>` is used.
+      # FQDN of the SMTP endpoint. If unset, `<.Values.global.domain>` is used. See also `fqdnImap` above
+      # for details on certificate requirements.
       fqdnSmtp: ~
     # Control access for external users to groupware data
     # Ref.: https://documentation.open-xchange.com/8/middleware/miscellaneous/sharing_and_guest_mode.html
@@ -386,6 +400,18 @@ functional:
       # Just provide the plain number without quoting. It will allow a quota grace of 10% and +20% in trash storage.
       # If you need different rules you can use customizing on Dovecot's `quotaRules` and `quotaGrace` templating.
       default: 1
+    # Settings for the Shared Accounts, the shared mailboxes with their own calendar that users are
+    # given access to through the IAM.
+    sharedAccounts:
+      calendar:
+        # Under which identity a user acts when scheduling in a Shared Account's calendar, meaning
+        # who an appointment created or answered there names as its organizer respectively sender.
+        # - `sendOnBehalf`: The user acts on behalf of the Shared Account. Both are visible to the
+        #   recipients - the appointment is the Shared Account's, sent by that user.
+        # - `sendAs`: The user impersonates the Shared Account. Only the Shared Account is visible
+        #   to the recipients, the acting user is not shown.
+        # Ref.: https://documentation.open-xchange.com/components/middleware/config/8/#mode=search&term=com.openexchange.sharedaccount.calendar.sentByPreference
+        sentByPreference: "sendOnBehalf"
     # User profile related control options
     userProfile:
       # The user's display name is managed by openDesk IAM and should not be manually changed by the user.

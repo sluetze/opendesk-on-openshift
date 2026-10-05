@@ -52,7 +52,7 @@ ics:
   issuerBaseUrl: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
   originRegex: "{{ .Values.global.domain }}"
   enableSessionCookie: true
-  userUniqueMapper: {{ if .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}"opendesk_useruuid"{{ else }}"opendesk_username"{{ end }}
+  userUniqueMapper: {{ if .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}"opendesk_objectid"{{ else }}"opendesk_username"{{ end }}
   usernameClaim: "opendesk_username"
   logLevel: {{ if .Values.debug.enabled }}"DEBUG"{{ else }}"INFO"{{ end }}
   keycloak:
@@ -80,7 +80,7 @@ ics:
     port: {{ .Values.cache.intercomService.port }}
     auth:
       username: {{ .Values.cache.intercomService.username }}
-      password: {{ .Values.cache.intercomService.password.value | default .Values.secrets.redis.password.value | quote }}
+      password: {{ .Values.cache.intercomService.password.value | default .Values.cache.redis.password.value | quote }}
     ssl:
       enabled: {{ .Values.cache.intercomService.tls }}
   openxchange:
