@@ -97,14 +97,13 @@ migrations:
   objectStore:
     caBundle: "/etc/ssl/certs/ca-certificates.crt"
 
-# 1.19 MAS: cannot jump legacy_auth → delegated_auth. First pass runs syn2mas
-# (docs/migrations-manual.md). After element-markers=syn2mas_migrated, set
-# enabled: false and dryRun back to true, then redeploy Element.
+# 1.19 MAS finalized: syn2mas Job Complete, element-markers=syn2mas_migrated.
+# Keep enabled false / dryRun true for future deploys (delegated_auth).
 technical:
   matrix:
     migration:
-      enabled: true
-      dryRun: false
+      enabled: false
+      dryRun: true
 
 secrets:
   # Hard chart requirement: Java trustStorePassword (OX/XWiki) + Secret
