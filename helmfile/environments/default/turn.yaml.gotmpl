@@ -1,9 +1,12 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
+# External TURN for Jitsi and MatrixRTC. Set either host to configure MatrixRTC's external relay as a fallback
+# connection path to the LiveKit SFU. MatrixRTC's built-in TURN servers are not used.
 turn:
   transport: "udp"
-  credentials: {{ env "TURN_CREDENTIALS" | quote }}
+  # Shared secret configured through secrets.turn.sharedSecret (defaults to TURN_CREDENTIALS).
   server:
     host: ""
     port: "3478"

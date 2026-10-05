@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 global:
@@ -52,14 +52,10 @@ migrations:
     port: {{ .Values.objectstores.migrations.port }}
     useSSL: {{ .Values.objectstores.migrations.useSSL }}
     pathStyle: {{ .Values.objectstores.migrations.pathStyle }}
-    requestTimeoutSeconds: {{ .Values.migrations.objectStore.requestTimeoutSeconds }}
-    # The store is reached under the endpoint its other consumers use, which is the deployment's
-    # public one. A deployment whose certificate is issued by a CA the migrations image does not
-    # know sets `caBundle` to a mounted certificate; `verifySSL` is for test deployments with a
-    # self-signed one and belongs nowhere else.
-    verifySSL: {{ .Values.migrations.objectStore.verifySSL }}
-    {{- with .Values.migrations.objectStore.caBundle }}
-    caBundle: {{ . | quote }}
+    requestTimeoutSeconds: 30
+    verifySSL: true
+    {{- if .Values.trust.secret.mount }}
+    caBundle: "/etc/opendesk/trust/ca-certificates.crt"
     {{- end }}
 
   # `actions` defines the migration itself: which actions the image runs, in which stage and in
@@ -73,9 +69,10 @@ migrations:
   #
   # `tag` and `runMode` together form an action's footprint, which is what makes it run only once:
   # the `tag` is openDesk's own statement of which piece of work this is, the `runMode` states in
-  # which mode it was performed. Both are part of the migration definition and not configurable -
-  # the actions of a release bring the deployment in line with it, so they apply, which is what
-  # every `dryRun: false` below says. The image's dry run mode remains available to support.
+  # which mode it was performed. Both are part of the migration definition - the actions of a
+  # release bring the deployment in line with it, so they apply. Where an action's declaration
+  # derives its `runMode` from a per-deployment option instead, the reason is stated at the
+  # action.
   #
   # What an action does, what it needs and what it changes is documented once, per action, in
   # `docs/migrations-automated.md`. The comments below only say what *this* declaration decides:
@@ -85,172 +82,131 @@ migrations:
     # components it works on are actually installed - the same conditions that gate the
     # corresponding releases.
     pre:
-    {{- if .Values.apps.oxAppSuite.enabled }}
-      # Takes the OX Connector down for the deployment, which brings it back up with the
-      # configuration of this release. See ../../docs/migrations-automated.md#workload_scale
-      #
-      # First of the stage, because the actions that follow change the objects the Connector
-      # provisions - the Functional Accounts and their OX counterparts, then the identifier every
-      # user and group is addressed by. Each of them is written on both sides by the action itself,
-      # which requires that nothing else writes them at the same time.
-      - id: "workload_scale"
-        tag: "v1.18.0"
-        versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
-        config:
-          workload:
-            kind: "StatefulSet"
-            name: "ox-connector"
-            replicas: 0
-    {{- end }}
-    {{- if and .Values.apps.oxAppSuite.enabled .Values.apps.nubus.enabled }}
-      # Part 1 of 2 of the Functional to Shared Account migration, see
-      # ../../docs/migrations-automated.md#ox_functional_accounts_export
-      #
-      # After `workload_scale`, and that order is what makes the action work: it removes the
-      # accounts from OX App Suite itself instead of deleting them in the IAM and waiting for the
-      # OX Connector to follow, which cannot be observed reliably - see the action's documentation.
-      - id: "ox_functional_accounts_export"
-        tag: "v1.18.0"
-        runMode: "apply"
-        versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
-        config:
-          dryRun: false
-          udm:
-            url: "http://ums-udm-rest-api:9979/univention/udm/"
-            username: "cn=admin"
-            requestTimeoutSeconds: 30
-          ldap:
-            pod: "ums-ldap-server-primary-0"
-            container: "main"
-            baseDn: {{ .Values.ldap.baseDn | quote }}
-          handover:
-            # Named in both halves, so a mismatch makes part 2 report that part 1 did not run.
-            objectKey: "ox-functional-accounts.yaml"
-          oxAppSuite:
-            # The OX context part 2 creates the Shared Accounts in. A Functional Account carries
-            # none of its own, so it is declared here and written into the handover, where it can
-            # still be changed per account before part 2 runs. See `oxDefaultContext` in
-            # `helmfile/apps/open-xchange/values-oxconnector.yaml.gotmpl`.
-            context: 1
-            # Where the action removes the accounts' OX counterparts - their secondary accounts -
-            # and where it reads the contexts back afterwards to confirm they are gone. The same
-            # endpoint `ox_names_to_object_identifier` provisions through.
-            soapUrl: {{ printf "http://%s.%s.svc.%s" "open-xchange-core-mw-admin" (.Values.apps.oxAppSuite.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
-            username: "admin"
-            requestTimeoutSeconds: 60
-    {{- end }}
+    {{- if .Values.apps.element.enabled }}
     {{- if .Values.apps.nubus.enabled }}
-      # Gives every IAM object its own `entryUUID` as `univentionObjectIdentifier`, see
-      # ../../docs/migrations-automated.md#ldap_entryuuid_to_object_identifier
-      - id: "ldap_entryuuid_to_object_identifier"
-        tag: "v1.18.0"
-        runMode: "apply"
+      # Deactivates the Matrix accounts of users that were deleted from the directory before the
+      # openDesk Provisioning Connector existed to react to it - the connector handles this on the
+      # fly from now on, this is the one-time catch-up. See
+      # ../../docs/migrations-automated.md#synapse_deactivate_orphaned_users
+      #
+      # Reads the LDAP (Nubus) and acts on Synapse (Element), so it is only declared when both are
+      # installed. The first action of all, in `migrations-pre` and only for deployments still on
+      # v1.18: it acts on the previous Synapse while that still runs its own authentication, before
+      # the Element release of *this* deployment and syn2mas move the users to the Matrix
+      # Authentication Service. syn2mas carries a deactivated account over as a deactivated MAS user
+      # without sessions, so cleaning up Synapse is all it takes, and the action never acts on a
+      # Synapse behind MAS - which would leave the MAS user active. It registers the admin it acts
+      # as through Synapse's registration shared secret, which only the legacy authentication offers.
+      #
+      # The only action whose `runMode` is not a literal: deactivation cannot be undone, so it
+      # defaults to a dry run that reports every account it would touch, and applies only once the
+      # per-deployment option `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` in
+      # `migrations.yaml.gotmpl` was consciously set to `false`. Changing the option changes the
+      # footprint, which is what makes the same tagged work run once more, in apply mode. As only a
+      # completed `migrations-post` advances the recorded release, operators can deploy just this
+      # stage for the dry run, review it and then upgrade with the option set - the window stays
+      # open until the first upgrade deployment went through.
+      - id: "synapse_deactivate_orphaned_users"
+        tag: "v1.19.0"
+        runMode: {{ if .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun }}"dry-run"{{ else }}"apply"{{ end }}
         versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1.18"
         config:
-          dryRun: false
           ldap:
             pod: "ums-ldap-server-primary-0"
             container: "main"
-            baseDn: {{ .Values.ldap.baseDn | quote }}
+          synapse:
+            connection:
+              # The previous (legacy) Synapse, which the Element release of this deployment replaces.
+              url: {{ printf "http://%s.%s.svc.%s:8008" "opendesk-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+            dryRun: {{ .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun }}
+            erase: {{ .Values.functional.dataProtection.matrixAccountErasure.enabled }}
+            postgres:
+              host: {{ .Values.databases.synapse.host | quote }}
+              port: {{ .Values.databases.synapse.port }}
+              name: {{ .Values.databases.synapse.name | quote }}
+              user: {{ .Values.databases.synapse.username | quote }}
+              sslMode: {{ .Values.databases.synapse.sslmode | quote }}
+          safety:
+            # An incompletely read LDAP makes live users look orphaned, so the action refuses to
+            # act when the orphans exceed this share of the active OIDC bound accounts.
+            # Configurable, as how many users a deployment may legitimately lose at once is a
+            # property of that deployment.
+            maxOrphanPercent: {{ .Values.migrations.actionOptions.synapseDeactivateOrphanedUsers.maxOrphanPercent }}
     {{- end }}
-    {{- if and .Values.apps.oxAppSuite.enabled .Values.apps.nubus.enabled }}
-      # Writes the identifier the action above put on the IAM objects into OX App Suite, see
-      # ../../docs/migrations-automated.md#ox_names_to_object_identifier
-      - id: "ox_names_to_object_identifier"
-        tag: "v1.18.0"
+      # Marks an existing Matrix deployment as running Synapse's own (legacy) authentication, see
+      # ../../docs/migrations-automated.md#configmap_create
+      #
+      # The Element chart's matrix-tools read this marker to tell an upgraded deployment from a
+      # fresh installation, and refuse to switch an existing one to Matrix Authentication Service
+      # (MSC3861) delegation other than through syn2mas. In `migrations-pre` because it has to be
+      # in place before the Element release of *this* deployment is applied. A fresh installation
+      # never gets it, as the migrations skip fresh installations altogether.
+      - id: "configmap_create"
+        tag: "v1.19.0"
         runMode: "apply"
         versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1.18"
         config:
-          dryRun: false
-          ldap:
-            pod: "ums-ldap-server-primary-0"
-            container: "main"
-            baseDn: {{ .Values.ldap.baseDn | quote }}
-          oxAppSuite:
-            soapUrl: {{ printf "http://%s.%s.svc.%s" "open-xchange-core-mw-admin" (.Values.apps.oxAppSuite.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
-            username: "admin"
-            requestTimeoutSeconds: 60
-      # Drops the OX-Connector subscription so that the deployment registers it again with the
-      # topics this release declares - which is what makes it receive the Shared Accounts. Costs a
-      # full re-provisioning, once. See
-      # ../../docs/migrations-automated.md#provisioning_drop_subscriptions
-      - id: "provisioning_drop_subscriptions"
-        tag: "v1.18.0"
+          configmap:
+            name: "element-markers"
+            data:
+              MATRIX_STACK_MSC3861: "legacy_auth"
+            labels:
+              app.kubernetes.io/managed-by: "matrix-tools-deployment-markers"
+      {{- if and .Values.secrets.synapse.signingKey.create (not .Values.secrets.synapse.signingKey.value) }}
+      # Carries the signing key the previous Synapse generated on its volume over to the Element
+      # chart, which would otherwise generate a new one and give the homeserver a new identity. See
+      # ../../docs/migrations-automated.md#synapse_signing_key_export
+      #
+      # In `migrations-pre` because the key is read from the previous Synapse pod, which is
+      # replaced once the Element release of *this* deployment is applied. Only declared while no
+      # key is configured (`SYNAPSE_SIGNING_KEY`): a configured key is what the Element chart
+      # uses, and the Secret written here would not be read.
+      - id: "synapse_signing_key_export"
+        tag: "v1.19.0"
+        runMode: "apply"
         versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1.18"
         config:
-          provisioning:
-            url: "http://ums-provisioning-api/v1"
-            username: "admin"
-            requestTimeoutSeconds: 30
-          subscriptions:
-            # Gains `oxmail/shared_account` and `oxmail/shared_account_permission` with v1.18.0.
-            - "ox-connector"
+          source:
+            pod: "opendesk-synapse-0"
+            container: "synapse"
+            path: "/media/generatedSecrets/signingKey"
+          target:
+            secret: "element-generated"
+            key: "SYNAPSE_SIGNING_KEY"
+            labels:
+              app.kubernetes.io/managed-by: "matrix-tools-init-secrets"
+      {{- end }}
+    {{- else }}
+      []
     {{- end }}
     # Executed after the deployment, in the order listed.
     post:
-    {{- if and .Values.apps.oxAppSuite.enabled .Values.apps.nubus.enabled }}
-      # Part 2 of 2 of the Functional to Shared Account migration, see
-      # ../../docs/migrations-automated.md#ox_shared_accounts_import
-      #
-      # Here and not in `migrations-pre`, because `oxmail/shared_account` is a UDM module *this*
-      # release brings. It imports what part 1 handed over, so both are skipped or neither is.
-      - id: "ox_shared_accounts_import"
-        tag: "v1.18.0"
+    {{- if .Values.apps.nubus.enabled }}
+      # Removes the NT password hashes and the weak Kerberos keys Nubus 1.22.0 stopped writing
+      # from every account still carrying them, with the two cleanup tools that release ships.
+      # See ../../docs/migrations-automated.md#udm_remove_legacy_hashes
+      - id: "udm_remove_legacy_hashes"
+        tag: "v1.19.0"
         runMode: "apply"
         versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
+          minimum: "v1.18"
+          from: "v1.18"
+          to: "v1"
         config:
           dryRun: false
           udm:
-            url: "http://ums-udm-rest-api:9979/univention/udm/"
-            username: "cn=admin"
-            requestTimeoutSeconds: 30
-          ldap:
-            baseDn: {{ .Values.ldap.baseDn | quote }}
-          handover:
-            objectKey: "ox-functional-accounts.yaml"
-          sharedAccounts:
-            permission: {{ .Values.migrations.actionOptions.oxFunctionalToSharedAccounts.permission | quote }}
-    {{- end }}
-    {{- if .Values.apps.nubus.enabled }}
-      # Drops the Intercom Service's sessions, so that none established against the release being
-      # replaced survives into this one. See
-      # ../../docs/migrations-automated.md#flush_intercom_sessions
-      #
-      # Here and not in `migrations-pre`: a session created between the two stages, while the old
-      # Intercom Service is still up, would outlive a flush that ran first.
-      - id: "flush_intercom_sessions"
-        tag: "v1.18.0"
-        versions:
-          minimum: "v1.15"
-          from: "v1.15"
-          to: "v1.17"
-        config:
-          redis:
-            host: {{ .Values.cache.intercomService.host | quote }}
-            port: {{ .Values.cache.intercomService.port }}
-            username: {{ .Values.cache.intercomService.username | quote }}
-            tls: {{ .Values.cache.intercomService.tls }}
-            database: 0
-            keyPattern: "sess:*"
-            requestTimeoutSeconds: 30
+            podSelector: "app.kubernetes.io/name=udm-rest-api,app.kubernetes.io/instance=ums"
+            container: "main"
+            timeoutSeconds: 300
     {{- end }}
   # `actionsSkip` opts out of declared actions. It mirrors `actions` - an entry names the stage,
   # the `id` and the `tag` of the action it skips, and has to match both exactly; the `runMode` is
@@ -262,10 +218,23 @@ migrations:
     post:
       {{ .Values.migrations.actionsSkip.post | toYaml | nindent 6 }}
   # `secretFiles` is not defined here but per stage, in the values file of the `migrations-pre` and
-  # the `migrations-post` release. A Secret named there has to exist when that Job starts, and the
-  # two stages do not see the same ones: `migrations-pre` is the very first app of a deployment, so
-  # it can only mount Secrets that exist before any component was deployed, while `migrations-post`
-  # runs last and can mount every Secret the deployment creates.
+  # the `migrations-post` release.
+
+{{- if .Values.trust.secret.mount }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+      optional: true
+
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/opendesk/trust"
+    readOnly: true
+{{- end }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false

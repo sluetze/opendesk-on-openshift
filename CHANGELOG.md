@@ -1,3 +1,76 @@
+# [1.19.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.18.2...v1.19.0) (2026-10-01)
+
+
+### Bug Fixes
+
+* **collabora:** Ensure Controller is deployed first (when enabled) ([8e81b3d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/8e81b3d1e9a0960f147c073696ebe566b8bb0568))
+* **cryptpad:** Enable `readOnlyRootFilesystem` ([6e3177a](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/6e3177ab2ebe722d23ef44d201162e13dcc32f0a))
+* **dovecot:** Harden configuration ([67ee4cc](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/67ee4cc086b8a8de27ad138780c9b53c198499af))
+* **dovecot:** Use cluster internal communication with Keycloak ([2c5c896](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/2c5c896176fc909ae04694d0b47651d5fd55acce))
+* **element:** Ensure display name is set on pre-provisioned admin accounts ([e134fd7](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/e134fd71fcb1e09dbd42e7eca1a74e6a5eb4123b))
+* **helmfile:** Correct typo in values key to match upstream chart spelling ([2a9ee6f](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/2a9ee6fbfa4142cdcfd22aa9c99818d1b18d9c55))
+* **helmfile:** Remove HAProxy annotations that are not supported on a per-Ingress level ([88b5235](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/88b5235daefc2fdecf1ccc2dbc30e649c9011ba5))
+* **helmfile:** Set antivirus option for Nextcloud and OX AppSuite to `[secure]` when no scanner is configured ([e70b3ea](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/e70b3ea6daccdfb6b60c2063bbd4cb4e27120d51))
+* **helmfile:** Streamline ClamAV servicenames and provide ICAP `serviceName` option in `antivirus.yaml.gotmpl` ([fd0615d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/fd0615d669f08845a6cec721ff76ebc4a6c5c3cf))
+* **helmfile:** Streamline Redis password handling; see `migrations-manual.md` for potential upgrade steps ([280ee81](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/280ee81ce75544694dbff6df7b2f685b30145726))
+* **helmfile:** Streamline timeout settings using `deployment.yaml.gotmpl` with a default of 300sec; see `updates.md` for details ([0e78701](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/0e78701d5e1951e57e718de18fb9b93aa9b2712d))
+* **helmfile:** Template image information for `nubusLicenseImport` and its `waitForDependency` ([d29737d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/d29737d28e0cac9fdf33fae45d78c6e0cef4a64c))
+* **helmfile:** Use `{}` instead of `~` for default empty `seLinuxOptions` ([c048c6a](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/c048c6ab198f44e58876350cdcfcafabd4f59574))
+* **migrations:** Output full stacktrace in case of failure ([5acf1d5](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/5acf1d5f47e79000ce8429cdd1f933b223f50f33))
+* **nextcloud:** Update from 32.0.9 to 33.0.9 ([eff6fb9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/eff6fb931038f6cc863f471bd33d6f87c37c7dec))
+* **nextcloud:** Update to 33.0.9 incl. apps ([475f571](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/475f571d40efdb722d7b70a93936cadbfb23cc1c))
+* **nextcloud:** Use cluster internal communication with Collabora ([255bdc8](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/255bdc82b93fd3bf99e7f0ea04ccb0a9be0e0b13))
+* **notes:** Improve support for existing secrets ([fd43a01](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/fd43a015192fee1bb59ecf5d3be008b37f98423f))
+* **notes:** Session affinity with HAProxy required for scaling ([16c7d2f](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/16c7d2f7c43d01e09188f276829f9189fc9a5cf0))
+* **nubus:** Add `migrations-post` cleanup for legacy hashes; see `migrations-automated.md` for details ([6e5a538](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/6e5a538fd07a1744ef970ca75e1377ac740c2589))
+* **nubus:** Cleanup for removed Notifications API; see `migrations-manual.md` for recommended upgrade steps ([7279677](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/72796776b4215ce33d4ba8b093f43dbbf73f0d9d))
+* **nubus:** Do not template `createUsers` when no consumers to register ([e02d6d3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/e02d6d30f6aa561beecbf0354ecb86cb4856da06))
+* **nubus:** Switch Keycloak's LDAP mapper for `univentionObjectIdentifier` to not read always from LDAP ([e01f969](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/e01f969547b4af2b4f1b7727844a80ac3317d55e))
+* **open-xchange:** Add missing standard labels on Dovecot and Postfix PVC template ([7916e43](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/7916e43c3e9774ce8f8c5e8e96acf0d9b7291a72))
+* **open-xchange:** Avoid DB init race condition on external DBs ([795c761](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/795c761a169d4d882a60be3bf662e90f66f22ea3))
+* **open-xchange:** Enable contact picker based addressbooks for CardDAV ([60cccf2](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/60cccf2714e25985b8b68b17eb8b42e0d4185953))
+* **open-xchange:** Enable PSS restricted profile ([9c7f9c9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/9c7f9c93d65a67be8595fbb92bc67e56d2c1f73e))
+* **open-xchange:** Enable PSS restricted profile for Dovecot ([082f32f](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/082f32fc65d9576114a35d03cb46c0aaccc69fbd))
+* **open-xchange:** Enable SSL support for User-DB connections ([ca99a30](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/ca99a30582a5bbadfb7422898ccf90c3bafa31be))
+* **open-xchange:** Fix auth for Sieve on shared accounts ([d268abf](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/d268abf7048313186b868efdbab5d3a92630a08f))
+* **open-xchange:** Make the `containerSecurityContext` of `opendesk-open-xchange-bootstrap` Kyverno complete ([1a76503](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/1a765038bdbbd7a2bbee2beb00a7dffb63d59001))
+* **open-xchange:** Streamline the HAProxy Ingress annotations ([1301d02](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/1301d02bf89f5f0b9cc65bd66507f7ebb46ec776))
+* **open-xchange:** Turn off "send later" feature, as it is not working as expected ([0cf1388](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/0cf1388a7434c74f9fb3a78fc8ec5cb02ad777a2))
+* **open-xchange:** Use global toggle to switch off cache services ([37de58e](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/37de58ef572aec92343dc499ba6fac24cbcf859e))
+* **openproject:** [[#399](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/issues/399)] Use `functional.internationalization.defaultLanguage` to set default and seed language ([39e6778](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/39e677831cf009bf7889094564500dfea9e402df))
+* **openproject:** Add missing `jwks_uri` for OIDC configuration to allow authorization via Keycloak ([1ff294d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/1ff294d7de2903681bcd3e20c7b7bef51a116b32))
+* **openproject:** Update from 17.8.0 to 17.8.1 ([78b918c](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/78b918c9fcc36f8060a36923e0f70b747248f2af))
+* **openproject:** Use dedicated resources for hocuspocus ([bae92bd](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/bae92bd4c57ad1356048034b08f8d0f8151a7409))
+* **security:** Update opencode.gpg signed artifacts with opendesk.gpg signed ones; see https://www.opendesk.eu/en/blog/security-incident-new-keys-to-sign-container-images-and-helm-charts-for-opendesk-1-19-0 for details ([ea24dec](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/ea24dec0ca03f27790bf43975a90dc65017b3903))
+* **services-external:** Bump ClamAV to 1.5.4 and update chart to preserve CVD signing root CA from upstream image ([2b33cf3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/2b33cf39e98cd3c5e20e726e2738e764b9230713))
+* **services-external:** Enable PSS restricted profile for ClamAV ([241a8cb](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/241a8cbc513bba079d0833ff02bb2dfbea8061e0))
+* **services-external:** Enable PSS restricted profile for SeaweedFS ([e07e2d9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/e07e2d9e3266426be2915e3a9ceebda3135c0f8f))
+* **services-external:** Restart SeaweedFS on relevant config changes ([506baf3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/506baf38b9f8272dfe6a13c9a4638458fc36e299))
+* **xwiki:** [[#419](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/issues/419)] Provide option to explicity set the PostgreSQL schema name ([a7ef8b3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/a7ef8b309a867ef3558f91a14466d418b0970c7a))
+* **xwiki:** Disable volumePermissions init container to enable PSS restricted profile ([ee17e3c](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/ee17e3c4e7a4c37a5d9cdfed891dc635a3ae17db))
+
+
+### Features
+
+* **collabora:** Update from 26.04.2 to 26.04.3 and activate PSS restricted profile ([b2af329](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/b2af329fa46863ee72266380f19c242728b46bb2))
+* **element:** IAM controllered User lifecycle; See `migrations-manual.md` for required actions and `updates.md` for new configuration options ([37aac70](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/37aac7052918962612c2e4aee4f753419997ecbb))
+* **element:** Update from 1.12.18 to 1.12.29 enabling Element Call, Element X compatibility (through MAS) and S3 filestorage backend; add standalone whiteboard component; see `migrations-manual.md` for required upgrade steps ([00ed90d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/00ed90d2a8f148d99b337ac80ef00535de886be7))
+* **helmfile:** [[#356](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/issues/356)] Major update to self-signed and custom provided certificate support; read `migrations-manual.md` for potential upgrade steps and `enhanced-configuration/self-signed-certificates-md` for details ([54bbac8](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/54bbac8468319230d0b56339098a33f99fd6020d))
+* **jitsi:** Update chart to 3.11.0 with support for scaling the number of JVB instances ([c8d4746](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/c8d4746aea6722619250dcc7821d370d1789e8c1))
+* **jitsi:** Update from stable-11146 to stable-11248 and upstream Helm chart to 3.8.0 ([76fbad3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/76fbad3b691459e0922f59f427e3c44f9003bfc4))
+* **notes:** Upgrade from v4.4.0 to v5.6.1 ([b6af8f5](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/b6af8f52696a99ed659bf3d30dcdc340d9f41f4d))
+* **nubus:** Set global password complexity rules with `functional.authentication.password.*` and raise default minimum password length to 14 chars; see `updates.md` for details and `migrations-manual.md` for potential upgrade steps ([1f5f93c](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/1f5f93c784b209dba8610570c8ed2ece94be5cbd))
+* **nubus:** Support for `functional.portal.customize`; see `updates.md` for details ([8cc751f](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/8cc751f9f03c0f9a0acb24343cb07bb001793d1e))
+* **nubus:** Support for adding custom extensions and enhancing the LDAP equality search index; see `updates.md` for details ([eee31db](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/eee31db083ec2b0518e861437efd1a5d5222a3b4))
+* **nubus:** Toggle Keycloak Service Monitor by `monitoring.prometheus.serviceMonitors.enabled` ([6b980e9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/6b980e9a677f577ae1f662449a0d1d12a0143181))
+* **nubus:** Update from 1.22 to 1.23 ([88e2be3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/88e2be326434be397feeddb1c7f04ab0b0eeec87))
+* **nubus:** Update from v1.21.0 to v1.22.0; see `migrations-manual.md` for potential upgrade steps ([2ecf93f](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/2ecf93f569fd60eba5f4ead3c36629b62b21e145))
+* **open-xchange:** Enable PSS restricted profile for Postfix ([2a6d5c3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/2a6d5c34ff944ebfb2545a552ca0b981f210fe94))
+* **open-xchange:** Update from 8.51 to 8.52 ([06afdf4](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/06afdf478f1dd5a0b2144768e597b5b8d973034b))
+* **openproject:** Toggle Service Monitor by `monitoring.prometheus.serviceMonitors.enabled` ([ff3ed4d](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/ff3ed4d94f8dff85615f79c99f61586b8a1430a8))
+* **openproject:** Update from 17.7.2 to 17.8.0 ([a609af5](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/a609af5814f6d32058f1c27c1838b35e1a68c706))
+* **xwiki:** Upgrade from 17.10.9 to 18.4.5 with `readOnlyRootFilesystem` ([c673650](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/c673650ecb8e7ae80115b8357218716820407d84))
+
 ## [1.18.2](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.18.1...v1.18.2) (2026-09-11)
 
 
@@ -47,6 +120,13 @@
 * **openproject:** Add more theming options; see `updates.md` and `migrations-manual.md` for more details ([4d64ecd](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/4d64ecd1f743172d65484c0096e588030813e139))
 * **openproject:** Update from 17.6.0 to 17.7.2 ([7342b13](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/7342b137be202c725a183c27bd9330cc8395a6cb))
 * **ox-connector:** Update connector to support shared accounts; see `migrations.md` for required upgrade steps ([a611f7a](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/commit/a611f7a6feef3c37cae48e2564f763e67a4f72c8))
+
+## [1.17.4](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.17.3...v1.17.4) (2026-09-15)
+
+
+### Bug Fixes
+
+- **nextcloud:** Update from 32.0.9 to 33.0.9 ([eff6fb9](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/commit/eff6fb931038f6cc863f471bd33d6f87c37c7dec))
 
 ## [1.17.3](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/compare/v1.17.2...v1.17.3) (2026-08-14)
 

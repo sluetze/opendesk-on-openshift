@@ -25,6 +25,7 @@ containerSecurityContext:
     type: "RuntimeDefault"
   readOnlyRootFilesystem: true
   runAsNonRoot: true
+  privileged: false
   seLinuxOptions:
     {{ .Values.seLinuxOptions.openxchangeBootstrap | toYaml | nindent 4 }}
 

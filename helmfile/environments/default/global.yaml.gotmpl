@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -37,17 +37,20 @@ global:
   #            /helmfile/apps/opendesk-services/values-certificates.yaml.gotmpl
   #
   hosts:
-    adminBot: "adminbot"
     collabora: "office"
     cryptpad: "pad"
-    element: "chat"
+    elementAdmin: "element-admin"
+    elementSupervision: "element-supervision"
+    elementWeb: "chat"
     intercomService: "ics"
     jitsi: "meet"
     keycloak: "id"
+    matrixAuthenticationService: "mas"
     matrixNeoBoardWidget: "matrix-neoboard-widget"
     matrixNeoChoiceWidget: "matrix-neochoice-widget"
     matrixNeoDateFixBot: "matrix-neodatefix-bot"
     matrixNeoDateFixWidget: "matrix-neodatefix-widget"
+    matrixRTC: "mrtc"
     minioApi: "objectstore"
     minioConsole: "objectstore-ui"
     seaweedfs: "objectstorage"
@@ -60,8 +63,6 @@ global:
     openxchangeDav: "dav"
     static: "static"
     synapse: "matrix"
-    synapseAdmin: "synapse-admin"
-    synapseFederation: "matrix-federation"
     whiteboard: "whiteboard"
     xwiki: "wiki"
 

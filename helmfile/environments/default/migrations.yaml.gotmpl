@@ -35,25 +35,7 @@ migrations:
     # Anything you need beyond that has to be collected from the Pod, e.g. by your log aggregation.
     keepOutputSeconds: 604800
 
-  # Where the two migration stages hand work over. They are separate jobs, so an action that has to
-  # read something before your release is applied and act on it afterwards is two actions, and the
-  # first leaves what it worked out in an object store - not in a ConfigMap, which holds 1 MiB and
-  # would fail exactly in the installations that have the most to migrate.
-  #
-  # Which store, bucket and identity that is comes from `objectstores.migrations`, the bucket
-  # openDesk provisions for this; the migration jobs reach it under the endpoint its other
-  # consumers use, which is your deployment's public one. What is settable here is how they trust
-  # and address it, once for every action rather than per action:
-  objectStore:
-    # Set to the path of a mounted CA certificate when your object store's certificate is issued by
-    # a CA the migrations image does not know. Mount it through the migration releases'
-    # `extraVolumes`/`extraVolumeMounts`.
-    caBundle: ""
-    # Only for test deployments with a self-signed certificate. Switching this off means the
-    # handover between the two stages travels over a connection nothing authenticates.
-    verifySSL: true
-    # Seconds a single request to the object store may take.
-    requestTimeoutSeconds: 30
+
 
   # `actionsSkip` opts out of single migration actions, e.g. when a migration is considered too
   # complex or too risky for this environment.
@@ -80,11 +62,8 @@ migrations:
   # migrations:
   #   actionsSkip:
   #     pre:
-  #       - id: "ox_functional_accounts_export"
-  #         tag: "v1.18.0"
-  #     post:
-  #       - id: "ox_shared_accounts_import"
-  #         tag: "v1.18.0"
+  #       - id: "synapse_deactivate_orphaned_users"
+  #         tag: "v1.19.0"
   # ```
   actionsSkip:
     # Actions to be skipped in the stage `migrations-pre`.
@@ -101,18 +80,29 @@ migrations:
   # What each action does is documented in `docs/migrations-automated.md`. To take the
   # responsibility for a migration yourself, opt out of its actions through `actionsSkip` above.
   actionOptions:
-    # The migration of the OX App Suite Functional Accounts still in your IAM to the Shared
-    # Accounts that replace them, in two halves: `ox_functional_accounts_export` records and
-    # deletes them in `migrations-pre`, `ox_shared_accounts_import` creates the Shared Accounts in
-    # `migrations-post`.
-    #
-    # To migrate them yourself instead, opt out through `actionsSkip` above - of *both* actions, so
-    # in `pre` *and* in `post`, as opting out of only one leaves the migration half applied.
-    oxFunctionalToSharedAccounts:
-      # The permission every user of a migrated account is linked with, given as the `name` of the
-      # `oxmail/shared_account_permission` object - not its display name, which is a label that may
-      # be reworded. Defaults to openDesk's "Mail: Full access, Calendar: Full access", which comes
-      # closest to what a Functional Account granted its users; `ox_shared_accounts_import` reports
-      # the permissions your deployment provides should this one not exist.
-      permission: "opendesk_mail_author_calendar_author"
+    # Settings for `synapse_deactivate_orphaned_users`, which deactivates the Matrix accounts of
+    # users that were deleted from the directory before the openDesk Provisioning Connector
+    # existed to react to it.
+    synapseDeactivateOrphanedUsers:
+      # Whether to only report the affected accounts instead of deactivating them.
+      #
+      # Defaults to `true` - the one exception to "every action applies its change" above - because
+      # this action cannot be undone: it deactivates the accounts *and* erases their data. A dry
+      # run logs every account it would touch, with its user name, Matrix ID, display name, OIDC
+      # subject and the account's creation date, and modifies nothing.
+      #
+      # The action is the first step of the upgrade from v1.18 (in the `migrations-pre` job, before
+      # syn2mas moves the users to MAS) and only runs until that upgrade went through. To review the
+      # list first, deploy just the `opendesk-secrets` and `opendesk-migrations-pre` releases,
+      # read the job log, and only then set this to `false` and upgrade.
+      dryRun: true
+      # The share (in percent) of the active OIDC bound Matrix accounts the action may
+      # deactivate at most - accounts that are already deactivated are no candidates and are
+      # counted on neither side. This is a safety limit: an LDAP that was only read in part
+      # would make live users look orphaned, and exceeding this limit makes the action refuse
+      # to deactivate anything rather than act on a comparison it cannot trust.
+      #
+      # Raise it if your deployment legitimately has to deactivate a larger share of its users at
+      # once - the action reports the actual share in the log of the `migrations-pre` job.
+      maxOrphanPercent: 25
 ...

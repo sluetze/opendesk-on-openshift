@@ -8,15 +8,23 @@ autoscaling:
 collabora:
   aliasgroups:
     - host: "https://{{ .Values.global.hosts.nextcloud }}.{{ .Values.global.domain }}"
+      aliases:
+        - "http://opendesk-nextcloud-aio.{{ .Values.apps.nextcloud.namespace | default .Release.Namespace }}.svc.{{ .Values.cluster.networking.domain }}"
   env:
     - name: "POD_NAME"
       valueFrom:
         fieldRef:
           fieldPath: "metadata.name"
+    - name: "content_security_policy"
+      value: "frame-ancestors 'self' https://{{ .Values.global.hosts.nextcloud }}.{{ .Values.global.domain }}"
   extra_params: >
+    --o:security.capabilities=false
+    --o:child_root_path=/tmp/coolwsd-child-roots
+    --o:cache_files.path=/tmp/coolwsd-cache
     --o:logging.disable_server_audit={{ .Values.technical.collabora.loggingDisableServerAudit }}
     --o:ssl.enable=false
     --o:ssl.termination=true
+    --o:server_name={{ .Values.global.hosts.collabora }}.{{ .Values.global.domain }}
     --o:fetch_update_check=0
     --o:num_prespawn_children={{ .Values.technical.collabora.numPrespawnChildren }}
     --o:remote_font_config.url=https://{{ .Values.global.hosts.nextcloud }}.{{ .Values.global.domain }}/apps/richdocuments/settings/fonts.json
@@ -61,6 +69,31 @@ collabora:
     secretName: {{ .Values.secrets.collabora.adminPassword.name | quote }}
     passwordKey: {{ .Values.secrets.collabora.adminPassword.key | quote }}
 
+extraVolumes:
+  - name: "child-roots"
+    emptyDir: {}
+  - name: "cache-files"
+    emptyDir: {}
+{{- if .Values.trust.secret.mount }}
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: {{ .Values.trust.secret.name | quote }}
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+{{- end }}
+
+extraVolumeMounts:
+  - name: "child-roots"
+    mountPath: "/tmp/coolwsd-child-roots"
+  - name: "cache-files"
+    mountPath: "/tmp/coolwsd-cache"
+{{- if .Values.trust.secret.mount }}
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
+{{- end }}
+
 fullnameOverride: "collabora"
 
 image:
@@ -87,7 +120,6 @@ ingress:
   {{- else }}
     haproxy-ingress.github.io/proxy-body-size: "{{ .Values.ingress.parameters.bodySize.collabora }}"
     haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.collabora }}s"
-    haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.collabora }}s"
     haproxy-ingress.github.io/timeout-tunnel: "{{ .Values.ingress.parameters.bodyTimeout.collabora }}s"
     haproxy-ingress.github.io/balance-algorithm: "url_param {{ if .Values.apps.collaboraController.enabled }}RouteToken{{ else }}WOPISrc{{ end }} check_post"
     haproxy-ingress.github.io/config-backend: |
@@ -138,9 +170,9 @@ resources:
   {{ .Values.resources.collabora | toYaml | nindent 2 }}
 
 securityContext:
-  allowPrivilegeEscalation: true
+  allowPrivilegeEscalation: false
   privileged: false
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1001
   runAsGroup: 1001
@@ -149,27 +181,6 @@ securityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      # For secuity reasons, esp. when macros are enabled, Collabora isolates all documents workspaces
-      # from each other. This isolation can work in three different ways. Collabora will automatically
-      # select the best option.
-      # - Using linux user namespaces is the most efficient one. You can test if user namespaces are
-      #   available by running `unshare -Ur bash` in the Collabora Pod. If it returns
-      #   `unshare: unshare failed: Operation not permitted`
-      #   user namespaces are not available.
-      #   Capabilities required: none
-      #   Note: A container runtime still could gate syscalls like `unshare` with `CAP_SYSADMIN`. You could
-      #         try using a custom seccompProfile in that case.
-      #         Ref.: https://github.com/CollaboraOnline/online/blob/master/docker/cool-seccomp-profile.json
-      # - Linking the documents and runtime environment into their own context.
-      #   Capabilities required: `CAP_SYSADMIN`, `CAP_SYSCHROOT`, `CHOWN`, `FOWNER`
-      # - Copying the documents and runtime environment into their own context,
-      #   having impact on the performance.
-      #   Capabilities required: `CAP_SYSCHROOT`, `CHOWN`, `FOWNER`
-      - "CHOWN"
-      - "FOWNER"
-      - "SYS_CHROOT"
-
   seLinuxOptions:
     {{ .Values.seLinuxOptions.collabora | toYaml | nindent 4 }}
 

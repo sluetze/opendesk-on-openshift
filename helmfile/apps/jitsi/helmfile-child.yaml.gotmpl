@@ -5,7 +5,7 @@ repositories:
   # openDesk Jitsi
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-jitsi
   - name: "jitsi-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.jitsi.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -22,7 +22,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.jitsi.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.jitsi | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

@@ -14,20 +14,13 @@ containerSecurityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "DAC_OVERRIDE"
-      - "FOWNER"
-      - "SETGID"
-      - "SETUID"
-      - "KILL"
   enabled: true
   seccompProfile:
     type: "RuntimeDefault"
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
-  runAsUser: 0
-  runAsGroup: 0
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
   privileged: false
   seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
 
@@ -36,16 +29,28 @@ initContainerSecurityContext:
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "FOWNER"
   enabled: true
   seccompProfile:
     type: "RuntimeDefault"
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
-  runAsUser: 0
-  runAsGroup: 0
+  runAsNonRoot: true
+  runAsUser: 100
+  runAsGroup: 101
+  privileged: false
+  seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
+
+policyContainerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  enabled: true
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 65534
+  runAsGroup: 65534
   privileged: false
   seLinuxOptions: {{ .Values.seLinuxOptions.postfix | toYaml | nindent 4 }}
 
@@ -103,16 +108,6 @@ postfix:
     30-antivirus:
       host: {{ .Values.antivirus.milter.host | quote }}
       port: {{ .Values.antivirus.milter.port }}
-    {{- else }}
-    {{- if .Values.apps.clamavDistributed.enabled }}
-    30-antivirus:
-      host: "clamav-milter"
-      port: 7357
-    {{- else if .Values.apps.clamavSimple.enabled }}
-    30-antivirus:
-      host: "clamav-simple"
-      port: 7357
-    {{- end }}
     {{- end }}
   {{- if .Values.smtp.host }}
   relayHost:

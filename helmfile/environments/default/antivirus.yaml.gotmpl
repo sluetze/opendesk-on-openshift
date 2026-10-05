@@ -1,18 +1,42 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
+# Central antivirus wiring for the consumers:
+# ICAP
+# - Nextcloud
+# - Open-Xchange
+# Milter
+# - Postfix
+#
+# Defaults to the bundled ClamAV. Both deployments options of this default
+# (apps.clamavSimple and apps.clamavDistributed) expose the scanning interfaces
+# under the same deployment-independent service names `antivir-icap` and
+#`antivir-milter`, so these endpoints work regardless of which variant is enabled.
+#
+# Production: The bundled ClamAV is intended for development and evaluation purposes.
+# For production use, point `icap.host` at an external ICAP scanning service
+# and set `icap.serviceName` accordingly.
+#
+# External ICAP services usually provide no milter interface - mail scanning
+# then either stays on the bundled ClamAV milter or `milter.host` is set to ~.
 antivirus:
   icap:
-    host: ~
+    host: "antivir-icap"
     port: 1344
+    # ICAP service name requested by the clients: "avscan" for ClamAV/c-icap,
+    # external servers may expose a different one.
+    serviceName: "avscan"
   milter:
-    host: ~
+    # Milter used by Postfix for mail scanning. Set to ~ to configure no
+    # antivirus milter.
+    host: "antivir-milter"
     port: 7357
+  # The following settings only apply for the bundled ClamAV.
   onInfected:
     # Action to be performed on infected messages (ClamAV OnInfected milter settings)
-    # https://manpages.debian.org/testing/clamav-milter/clamav-milter.conf.5.en.html#ACTIONS
+    # Ref.: https://manpages.debian.org/testing/clamav-milter/clamav-milter.conf.5.en.html#ACTIONS
     action: "Reject"
     # The rejection reason for infected messages, only useful when action is "Reject"
     # The string "%v", if present, will be replaced with the virus name.
-    message: "Malware scanner detected problematic content."
+    message: "Security scan rejected this file: %v"
 ...

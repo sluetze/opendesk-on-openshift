@@ -21,7 +21,7 @@ configuration:
       username:
         value: {{ .Values.cache.nextcloud.username }}
       password:
-        value: {{ .Values.cache.nextcloud.password.value | default .Values.cache.redis.password.value | quote }}
+        value: {{ .Values.cache.nextcloud.password.value | quote }}
     host: {{ .Values.cache.nextcloud.host | quote }}
     port: {{ .Values.cache.nextcloud.port | quote }}
     tls: {{ .Values.cache.nextcloud.tls }}
@@ -71,14 +71,14 @@ containerSecurityContext:
   runAsNonRoot: true
   seLinuxOptions:
     {{ .Values.seLinuxOptions.nextcloud | toYaml | nindent 6 }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "FS_ENV_CA_CERTIFICATE_PATH"
     value: "/etc/ssl/certs/ca-certificates.crt"
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

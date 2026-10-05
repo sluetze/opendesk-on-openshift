@@ -5,7 +5,7 @@ repositories:
   # openDesk Dovecot
   # Source: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-dovecot
   - name: "dovecot-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.dovecot.verify }}
     oci: true
   {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
@@ -37,7 +37,7 @@ repositories:
   # Source:
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-open-xchange-bootstrap
   - name: "open-xchange-bootstrap-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.oxAppSuiteBootstrap.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -54,7 +54,7 @@ repositories:
   # openDesk Postfix
   # https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-postfix
   - name: "postfix-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.postfix.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -75,9 +75,11 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.oxAppSuite.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.openXchange | default .Values.deployment.timeouts.default }}
     {{- if eq .Values.ingress.controller "haproxy" }}
     postRenderer: "./post-renderer-openxchange-HAPROXY.sh"
+    {{- else }}
+    postRenderer: "./post-renderer-openxchange-PSS-RESTRICTED.sh"
     {{- end }}
 
   - name: "opendesk-open-xchange-bootstrap"
@@ -93,7 +95,7 @@ releases:
     waitForJobs: true
     wait: true
     installed: {{ .Values.apps.oxAppSuite.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskOpenXchangeBootstrap | default .Values.deployment.timeouts.default }}
 
   - name: "dovecot"
     chart: "dovecot-repo/{{ .Values.charts.dovecot.name }}"
@@ -111,7 +113,7 @@ releases:
     waitForJobs: true
     wait: true
     installed: {{ .Values.apps.dovecot.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.dovecot | default .Values.deployment.timeouts.default }}
 
   - name: "postfix-ox"
     chart: "postfix-repo/{{ .Values.charts.postfix.name }}"
@@ -129,7 +131,7 @@ releases:
     waitForJobs: true
     wait: true
     installed: {{ .Values.apps.postfix.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.postfixOx | default .Values.deployment.timeouts.default }}
 
   - name: "ox-connector"
     chart: "ox-connector-repo/{{ .Values.charts.oxConnector.name }}"
@@ -140,6 +142,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.oxAppSuite.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.oxConnector | default .Values.deployment.timeouts.default }}
     needs:
       - "postfix-ox"
     {{- if ne (env "OPENDESK_1_12_0_SKIP_PVC_MIGRATION") "" }}

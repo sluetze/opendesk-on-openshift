@@ -86,9 +86,11 @@ environment:
   OPENPROJECT_MAIL__FROM: "{{ .Values.smtp.localpartNoReply }}@{{ .Values.global.mailDomain | default .Values.global.domain }}"
   OPENPROJECT_HOME__URL: {{ printf "https://%s.%s/" .Values.global.hosts.nubus .Values.global.domain | quote }}
   OPENPROJECT_OPENID__CONNECT_KEYCLOAK_ISSUER: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}"
+  OPENPROJECT_OPENID__CONNECT_KEYCLOAK_JWKS__URI: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}/protocol/openid-connect/certs"
   OPENPROJECT_OPENID__CONNECT_KEYCLOAK_POST__LOGOUT__REDIRECT__URI: "https://{{ .Values.global.hosts.openproject }}.{{ .Values.global.domain }}/"
   OPENPROJECT_PLUGIN__OPENPROJECT__AVATARS: "{enable_gravatars: false, enable_local_avatars: true}"
-
+  OPENPROJECT_DEFAULT_LANGUAGE: {{ substr 0 2 .Values.functional.internationalization.defaultLanguage | quote }}
+  OPENPROJECT_SEED_LOCALE: {{ substr 0 2 .Values.functional.internationalization.defaultLanguage | quote }}
   OPENPROJECT_SEED_DESIGN_PRIMARY__BUTTON__COLOR: {{ .Values.theme.colors.primary | quote }}
   OPENPROJECT_SEED_DESIGN_ACCENT__COLOR: {{ .Values.theme.colors.primary | quote }}
   OPENPROJECT_SEED_DESIGN_HEADER__BG__COLOR: {{ .Values.theme.colors.white | quote }}
@@ -116,15 +118,15 @@ environment:
   OPENPROJECT_SEED_DESIGN_EXPORT__FONT__BOLD__ITALIC: {{ .Values.theme.imagery.projects.pdfExportFontBoldItalicUrl | quote }}
   {{- end }}
 
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   SSL_CERT_FILE: "/etc/ssl/certs/ca-certificates.crt"
   {{- end }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -161,7 +163,7 @@ hocuspocus:
     port: 1234
   resourcesPreset: ~
   resources:
-    {{ .Values.resources.openproject | toYaml | nindent 4 }}
+    {{ .Values.resources.openprojectHocuspocus | toYaml | nindent 4 }}
 
 strategy:
   type: "RollingUpdate"
@@ -204,6 +206,13 @@ probes:
   readiness:
     initialDelaySeconds: 150
     failureThreshold: 30
+
+metrics:
+  enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+  serviceMonitor:
+    enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+    labels:
+      {{ .Values.monitoring.prometheus.serviceMonitors.labels | toYaml | nindent 6 }}
 
 openproject:
   extraEnvVarsSecret: {{ .Values.secrets.postfix.opendeskSystemPassword.name | quote }}
@@ -252,7 +261,6 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.openproject | quote }}
     haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.openproject | quote }}
     haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.openproject}}s"
-    haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.openproject}}s"
     {{- with .Values.annotations.openproject.ingress }}
     {{ . | toYaml | nindent 4 }}
     {{- end }}

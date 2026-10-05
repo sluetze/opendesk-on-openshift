@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: 2024 Center for Digital Sovereignty of Public Administration (ZenDiS) GmbH
-# SPDX-FileCopyrightText: 2023 Federal Ministry of the Interior and Community, PG ZenDiS "Project group for the development of ZenDiS"
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 additionalAnnotations:
-  {{ .Values.annotations.elementMatrixUserVerificationService.additional | toYaml | nindent 2 }}
+  {{ .Values.annotations.matrixUserVerificationService.additional | toYaml | nindent 2 }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -12,7 +12,7 @@ containerSecurityContext:
       - "ALL"
   enabled: true
   privileged: false
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   runAsGroup: 1000
   runAsNonRoot: true
   runAsUser: 1000
@@ -33,17 +33,26 @@ extraEnvVars:
   - name: "UVS_LOG_LEVEL"
     value: "debug"
 {{- end }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   - name: "NODE_EXTRA_CA_CERTS"
     value: "/etc/ssl/certs/ca-certificates.crt"
+{{- end }}
 extraVolumes:
+  # Provide writable storage for npm's cache and logs.
+  - name: "npm"
+    emptyDir: {}
+{{- if .Values.trust.secret.mount }}
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
+{{- end }}
 extraVolumeMounts:
+  - name: "npm"
+    mountPath: "/home/node/.npm"
+{{- if .Values.trust.secret.mount }}
   - name: "trusted-cert-secret-volume"
     mountPath: "/etc/ssl/certs/ca-certificates.crt"
     subPath: "ca-certificates.crt"
@@ -65,7 +74,7 @@ image:
 
 podAnnotations:
   intents.otterize.com/service-name: "opendesk-matrix-user-verification-service"
-  {{- with .Values.annotations.elementMatrixUserVerificationService.pod }}
+  {{- with .Values.annotations.matrixUserVerificationService.pod }}
   {{ . | toYaml | nindent 2 }}
   {{- end }}
 
@@ -80,10 +89,10 @@ resources:
 
 service:
   annotations:
-    {{ .Values.annotations.elementMatrixUserVerificationService.service | toYaml | nindent 4 }}
+    {{ .Values.annotations.matrixUserVerificationService.service | toYaml | nindent 4 }}
 
 serviceAccount:
   annotations:
-    {{ .Values.annotations.elementMatrixUserVerificationService.serviceAccount | toYaml | nindent 4 }}
+    {{ .Values.annotations.matrixUserVerificationService.serviceAccount | toYaml | nindent 4 }}
 
 ...

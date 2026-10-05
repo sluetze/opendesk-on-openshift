@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -113,5 +113,20 @@ objectstores:
     storageClass: "STANDARD"
     username: "openxchange_user"
     useSSL: true
+    actions: ["Admin", "Read", "Write", "List"]
+  synapse:
+    bucket: "synapse"
+    endpoint: ""
+    region: "eu-west-1"
+    secretKey:
+      value: {{ (derivePassword 1 "long" $masterPassword "minio" "synapse_user" | sha1sum | quote) }}
+      create: true
+      name: "objectstore-synapse-secret-key"
+      key: "secretKey"
+    storageClass: "STANDARD"
+    username: "synapse_user"
+    useSSL: true
+    pathStyle: true
+    port: 443
     actions: ["Admin", "Read", "Write", "List"]
 ...

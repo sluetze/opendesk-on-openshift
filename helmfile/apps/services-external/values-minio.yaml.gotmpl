@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -133,6 +133,9 @@ provisioning:
     - name: {{ .Values.objectstores.nubus.bucket | quote }}
       versioning: "Suspended"
       withLock: false
+    - name: {{ .Values.objectstores.synapse.bucket | quote }}
+      versioning: "Suspended"
+      withLock: false
     {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
     - name: {{ .Values.objectstores.dovecot.bucket | quote }}
       versioning: "Suspended"
@@ -204,6 +207,18 @@ provisioning:
           effect: "Allow"
           actions:
             - "s3:*"
+    - name: "synapse-bucket-policy"
+      statements:
+        - resources:
+            - "arn:aws:s3:::synapse"
+          effect: "Allow"
+          actions:
+            - "s3:*"
+        - resources:
+            - "arn:aws:s3:::synapse/*"
+          effect: "Allow"
+          actions:
+            - "s3:*"
     - name: "ums-bucket-policy"
       statements:
         - resources:
@@ -261,6 +276,12 @@ provisioning:
       policies:
         - "openxchange-bucket-policy"
       setPolicies: true
+    - username: {{ .Values.objectstores.synapse.username | quote }}
+      password: {{ .Values.objectstores.synapse.secretKey.value | quote }}
+      disabled: false
+      policies:
+        - "synapse-bucket-policy"
+      setPolicies: true
     - username: {{ .Values.objectstores.nubus.username | quote }}
       password: {{ .Values.objectstores.nubus.secretKey.value | quote }}
       disabled: false
@@ -313,11 +334,11 @@ statefulset:
   replicaCount: {{ .Values.replicas.minio }}
   drivesPerNode: {{ if gt .Values.replicas.minio 1 }}2{{ else }}1{{ end }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "public.crt"

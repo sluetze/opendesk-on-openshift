@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -42,7 +43,8 @@ replicas:
 
   # -- component: Groupware (OX AppSuite, OX Dovecot etc.)
   # -- scalable: false
-  # -- comment: Scalable in openDesk Enterprise only
+  # -- comment: Runs as a single Pod in openDesk CE and EE, a user's IMAP sessions have to reach the same Pod and
+  # there is no routing layer to ensure that. The value is not evaluated.
   dovecot: 1
   # -- scalable: false
   postfix: 1
@@ -51,7 +53,19 @@ replicas:
 
   # -- component: Chat (Element, Synapse)
   # -- scalable: true
-  element: 1
+  elementAdmin: 1
+  # -- scalable: false
+  # -- comment: openDesk Enterprise only
+  elementAuditbot: 1
+  # -- scalable: false
+  # -- comment: openDesk Enterprise only
+  elementSupervision: 1
+  # -- scalable: true
+  elementWeb: 1
+  # -- scalable: true
+  matrixAuthenticationService: 1
+  # -- scalable: true
+  matrixHaproxy: 1
   # -- scalable: tbd
   matrixNeoBoardWidget: 1
   # -- scalable: tbd
@@ -60,22 +74,52 @@ replicas:
   matrixNeoDateFixBot: 1
   # -- scalable: tbd
   matrixNeoDateFixWidget: 1
+  # -- scalable: true
+  matrixRTC: 1
+  # -- scalable: tbd
+  matrixRTCSfu: 1
   # -- scalable: tbd
   matrixUserVerificationService: 1
-  # -- scalable: tbd
+  # -- scalable: false
+  # -- comment: The main Synapse process, for scaling please check the dedicated workers below and technical.yaml.gotmpl
   synapse: 1
+  # Synapse workers: A worker is only deployed with a count above 1 (or its autoscaling enabled in openDesk
+  # Enterprise), otherwise its work stays in the main Synapse process, see `technical.matrix.autoscaling.synapse`.
   # -- scalable: true
-  synapseWeb: 1
+  synapseClientReader: 1
   # -- scalable: true
-  wellKnown: 1
+  synapseDeviceLists: 1
+  # -- scalable: true
+  synapseEventCreator: 1
+  # -- scalable: true
+  synapseEventPersister: 1
+  # -- scalable: true
+  synapseFederationInbound: 1
+  # -- scalable: true
+  synapseFederationReader: 1
+  # -- scalable: true
+  synapseFederationSender: 1
+  # -- scalable: true
+  synapseInitialSynchrotron: 1
+  # -- scalable: true
+  synapseMasHelper: 1
+  # -- scalable: false
+  # -- comment: Always runs as a separate, single worker; the chart cannot scale it
+  synapseMediaRepository: 1
+  # -- scalable: true
+  synapsePusher: 1
+  # -- scalable: true
+  synapseReceipts: 1
+  # -- scalable: true
+  synapseSlidingSync: 1
+  # -- scalable: true
+  synapseSynchrotron: 1
 
   # -- component: IAM (Nubus)
   # -- scalable: true
   intercomService: 1
   # -- scalable: true
   keycloak: 1
-  # -- scalable: false
-  oxConnector: 1
   # -- scalable: tbd
   umsGuardianAuthorizationApi: 1
   # -- scalable: tbd
@@ -101,8 +145,6 @@ replicas:
   # -- comment: The LDAP proxy is only required in situations where there are clients outside of UDM writing into the
   # LDAP like Samba. This is not a use case within openDesk so the LDAP Proxy's replica count should be kept at `0`
   umsLdapServerProxy: 0
-  # -- scalable: tbd
-  umsNotificationsApi: 1
   # -- scalable: true
   umsPortalFrontend: 1
   # -- scalable: false
@@ -149,7 +191,9 @@ replicas:
   jitsi: 1
   # -- scalable: tbd
   jitsiKeycloakAdapter: 1
-  # -- scalable: tbd
+  # -- scalable: true
+  # -- comment: Number of JVBs to run. Each one is published on its own UDP port of the JVB
+  # service and advertised separately by the patchJVB job.
   jvb: 1
   # -- scalable: false
   # -- comment: The upstream `jitsi-meet` chart hardcodes `replicas: 1` for prosody, so this number
@@ -227,7 +271,15 @@ replicas:
   # -- scalable: true
   notesBackend: 1
   # -- scalable: true
+  notesDocspec: 1
+  # -- scalable: true
   notesFrontend: 1
   # -- scalable: true
+  notesWorker: 1
+  # -- scalable: true
   notesYProvider: 1
+
+  # -- component: Whiteboard (NeoBoard)
+  # -- scalable: tbd
+  neoboard: 1
 ...

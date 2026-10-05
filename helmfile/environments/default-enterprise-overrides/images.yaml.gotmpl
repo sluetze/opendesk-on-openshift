@@ -3,19 +3,83 @@
 ---
 images:
   collabora:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Collabora"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/collabora/images/collabora-online-for-opendesk"
-    tag: "26.04.2.4.1@sha256:ea6ed1bbb103f3bf8e20fe3f03238d1aa788630a3c135c44117f56b490895300"
+    tag: "26.04.3.3.1@sha256:e60950e80bbd0ed165226947173d5b9954203f6ebeda4ec9e3cf2bc6657f66c1"
   dovecot:
+    # enterpriseRegistryBase: "OX_EE_REGISTRY"
+    # enterpriseRegistryPath: "OX_EE_REGISTRY_PATH_DOVECOT_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Open-Xchange"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)-.+$'
+    # upstreamMirrorStartFrom: ["3", "0", "7"]
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/open-xchange/images-mirror/dovecot-pro"
     tag: "3.0.7-rev5@sha256:07761e6e8ddd585cf647f91e9d2a43ffadae2c8a31570ba4fafe594ded2c3a80"
   nextcloud:
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/nextcloud/images/opendesk-nextcloud"
-    tag: "33.0.9@sha256:a870dcd05b6db3766224e800ffc9d69fe051ec58adddbeca270840e824109ad1"
+    tag: "33.0.9@sha256:f6670cb5159c91db5b5e6b5b144857c6c3fa8bae83a6657316ec269c1a848c18"
   openxchangeCoreMW:
+    # enterpriseRegistryBase: "OX_EE_REGISTRY"
+    # enterpriseRegistryPath: "OX_EE_REGISTRY_PATH_APPSUITE_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Open-Xchange"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["8", "51", "0"]
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/open-xchange/images-mirror/middleware-public-sector-pro"
-    tag: "8.51.131@sha256:2ce0dc1f84619190b814f62002dd14d02af664b4aa61fe558e40da8d79d77175"
+    tag: "8.52.212@sha256:54af8be9d771d14e18ce8851227586cd7098c20d8ac4e740dcf00c0c5450c97c"
+  elementWeb:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_ELEMENTWEB_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/element-web-pro-opendesk"
+    tag: "v1.12.29@sha256:18d93efecd12372ead2a372d87ee5cfbb4684508b7a40c29492de5698e560d1f"
+  matrixAuthenticationService:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_MATRIXAUTHENTICATIONSERVICE_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/matrix-authentication-service-pro"
+    tag: "1.25.1@sha256:b0bec19d197d272f26f75ff3363571505c6739f37560a3254b108696254d2dff"
+  matrixLivekitServer:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_MATRIXLIVEKITSERVER_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/livekit-server-distroless"
+    tag: "v1.13.7@sha256:2da01f29a6c1776702a773ffd23ac732d0ccca890239eb6b60b650a031fdcdf5"
+  matrixSyn2Mas:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_MATRIXSYN2MAS_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/matrix-authentication-service-pro"
+    tag: "1.25.1-debug@sha256:6f59bca5c51179418d9decc2219f483e78d58cf187ff134c6a1c0d0c90be8864"
+  matrixTools:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_MATRIXTOOLS_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/matrix-tools"
+    tag: "0.20.3@sha256:4fb80ef96571a01ca9ffe534aa3193d3dd879bb045a8f5f0f5c91caa7e2d40a7"
+  synapse:
+    # enterpriseRegistryBase: "ELEMENT_EE_REGISTRY"
+    # enterpriseRegistryPath: "ELEMENT_EE_REGISTRY_PATH_SYNAPSE_IMAGE"
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    registry: "registry.opencode.de"
+    repository: "zendis/opendesk-enterprise/components/supplier/element/images-mirror/synapse-ess"
+    tag: "v1.161.0-pro.1@sha256:f3616c02fb153436f3c8fae0d6ad2f3ae51eb01f8ec7fbcf6ca5384e2caaff3b"
 ...

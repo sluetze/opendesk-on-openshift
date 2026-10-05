@@ -42,6 +42,37 @@ functional:
       clients: {}
       # Define additional/custom OIDC client scopes to be created in the 'opendesk' realm within Keycloak.
       clientScopes: {}
+    password:
+      # Password quality rules enforced by the Nubus IAM whenever a password is set or changed, e.g. via the
+      # portal's self-service or the admin portal.
+      # Ref.: https://docs.software-univention.de/ucs-operation/5.2/en/iam/password-management/policies.html#password-policy-settings
+      # The message shown in the login and self-service dialogues when a new password does not comply with the
+      # password quality rules configured in `quality` below. The message is a static text that is not derived
+      # from those rules, so keep the two in sync.
+      # Define one message per language, keyed by the two-letter language code. Always provide at least "en", as
+      # it serves as the fallback for languages without a message.
+      complexityMessage:
+        de: "Das Passwort muss mindestens 14 Zeichen lang sein und darf keine unsicheren Zeichenfolgen enthalten."
+        en: "Password must be at least 14 characters long and must not contain insecure character sequences."
+        fr: "Le mot de passe doit comporter au moins 14 caractères et ne doit pas contenir de chaînes de caractères peu sûres."
+      quality:
+        length:
+          # The minimum length for new passwords (`password/quality/length/min`).
+          min: 14
+        # Beside the length requirement, classes of characters can be required in new passwords.
+        credit:
+          # Minimum number of digits (`password/quality/credit/digits`).
+          digits: 0
+          # Minimum number of uppercase letters (`password/quality/credit/upper`).
+          upper: 0
+          # Minimum number of lowercase letters (`password/quality/credit/lower`).
+          lower: 0
+          # Minimum number of characters that are neither letters nor digits, e.g. special characters
+          # (`password/quality/credit/other`).
+          other: 0
+        # Check the Microsoft password complexity criteria in addition to ("true") or instead of ("sufficient")
+        # the checks above; set to "false" to not apply them (`password/quality/mspolicy`).
+        mspolicy: "false"
     # Configure global settings of the 'opendesk' realm within Keycloak. The values are directly
     # passed into the `realmSettings` section of the `opendesk-keycloak-bootstrap` chart.
     # Ref.: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-keycloak-bootstrap
@@ -50,6 +81,8 @@ functional:
     realmSettings:
       # The lifespan of an access token in seconds.
       # Ref.: https://www.keycloak.org/docs/latest/server_admin > "Access Token Lifespan"
+      # The defined lifespan is also applied to Dovecot's `auth.cache.ttl`, so that Dovecot's authentication cache is in
+      # sync with Keycloak's access token lifespan.
       accessTokenLifespan: 300
       # If true, refresh tokens are revoked after use. If false, they can be reused until they expire.
       # Ref.: https://www.keycloak.org/docs/latest/server_admin > "Revoke Refresh Token"
@@ -177,15 +210,32 @@ functional:
       profile:
         # Once connected with a user that user's Matrix ID is rarely checked by their communication partners, as the
         # display name is used to see whom they are communicating with. Not allowing users to change their
-        # own display name reduces the risk of identity fraud.
-        # To get the display name updated from the central identity and access management you have to have the Synapse
-        # enterprise feature "groupsync" configured.
+        # own display name reduces the risk of identity fraud. On the other hand, some users may want to change their
+        # display name to inform e.g. about availability.
+        # The setting below allows to toggle this option.
         allowUsersToUpdateDisplayname: true
-
         # If the LDAP entryUUID should be used for the localpart of user's Matrix IDs following setting must be `true`.
         useImmutableIdentifierForLocalpart: false
+      clients:
+        # Enterprise only: restrict OIDC client registration and login to the clients configured below.
+        # Disable to omit the client URI allowlist. An enabled but empty allowlist blocks all clients.
+        restrictAllowedClients: true
+        # Enterprise only: block legacy Matrix compatibility logins, independently of the OIDC allowlist.
+        denyLegacyClients: true
+        # Enterprise only: allow Element X (mobile) and Element Desktop Pro, including QR sign-in.
+        # When restrictAllowedClients is false, this only controls the device code grant (QR sign-in).
+        allowElementDesktopClients: true
+        # Enterprise only: Additional client URIs MAS accepts when restrictAllowedClients is true, e.g. "https://my-client.example.com/".
+        # A trailing "*" allows any path below the URI, see `allowed_client_uris` in the Element documentation.
+        additionalAllowedClientUris: []
 
   dataProtection:
+    matrixAccountErasure:
+      # When a user is deleted from the central identity management their Matrix account is
+      # revoked. Enabled, the account's data is erased along with it (GDPR erasure): The profile
+      # is dropped and the user's events are marked for redaction. This cannot be undone.
+      # Disable to only deactivate the account and keep its data.
+      enabled: true
     matrixPresence:
       # Enable to allow information about the user presence status to be shared.
       # Ref.: https://element-hq.github.io/synapse/latest/usage/configuration/config_documentation.html#presence
@@ -394,7 +444,9 @@ functional:
         # "Send later" feature allows users to schedule the sending of emails at a later time.
         # Ref.: https://documentation.open-xchange.com/8/middleware/mail/scheduled_mail.html
         sendLater:
-          enabled: true
+          # WARNING: The feature is currently not available. We are working with OX to make it
+          # available in future releases. The toggle therefore has no effect for now.
+          enabled: false
     quota:
       # Set the default mail storage quota for users in gigabyte.
       # Just provide the plain number without quoting. It will allow a quota grace of 10% and +20% in trash storage.
@@ -442,6 +494,46 @@ functional:
       enabled: false
 
   portal:
+    # Adapt portal and admin portal content beyond what the options below cover by loading additional data files into
+    # the Nubus data loader. Additional portal categories, folders, entries (tiles) or announcements are the
+    # typical use-cases, but any object type the data loader supports can be managed this way. So you might as
+    # well e.g. create custom user templates or groups.
+    # If you need to extend Nubus itself (LDAP schemas, UDM/UMC modules, ...) see `technical.nubus.extensions.custom`
+    # in `technical.yaml.gotmpl`.
+    custom:
+      # A map from the desired filename to the file's content (a string, use a YAML block scalar). Each
+      # content has to be a valid YAML stream that the Nubus data loader is able to process; the map is
+      # passed to the Nubus chart option "nubusStackDataUms.stackDataUms.extraDataFiles".
+      # All data files are processed in lexical order, so prefix the filename with a number to control when
+      # it runs relative to the default openDesk/Nubus files that can be found here and provides examples:
+      # Nubus: https://github.com/univention/ums-stack-data/tree/main/helm/stack-data-ums/data-files/default
+      # openDesk: https://gitlab.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-nubus/-/tree/main/udm/udm-data-loader
+      #
+      # List of available actions: https://github.com/univention/ums-stack-data/blob/main/src/univention/data_loader/actions.py
+      #
+      # Notes:
+      # - Ensure you separate each entry with `---` and that you end with `...` to make it a valid YAML stream.
+      # - Use the UDM REST API first to test the objects you want to template and then convert the JSON successfully
+      #   processed by the API to YAML and use it in the portal customization.
+      # - When you make use of this option and the `stack-data` job fails, be sure to remove the customization and
+      #   re-run the job to get clarity about the cause for the failing job.
+      #
+      # Example:
+      # ```
+      # extraDataFiles:
+      #   "98-portal-announcement-maintenance.yaml": |
+      #     ---
+      #     action: "create"
+      #     module: "portals/announcement"
+      #     position: "cn=announcement,cn=portals,cn=univention,dc=swp-ldap,dc=internal"
+      #     properties:
+      #       name: "maintenance"
+      #       title:
+      #         en_US: "Scheduled maintenance"
+      #         de_DE: "Geplante Wartung"
+      #     ...
+      # ```
+      extraDataFiles: {}
     # Configure if the a re-direct to the login dialogue is enforced, or if the portal is shown and the user as to actively
     # trigger the login flow, e.g. but clicking on the "Login" portal tile.
     enforceLogin: true

@@ -1,4 +1,5 @@
 <!--
+SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -53,10 +54,10 @@ Before deploying openDesk, you must configure the deployment to fit your environ
 To keep your deployment up to date, we recommend customizing in `dev`, `test`, or `prod` and not in `default` environment
 files.
 
-> All configuration options and their default values can be found in files at [`helmfile/environments/default/`](../helmfile/environments/default/)
+All configuration options and their default values can be found in files at [`helmfile/environments/default/`](../helmfile/environments/default/). While they contain helpful inline documenation, additional documentation can be found for some of them in the [`configurations-yamls`](./configuration-yamls/index.md) subfolder.
 
 For the following guide, we will use `dev` as environment where variables can be set in
-`helmfile/environments/dev/values.yaml.gotmpl`.
+`helmfile/environments/dev/values.yaml.gotmpl` that will override the settings from the default environment.
 
 ## DNS
 
@@ -117,43 +118,42 @@ export DOMAIN=domain.tld
 Depending on your ideal openDesk deployment, you may wish to disable or enable certain apps.
 All available apps and their default values are located in `helmfile/environments/default/opendesk_main.yaml.gotmpl`.
 
-| Component            | Name                               | Default  | Description                          |
-| -------------------- | ---------------------------------- | -------- | ------------------------------------ |
-| Cassandra            | `apps.cassandra.enabled`           | `false`† | NoSQL database (enterprise builds)   |
-| Certificates         | `apps.certificates.enabled`        | `true`   | TLS certificates                     |
-| ClamAV (Distributed) | `apps.clamavDistributed.enabled`   | `false`  | Antivirus engine                     |
-| ClamAV (Simple)      | `apps.clamavSimple.enabled`        | `true`   | Antivirus engine                     |
-| Collabora            | `apps.collabora.enabled`           | `true`   | Weboffice                            |
-| Collabora Controller | `apps.collaboraController.enabled` | `false`† | Collabora pod controller (enterprise)|
-| CryptPad             | `apps.cryptpad.enabled`            | `true`   | Weboffice                            |
-| dkimpy               | `apps.dkimpy.enabled`              | `false`  | Postfix milter for DKIM              |
-| Dovecot              | `apps.dovecot.enabled`             | `true`   | Mail backend                         |
-| Element              | `apps.element.enabled`             | `true`   | Secure communications platform       |
-| Element Admin        | `apps.elementAdmin.enabled`        | `false`  | Element admin console (enterprise‡)  |
-| Element Groupsync    | `apps.elementGroupsync.enabled`    | `false`  | Matrix group/space sync (enterprise‡)|
-| Home                 | `apps.home.enabled`                | `true`   | Base domain portal redirect          |
-| Jitsi                | `apps.jitsi.enabled`               | `true`   | Videoconferencing                    |
-| MariaDB              | `apps.mariadb.enabled`             | `true`   | Database                             |
-| Memcached            | `apps.memcached.enabled`           | `true`   | Cache Database                       |
-| Migrations           | `apps.migrations.enabled`          | `true`   | Version-upgrade migration runner     |
-| MinIO                | `apps.minio.enabled`               | `false`  | Object Storage (alternative backend) |
-| SeaweedFS            | `apps.seaweedfs.enabled`           | `true`   | Object Storage (default backend)     |
-| Nextcloud            | `apps.nextcloud.enabled`           | `true`   | File share                           |
-| Notes                | `apps.notes.enabled`               | `false`  | Notes app                            |
-| Nubus                | `apps.nubus.enabled`               | `true`   | Identity Management & Portal         |
-| OpenProject          | `apps.openproject.enabled`         | `true`   | Project management                   |
-| OX App Suite         | `apps.oxAppSuite.enabled`          | `true`   | Groupware                            |
-| Postfix              | `apps.postfix.enabled`             | `true`   | MTA                                  |
-| PostgreSQL           | `apps.postgresql.enabled`          | `true`   | Database                             |
-| Redis                | `apps.redis.enabled`               | `true`   | Cache Database                       |
-| Static Files         | `apps.staticFiles.enabled`         | `true`   | Static asset server                  |
-| XWiki                | `apps.xwiki.enabled`               | `true`   | Knowledge management                 |
+| Component            | Name                               | Default  | Description                               |
+| -------------------- | ---------------------------------- | -------- | ----------------------------------------- |
+| Cassandra            | `apps.cassandra.enabled`           | `false`† | NoSQL database (enterprise builds)        |
+| Certificates         | `apps.certificates.enabled`        | `true`   | TLS certificates                          |
+| ClamAV (Distributed) | `apps.clamavDistributed.enabled`   | `false`  | Antivirus engine                          |
+| ClamAV (Simple)      | `apps.clamavSimple.enabled`        | `true`   | Antivirus engine                          |
+| Collabora            | `apps.collabora.enabled`           | `true`   | Weboffice                                 |
+| Collabora Controller | `apps.collaboraController.enabled` | `false`† | Collabora pod controller (enterprise)     |
+| CryptPad             | `apps.cryptpad.enabled`            | `true`   | Weboffice                                 |
+| dkimpy               | `apps.dkimpy.enabled`              | `false`  | Postfix milter for DKIM                   |
+| Dovecot              | `apps.dovecot.enabled`             | `true`   | Mail backend                              |
+| Element              | `apps.element.enabled`             | `true`   | Secure communications platform            |
+| Element Admin        | `apps.elementAdmin.enabled`        | `true`   | Element admin console                     |
+| Element Auditbot     | `apps.elementAuditbot.enabled`     | `false`  | Audit logging bot (enterprise)            |
+| Element Supervision  | `apps.elementSupervision.enabled`  | `false`  | Admin/supervision bot (enterprise)        |
+| Home                 | `apps.home.enabled`                | `true`   | Base domain portal redirect               |
+| Jitsi                | `apps.jitsi.enabled`               | `true`   | Videoconferencing                         |
+| MariaDB              | `apps.mariadb.enabled`             | `true`   | Database                                  |
+| Memcached            | `apps.memcached.enabled`           | `true`   | Cache Database                            |
+| Migrations           | `apps.migrations.enabled`          | `true`   | Version-upgrade migration runner          |
+| MinIO                | `apps.minio.enabled`               | `false`  | Object Storage (alternative backend)      |
+| SeaweedFS            | `apps.seaweedfs.enabled`           | `true`   | Object Storage (default backend)          |
+| Nextcloud            | `apps.nextcloud.enabled`           | `true`   | File share                                |
+| Notes                | `apps.notes.enabled`               | `false`  | Notes app                                 |
+| Nubus                | `apps.nubus.enabled`               | `true`   | Identity Management & Portal              |
+| OpenProject          | `apps.openproject.enabled`         | `true`   | Project management                        |
+| OX App Suite         | `apps.oxAppSuite.enabled`          | `true`   | Groupware                                 |
+| Postfix              | `apps.postfix.enabled`             | `true`   | MTA                                       |
+| PostgreSQL           | `apps.postgresql.enabled`          | `true`   | Database                                  |
+| Redis                | `apps.redis.enabled`               | `true`   | Cache Database                            |
+| Static Files         | `apps.staticFiles.enabled`         | `true`   | Static asset server                       |
+| Whiteboard           | `apps.neoboard.enabled`            | `false`  | Collaborative whiteboard                  |
+| XWiki                | `apps.xwiki.enabled`               | `true`   | Knowledge management                      |
 
 † Enterprise builds (`OPENDESK_ENTERPRISE=true`) default these to `true`.
 
-‡ Enterprise component: The toggle defaults `false` and is not enterprise-gated, but the image lives in the enterprise
-registry - enabling it on a openDesk CE deployment (no `OPENDESK_ENTERPRISE` / private-registry credentials) just
-`ImagePullBackOff`s.
 
 For example, Jitsi can be deactivated like this:
 
@@ -261,6 +261,19 @@ your Ingress controller you have to configure it as follows:
 ingress:
   ingressClassName: "haproxy"
 ```
+
+openDesk also needs to know which Ingress controller type is in use, as it renders controller-specific annotations
+and manifests. The default is `haproxy`. When using the deprecated `ingress-nginx`, you have to set both values:
+
+```yaml
+ingress:
+  controller: "nginx"
+  ingressClassName: "nginx" # or the ingressClassName of your ingress-nginx installation
+```
+
+> [!warning]
+> Setting only `ingressClassName: "nginx"` is not sufficient. With `controller` left at its default `haproxy`, the
+> generated Ingress objects are not suitable for `ingress-nginx`.
 
 > [!note]
 > Currently, the only Ingress controllers supported are `haproxy-ingress.github.io` and the deprecated `ingress-nginx`.
@@ -373,19 +386,23 @@ smtp:
 
 ### TURN configuration
 
-Some components (Jitsi, Element) use a TURN server for direct communication. You can configure your own TURN server with
-these options:
+Jitsi and MatrixRTC use an external TURN server as a fallback connection path. For MatrixRTC, TURN relays
+connections to the LiveKit SFU; the SFU's built-in TURN servers are not used. Configure external TURN with these
+options:
 
 ```yaml
 turn:
   transport: "udp" # or tcp
-  credentials: "secret"
   server:
     host: "turn.domain.tld"
     port: "3478"
   tls:
     host: "turns.domain.tld"
     port: "5349"
+secrets:
+  turn:
+    sharedSecret:
+      value: "secret"
 ```
 
 ### Certificate issuer

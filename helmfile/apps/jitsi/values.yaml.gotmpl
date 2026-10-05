@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -29,7 +29,7 @@ containerSecurityContext:
     {{ .Values.seLinuxOptions.jitsiKeycloakAdapter | toYaml | nindent 4 }}
 
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "DENO_CERT"
     value: "/etc/ssl/certs/ca-certificates.crt"
@@ -37,7 +37,7 @@ extraEnvVars:
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -85,7 +85,6 @@ jitsi:
       enabled: {{ .Values.ingress.enabled }}
       annotations:
         haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.jitsi }}s"
-        haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.jitsi }}s"
         {{- with .Values.annotations.jitsiWeb.ingress }}
         {{ . | toYaml | nindent 8 }}
         {{- end }}
@@ -128,11 +127,6 @@ jitsi:
     image:
       repository: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.prosody.registry }}/{{ .Values.images.prosody.repository }}"
       tag: {{ .Values.images.prosody.tag | quote }}
-    initContainers:
-      busybox:
-        # Image for the `chown-data` init container. Upstream runs it as root on
-        # purpose, so its securityContext is deliberately left untouched here.
-        image: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.busybox.registry }}/{{ .Values.images.busybox.repository }}:{{ .Values.images.busybox.tag }}"
     imagePullSecrets:
     {{- range .Values.global.imagePullSecrets }}
       - name: {{ . | quote }}
@@ -149,7 +143,12 @@ jitsi:
       TURN_HOST: {{ .Values.turn.server.host | quote }}
       TURN_PORT: {{ .Values.turn.server.port | quote }}
       TURN_TRANSPORT: {{ .Values.turn.transport | quote }}
-      TURN_CREDENTIALS: {{ .Values.turn.credentials | quote }}
+    extraSecrets:
+      - name: "TURN_CREDENTIALS"
+        valueFrom:
+          secretKeyRef:
+            name: {{ .Values.secrets.turn.sharedSecret.name | quote }}
+            key: {{ .Values.secrets.turn.sharedSecret.key | quote }}
     resources:
       {{ .Values.resources.prosody | toYaml | nindent 6 }}
     securityContext:
@@ -237,7 +236,8 @@ jitsi:
       {{ . | toYaml | nindent 6 }}
       {{- end }}
   jvb:
-    replicaCount: {{ .Values.replicas.jvb }}
+    replicaCount: 1
+    portRangeSize: {{ .Values.replicas.jvb }}
     # The `useNodeIP` option provided by the upstream charts does not support all relevant scenarios, but since
     # upstream charts v1.4.0 a value for `publicIPs` is required. We set a dummy value as we anyway update it
     # later with the `patchJVB` job.

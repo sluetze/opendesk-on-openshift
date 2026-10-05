@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -42,6 +43,53 @@ spec:
               replicas: 1
           - metadata:
               name: "*jigasi*"
+            spec:
+              replicas: 1
+          # Exceptions: All provisioning consumers are singletons.
+          - metadata:
+              name: "opendesk-provisioning-*"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "*ox-connector*"
+          # Exception: each JVB deployment runs a single pod on its own UDP port; the number of
+          # bridges is set by `replicas.jvb`, not by a deployment's replica count.
+          - metadata:
+              name: "*jvb*"
+            spec:
+              replicas: 1
+          # Exception: Dovecot must not scale (openDesk CE and EE), a user's IMAP sessions have
+          # to reach the same Pod and there is no routing layer to ensure that.
+          - metadata:
+              name: "dovecot"
+            spec:
+              replicas: 1
+          # Exception: SeaweedFS runs as a single all-in-one instance.
+          - metadata:
+              name: "seaweedfs-all-in-one"
+            spec:
+              replicas: 1
+          # Exception: The OX core-ui-middleware updater is a singleton by design. The upstream
+          # chart hardcodes `replicas: 1` with a Recreate strategy and never reads `replicaCount`.
+          - metadata:
+              name: "*core-ui-middleware-updater"
+            spec:
+              replicas: 1
+          # Matrix stack singletons:
+          - metadata:
+              name: "element-synapse-main"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-synapse-media-repo"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-matrix-rtc-authorisation-service"
+            spec:
+              replicas: 1
+          - metadata:
+              name: "element-matrix-rtc-sfu"
             spec:
               replicas: 1
           - spec:

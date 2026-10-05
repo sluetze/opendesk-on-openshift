@@ -1,5 +1,5 @@
-# SPDX-FileCopyrightText: 2024 Center for Digital Sovereignty of Public Administration (ZenDiS) GmbH
-# SPDX-FileCopyrightText: 2023 Federal Ministry of the Interior and Community, PG ZenDiS "Project group for the development of ZenDiS"
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 cleanup:
@@ -7,12 +7,12 @@ cleanup:
   deletePodsOnSuccessTimeout: {{ .Values.debug.cleanup.deletePodsOnSuccessTimeout }}
 
 configuration:
+  apiBaseURL: {{ printf "http://%s.%s.svc.%s:8008" "element-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
   username: "uvs"
-  pod: "opendesk-synapse-0"
   secretName: "opendesk-matrix-user-verification-service-account"
-  password: {{ .Values.secrets.matrixUserVerificationService.password.value | quote }}
 
 global:
+  domain: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
   imagePullSecrets:
     {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
 
@@ -26,7 +26,7 @@ fullnameOverride: "opendesk-matrix-user-verification-service-bootstrap"
 
 podAnnotations:
   intents.otterize.com/service-name: "opendesk-matrix-user-verification-service-bootstrap"
-  {{- with .Values.annotations.elementMatrixUserVerificationServiceBootstrap.pod }}
+  {{- with .Values.annotations.matrixUserVerificationServiceBootstrap.pod }}
   {{ . | toYaml | nindent 2 }}
   {{- end }}
 
@@ -47,7 +47,5 @@ securityContext:
 
 serviceAccount:
   annotations:
-    {{ .Values.annotations.elementMatrixUserVerificationServiceBootstrap.serviceAccount | toYaml | nindent 4 }}
-
-
+    {{ .Values.annotations.matrixUserVerificationServiceBootstrap.serviceAccount | toYaml | nindent 4 }}
 ...

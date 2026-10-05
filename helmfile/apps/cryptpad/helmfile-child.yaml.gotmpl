@@ -22,6 +22,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.cryptpad.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.cryptpad | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

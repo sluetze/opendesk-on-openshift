@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 Zentrum für Digitale Souveränität der Öffentlic
 SPDX-License-Identifier: Apache-2.0
 -->
 
-# Release management
+# Release management 
 
 This document outlines the release and patch management strategy for **openDesk**, ensuring that all updates, patches, and new releases are systematically **planned, tested, documented**, and **reliably deployed** into production. The process is designed to align with operational planning requirements and maintain system stability and security.
 
@@ -13,6 +13,7 @@ This document outlines the release and patch management strategy for **openDesk*
     * [Release types](#release-types)
     * [Release schedule](#release-schedule)
     * [Upgrades](#upgrades)
+    * [Version support](#version-support)
   * [Patch management process](#patch-management-process)
     * [Patch identification \& prioritization](#patch-identification--prioritization)
     * [Patch workflow](#patch-workflow)
@@ -29,6 +30,9 @@ openDesk follows a structured release cycle to ensure predictability and reliabi
 
 ### Release types
 
+> [!note]
+> The release plan of openDesk is currently undergoing a shift towards Semantic Versionion 2.0. The shift will happen once openDesk hits version 2.0.0. Until then we will stay with the old versioning as stated as followed.
+
 | Type      | Frequency     | Content                                                                                              |
 | --------- | ------------- | ---------------------------------------------------------------------------------------------------- |
 | **Major** | Annually (Q3) | Large feature sets, architecture changes, breaking changes                                           |
@@ -36,9 +40,9 @@ openDesk follows a structured release cycle to ensure predictability and reliabi
 | **Patch** | On demand     | Bug fixes, security updates, minor improvements, no intended breaking changes                        |
 
 > [!note]
-> openDesk does **not** guarantee that minor releases are 100% backward‑compatible. When a breaking > change
-> is unavoidable it is announced in the release notes under a dedicated header **“Breaking Changes”** > and a
-> migration guide is provided.
+> openDesk does **not** guarantee that minor releases are 100% backward‑compatible. When a breaking change
+> is unavoidable it is announced in the release notes under a dedicated header **“Breaking Changes”** and a
+> migration guide (see [migrations-manual.md](./migrations-manual.md)) is provided.
 
 ### Release schedule
 
@@ -48,7 +52,8 @@ openDesk follows a structured release cycle to ensure predictability and reliabi
   - **Week 1–3**: Active development of new features and improvements.
   - **End of Week 3**: **Feature freeze** is enforced to allow stabilization and testing.
   - **Week 4**: Final testing, approvals, and preparation for release.
-  - At the **end of Week 4**, a new version is released, and a new cycle begins.
+  - At the **end of Week 4**, a new version is tagged as a release candidate which will be deployed on an internal instance, and a new cycle begins.
+  - After one additional week of testing, the release candidate is released.
     - The development cycle can be extended if necessary, or a release can be skipped if it becomes necessary to delay or postpone the release.
 - **Patch releases** are created **on demand**, based on criticality and urgency, and have no planned development cycle.
 
@@ -56,8 +61,13 @@ openDesk follows a structured release cycle to ensure predictability and reliabi
 
 - openDesk does not guarantee an in‑place upgrade between two major versions. Always consult the release notes and plan appropriate migration efforts.
 - Even within the same major line, skipping multiple monthly minor versions is not guaranteed to work without intermediate upgrade steps.
+  - see the [overview of the upgrade path](./migrations-manual.md#overview-and-mandatory-upgrade-path) for mandatory version updates
 - All breaking changes, including those in monthly minor releases, are highlighted in the release notes under Breaking Changes.
 - Migration instructions are collected in [migrations-manual.md](./migrations-manual.md)
+
+### Version support
+
+The openDesk with all of its components is supported only for the latest minor version available. Besided that, if manufacturers provide essential security patches we also release patch releases for the previous minor version.
 
 ## Patch management process
 
@@ -67,12 +77,12 @@ A standardized process ensures patches are developed, prioritized, and deployed 
 
 Patches are categorized by severity and urgency:
 
-| Priority Level | Criteria                                                                 |
-|----------------|--------------------------------------------------------------------------|
-| **Critical**   | Security vulnerabilities, system outages, data loss risks                |
-| **High**       | Major bugs affecting multiple users, performance degradation             |
-| **Medium**     | Functional bugs with workarounds, minor usability issues                 |
-| **Low**        | Cosmetic issues, documentation updates                                   |
+| Priority Level | Criteria                                                     |
+| -------------- | ------------------------------------------------------------ |
+| **Critical**   | Security vulnerabilities, system outages, data loss risks    |
+| **High**       | Major bugs affecting multiple users, performance degradation |
+| **Medium**     | Functional bugs with workarounds, minor usability issues     |
+| **Low**        | Cosmetic issues, documentation updates                       |
 
 ### Patch workflow
 
@@ -94,22 +104,23 @@ A lightweight approach reduces manual effort while maintaining transparency.
 
 ### Announcement channels
 
-| Channel | Audience | Purpose | Owner |
-|---------|----------|---------|-------|
-| **openCode Changelog** | Community & EE | Primary source of truth for every release | DevOps |
-| **opendesk.eu Blog** | Community & EE | Editorially revised release information for a quick overview. | Release Management |
-| **Account‑Manager Mail / Ticket** | Enterprise customers | Targeted information & upgrade advice | Customer Success |
+| Channel                           | Audience             | Purpose                                                       | Owner              |
+| --------------------------------- | -------------------- | ------------------------------------------------------------- | ------------------ |
+| **openCode Changelog**            | Community & EE       | Primary source of truth for every release                     | DevOps             |
+| **opendesk.eu Blog**              | Community & EE       | Editorially revised release information for a quick overview. | Release Management |
+| **Account‑Manager Mail / Ticket** | Enterprise customers | Targeted information & upgrade advice                         | Customer Success   |
 
 ### Timing of communications
 
-| Release Type | What | When |
-|--------------|------|------|
-| **Major** | Roadmap entry + migration highlights | 4 weeks before release |
-|            | Final confirmation | 1 week before release |
-| **Minor** | Changelog entry (draft) | Immediately after feature freeze (end of week 3) |
-|            | EE mail/ticket | 2 business days before deployment |
-| **Patch** | Changelog entry | Right after production deploy |
-|            | EE mail/ticket (only if impacted) | Within 1 business day |
+| Release Type | What                                 | When                                                   |
+| ------------ | ------------------------------------ | ------------------------------------------------------ |
+| **Major**    | Roadmap entry + migration highlights | 4 weeks before release                                 |
+|              | Final confirmation                   | 1 week before release                                  |
+| **Minor**    | Changelog entry (draft)              | On acceptance of merge request to ```develop``` branch |
+|              | Changelog entry                      | On release                                             |
+|              | EE mail/ticket                       | 2 business days before deployment                      |
+| **Patch**    | Changelog entry                      | On release                                             |
+|              | EE mail/ticket (only if impacted)    | Within 1 business day                                  |
 
 Community users consume information via openCode; Enterprise customers get an additional nudge via their account manager – **no mass mailings are sent manually**.
 

@@ -1,5 +1,5 @@
 <!--
-SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 SPDX-License-Identifier: Apache-2.0
 -->
@@ -18,6 +18,7 @@ This section covers the internal system requirements and external service requir
       * [haproxy-ingress.github.io](#haproxy-ingressgithubio)
       * [Ingress nginx](#ingress-nginx)
         * [Minimal configuration](#minimal-configuration)
+  * [MatrixRTC SFU](#matrixrtc-sfu)
   * [Volume provisioner](#volume-provisioner)
   * [Certificate management](#certificate-management)
   * [External services](#external-services)
@@ -35,10 +36,12 @@ openDesk is a Kubernetes-only solution and requires an existing Kubernetes (K8s)
   - [haproxy-ingress.github.io](https://haproxy-ingress.github.io)
   - [Ingress nginx](https://github.com/kubernetes/ingress-nginx/) >= [4.11.5/1.11.5](https://github.com/kubernetes/ingress-nginx/releases) - [now deprecated](https://www.kubernetes.dev/blog/2025/11/12/ingress-nginx-retirement/)
   - See section [Ingress controller](#ingress-controller) for more details.
+- Media ports of the MatrixRTC SFU (calls in Element) reachable for the clients; with `LoadBalancer` services, a
+  provider supporting TCP and UDP on one LoadBalancer. See section [MatrixRTC SFU](#matrixrtc-sfu).
 - Deployment tools
-  - [Helm](https://helm.sh/) >= v3.17.3 but not
-    - v3.18.0[^1]
-    - v3.20.1[^2]
+  - [Helm](https://helm.sh/) >= v3.17.3 and < v4.x[^1] but not
+    - v3.18.0[^2]
+    - v3.20.1[^3]
   - [Helmfile](https://helmfile.readthedocs.io/en/latest/) >= v1.0.0
   - [Helm Diff](https://github.com/databus23/helm-diff) >= v3.11.0
   - [yq](https://github.com/mikefarah/yq) >= v4.52.4
@@ -49,9 +52,6 @@ openDesk is a Kubernetes-only solution and requires an existing Kubernetes (K8s)
 > You can check which versions of the deployment tools the openDesk team is using in their development pipelines by looking up the
 > default value for `HELM_IMAGE_PIN` in [`.gitlab-ci.yml`](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/blob/develop/.gitlab-ci.yml?ref_type=heads)
 > and checking the corresponding [release in the Helm image repository](https://gitlab.opencode.de/bmi/opendesk/components/platform-development/images/helm/-/releases).
-
-**Additional openDesk Enterprise requirements**
-- [OpenKruise](https://openkruise.io/)[^3] >= v1.6
 
 ## Hardware
 
@@ -131,6 +131,27 @@ controller:
 
 See the [`allowSnippetAnnotations` documentation](https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#allow-snippet-annotations) for context.
 
+## MatrixRTC SFU
+
+Calls in Element send their media to the MatrixRTC SFU, not through the ingress controller. The SFU listens on one TCP
+and one UDP port (`technical.matrix.sfu.rtcTCP.port` and `technical.matrix.sfu.rtcMuxedUDP.port`, default `30000` and
+`30001`), which must be reachable for the clients at the single IP the SFU announces. Allow both ports in your
+firewalls. How the ports are exposed depends on `service.type.matrixRTC`, falling back to `cluster.service.type`:
+
+- `LoadBalancer`: openDesk creates one LoadBalancer for both ports and announces its IP. The provider must
+  - support TCP and UDP on the same LoadBalancer (mixed protocols),
+  - assign a single IP address; hostname-only (e.g. AWS ELB) or multiple-address LoadBalancers are not supported.
+
+  If your provider does not support mixed protocols, set `technical.matrix.sfu.rtcMuxedUDP.enabled: false`. Media
+  then uses TCP only, which works but degrades call quality on lossy networks.
+- `NodePort`: each port is also used as node port, so it must be within the node port range and unique in the
+  cluster. The SFU announces `cluster.networking.ingressGatewayIP`, if set, otherwise the IP of the node it runs on.
+
+With `LoadBalancer`, keep a single SFU replica (`replicas.matrixRTCSfu: 1`, the default): the LoadBalancer cannot
+route the media of a call to the replica handling it. Clients that cannot reach the media ports at all
+need a TURN server, preferably with TLS on port 443 (`turn.tls`), see
+[TURN configuration](./getting-started.md#turn-configuration).
+
 ## Volume provisioner
 
 Initial evaluation deployments requires a `ReadWriteOnce` volume provisioner.
@@ -158,13 +179,13 @@ deployments, you need to make use of your own production-grade services; see the
 | -------- | --------------------- | ------- | --------------------- |
 | Cache    | Memcached             | `1.6.x` | Memcached             |
 |          | Redis                 | `7.x.x` | Redis                 |
-| Database | Cassandra[^3]         | `5.0.x` | Cassandra             |
+| Database | Cassandra[^4]         | `5.0.x` | Cassandra             |
 |          | MariaDB               | `10.x`  | MariaDB               |
 |          | PostgreSQL            | `15.x`  | PostgreSQL            |
 | Mail     | Mail Transfer Agent   |         | Postfix               |
 |          | PKI/CI (S/MIME)       |         |                       |
-| Security | AntiVirus/ICAP        |         | ClamAV                |
-| Storage  | K8s ReadWriteOnce[^4] |         | Ceph / Cloud specific |
+| Security | AntiVirus/ICAP[^6]    |         | ClamAV                |
+| Storage  | K8s ReadWriteOnce[^5] |         | Ceph / Cloud specific |
 |          | K8s ReadWriteMany     |         | Ceph / NFS            |
 |          | Object Storage        |         | SeaWeed               |
 | Voice    | TURN                  |         | Coturn                |
@@ -178,10 +199,14 @@ Helmfile requires [HelmDiff](https://github.com/databus23/helm-diff) to compare 
 
 ## Footnotes
 
-[^1]: Due to a [Helm bug](https://github.com/helm/helm/issues/30890) v3.18.0 is not supported.
+[^1]: Helm 4 support will be a breaking change for openDesk due to changed post-renderer handling; once available all deployments must migrate. Targeted for end of 2026.
 
-[^2]: Due to Helm bugs [[1](https://github.com/helm/helm/issues/31919), [2](https://github.com/helm/helm/issues/31971)] v3.20.1 is not supported.
+[^2]: Due to a [Helm bug](https://github.com/helm/helm/issues/30890) v3.18.0 is not supported.
 
-[^3]: Required for Dovecot Pro as part of openDesk Enterprise Edition.
+[^3]: Due to Helm bugs [[1](https://github.com/helm/helm/issues/31919), [2](https://github.com/helm/helm/issues/31971)] v3.20.1 is not supported.
 
-[^4]: Due to technical limitations within NFS it is not supported as storage backend for RWO.
+[^4]: Required for Dovecot Pro as part of openDesk Enterprise Edition.
+
+[^5]: Due to technical limitations within NFS it is not supported as storage backend for RWO.
+
+[^6]: See [malware](./configuration-yamls/antivir.md) for antivirus/ICAP configuration details.

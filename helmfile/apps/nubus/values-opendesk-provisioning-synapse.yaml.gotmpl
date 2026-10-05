@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+global:
+  imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+  imagePullSecrets:
+    {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
+
+additionalAnnotations:
+  {{ .Values.annotations.provisioningSynapse.additional | toYaml | nindent 2 }}
+
+# The provisioning image and chart are generic; this release runs the mas-synapse
+# module, which drives the user lifecycle through MAS (and the display name through
+# Synapse). Further modules get their own release of the same chart.
+module: "mas-synapse"
+
+image:
+  registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.provisioningConnector.registry | quote }}
+  repository: {{ .Values.images.provisioningConnector.repository | quote }}
+  pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+  tag: {{ .Values.images.provisioningConnector.tag | quote }}
+
+provisioningApi:
+  connection:
+    url: {{ printf "http://%s.%s.svc.%s" "ums-provisioning-api" (.Values.apps.nubus.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+  auth:
+    username: "opendesk-provisioning-synapse"
+    # Passed as a value on purpose: the chart renders the register-consumers
+    # registration JSON, and that JSON embeds this password, so it cannot come from
+    # an existingSecret. See the note in environments/default/secrets.yaml.gotmpl.
+    password: {{ .Values.secrets.nubus.provisioning.synapse.apiPassword.value | quote }}
+
+masSynapse:
+  mas:
+    connection:
+      # The internal `web` listener, which serves the `adminapi` and `oauth` resources.
+      url: {{ printf "http://%s.%s.svc.%s:8080" "element-matrix-authentication-service" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+    upstreamProviderId: {{ .Values.platform.matrixMasProviderId | quote }}
+    auth:
+      clientId: {{ .Values.platform.matrixProvisioningMasClientId | quote }}
+      existingSecret:
+        name: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.name | quote }}
+        keyMapping:
+          clientSecret: {{ .Values.secrets.matrixAuthenticationService.provisioningClientSecret.key | quote }}
+  synapse:
+    connection:
+      url: {{ printf "http://%s.%s.svc.%s:8008" "element-synapse" (.Values.apps.element.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
+    serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+    # MAS service user the connector creates and mints short-lived Synapse admin tokens for, which
+    # it needs to keep display names in sync (MAS has no API for them).
+    adminUsername: "provisioning-admin"
+  config:
+    disableAction: "lock"
+    eraseOnDelete: {{ .Values.functional.dataProtection.matrixAccountErasure.enabled }}
+    syncDisplayname: {{ not .Values.functional.chat.matrix.profile.allowUsersToUpdateDisplayname }}
+    enableFlagProperty: "opendeskLivecollaborationEnabled"
+    adminFlagProperty: "opendeskLivecollaborationAdmin"
+    # We do not pre-provision users, as they without an actual login of a user the user
+    # would never be able to decrypt any received message anyway.
+    createUsers: false
+    localpartUseImmutableId: {{ .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}
+
+config:
+  logLevel: {{ if .Values.debug.enabled }}"DEBUG"{{ else }}"INFO"{{ end }}
+
+resources:
+  {{ .Values.resources.provisioningSynapse | toYaml | nindent 2 }}
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  enabled: true
+  privileged: false
+  runAsUser: 1000
+  runAsGroup: 1000
+  seccompProfile:
+    type: "RuntimeDefault"
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  seLinuxOptions:
+    {{ .Values.seLinuxOptions.provisioningSynapse | toYaml | nindent 4 }}
+
+serviceAccount:
+  create: true
+  annotations:
+    {{ .Values.annotations.provisioningSynapse.serviceAccount | toYaml | nindent 4 }}
+...

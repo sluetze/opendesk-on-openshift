@@ -27,6 +27,24 @@ SPDX-License-Identifier: Apache-2.0
   * [Deprecation warnings](#deprecation-warnings)
   * [Overview and mandatory upgrade path](#overview-and-mandatory-upgrade-path)
   * [Manual checks/actions](#manual-checksactions)
+    * [Versions ≥ v1.19.0](#versions--v1190)
+      * [TL;DR for the upgrade to v1.19.0](#tldr-for-the-upgrade-to-v1190)
+      * [Pre-upgrade to versions ≥ v1.19.0](#pre-upgrade-to-versions--v1190)
+        * [Changed Helmfile structure: Matrix release customizations](#changed-helmfile-structure-matrix-release-customizations)
+        * [New databases: Matrix](#new-databases-matrix)
+        * [New object storage: Synapse media](#new-object-storage-synapse-media)
+        * [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased)
+        * [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated)
+        * [Matrix: Migrate the Synapse authentication to MAS](#matrix-migrate-the-synapse-authentication-to-mas)
+        * [Changed Helmfile structure: TURN shared secret](#changed-helmfile-structure-turn-shared-secret)
+        * [New Helmfile settings: Matrix migration and MatrixRTC SFU in `technical.matrix`](#new-helmfile-settings-matrix-migration-and-matrixrtc-sfu-in-technicalmatrix)
+        * [Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates)
+        * [Changed Helmfile default: Minimum password length raised from 8 to 14 characters](#changed-helmfile-default-minimum-password-length-raised-from-8-to-14-characters)
+        * [Changed Helmfile default: Redis consumer password fallbacks removed](#changed-helmfile-default-redis-consumer-password-fallbacks-removed)
+        * [Changed security contexts: Volume ownership now relies on fsGroup](#changed-security-contexts-volume-ownership-now-relies-on-fsgroup)
+      * [Post-upgrade to versions ≥ v1.19.0](#post-upgrade-to-versions--v1190)
+        * [Changed Nubus default: Structured logging enabled](#changed-nubus-default-structured-logging-enabled)
+        * [Nubus: Removed Notifications API, its database can be dropped](#nubus-removed-notifications-api-its-database-can-be-dropped)
     * [Versions ≥ v1.18.0](#versions--v1180)
       * [Pre-upgrade to versions ≥ v1.18.0](#pre-upgrade-to-versions--v1180)
         * [New persistence requirement: OX Connector requires its own PostgreSQL database](#new-persistence-requirement-ox-connector-requires-its-own-postgresql-database)
@@ -89,7 +107,6 @@ We cannot hold back all migrations as some are required e.g. due to a change in 
 This section provides an overview of potential changes to be part of the next major release (openDesk 2.0).
 
 - `functional.portal.link*` (see `functional.yaml.gotmpl` for details) are going to be moved into the `theme.*` tree, we are also going to move the icons used for the links currently found under `theme.imagery.portalEntries` in this step.
-- We will explicitly set the [database schema configuration](https://www.xwiki.org/xwiki/bin/view/Documentation/AdminGuide/Configuration/#HConfigurethenamesofdatabaseschemas) for XWiki to avoid the use of the `public` schema.
 - Removal of the `OPENDESK_1_12_0_SKIP_PVC_MIGRATION` option that was [introduced with openDesk 1.12.0](#fixed-helmfile-templating-storageclassnames-for-nubus-openproject-and-ox-connector).
 - Focussing on PostgreSQL all components except OX App Suite components:
   - Removal of the XWiki MariaDB support.
@@ -120,8 +137,9 @@ matching that constraint, though our links always point to the newest patch rele
 <!-- IMPORTANT: Make sure to mark mandatory releases if an automatic migration requires a previous update to be installed -->
 | Version                                                                                   | Mandatory | Pre-Upgrade                                                          | Post-Upgrade                                                           | Minimum Required Previous Version                                                     |
 | ----------------------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| [v1.18.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.18.0) | **yes**   | [Pre](#pre-upgrade-to-versions--v1180)                               | [Post](#post-upgrade-to-versions--v1180)                               | ⬇ Install v1.15.x first                                                              |
-| [v1.17.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.17.0) | --        | [Pre](#pre-upgrade-to-versions--v1170)                               | [Post](#post-upgrade-to-versions--v1170)                               | ⬇ Install v1.15.x first                                                              |
+| [v1.19.0](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.18.0) | **yes**   | [Pre](#pre-upgrade-to-versions--v1190)                               | [Post](#post-upgrade-to-versions--v1190)                               | ⬇ Install v1.18.x first                                                              |
+| [v1.18.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.18.2) | **yes**   | [Pre](#pre-upgrade-to-versions--v1180)                               | [Post](#post-upgrade-to-versions--v1180)                               | ⬇ Install v1.15.x first                                                              |
+| [v1.17.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.17.4) | --        | [Pre](#pre-upgrade-to-versions--v1170)                               | [Post](#post-upgrade-to-versions--v1170)                               | ⬇ Install v1.15.x first                                                              |
 | [v1.16.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.16.1) | --        | [Pre](#pre-upgrade-to-versions--v1160)                               | --                                                                     | [⚠ Install v1.15.x first](#pre-upgrade-to-versions--v1160)                           |
 | [v1.15.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.15.1) | **yes**   | [Pre](#pre-upgrade-to-versions--v1150)                               | [Post](#post-upgrade-to-versions--v1150)                               | ⬇ Install ≥ v1.12.x first                                                            |
 | [v1.14.x](https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/releases/v1.14.2) | --        | [Pre](#pre-upgrade-to-versions--v1140)                               | [Post](#post-upgrade-to-versions--v1140)                               | ⬇ Install ≥ v1.12.x first                                                            |
@@ -149,6 +167,695 @@ matching that constraint, though our links always point to the newest patch rele
 > patch) starting from 1.7.0, e.g. 1.7.0, 1.7.1, 1.8.0, etc. Furthermore, if a version is not explicitly
 > listed no extra manual steps are required when upgrading to that version, e.g. in the case of an update from
 > version 1.7.0 to version 1.7.1.
+
+### Versions ≥ v1.19.0
+
+#### TL;DR for the upgrade to v1.19.0
+
+openDesk 1.19.0 replaces the Matrix/Element deployment with the Matrix stack chart: authentication moves from
+Synapse to the Matrix Authentication Service (MAS), and Synapse media is stored in object storage by default.
+The new openDesk Provisioning Connector locks Matrix accounts when users are deactivated in the IAM and
+deactivates Matrix accounts when users are deleted from the IAM. Accounts of users deleted before the upgrade
+can be deactivated once as part of the upgrade (a dry run by default). Optional account erasure is a separate
+[deployment setting](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased).
+
+The media PVC acts as a cache for recent media; cleanup removes inactive local copies after ensuring they are
+stored in S3.
+
+**Mandatory for all deployments with Matrix/Element**
+
+1. Provide the new persistence (bundled services get it automatically, external services must be provisioned
+   before the upgrade):
+   - PostgreSQL database for MAS, see [New databases: Matrix](#new-databases-matrix).
+   - S3 bucket for Synapse media, see [New object storage: Synapse media](#new-object-storage-synapse-media).
+     Deployments storing media on a volume keep referencing the existing PVC through
+     `persistence.storages.synapse.existingClaim`.
+2. Decide whether the data of deleted users is erased along with their account,
+   see [Matrix: Decide whether the data of a deleted user is erased](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased).
+3. Review the orphaned Matrix accounts and apply the deactivation after review,
+   see [Matrix: Review the orphaned Matrix accounts before they are deactivated](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated).
+4. Migrate the Synapse authentication to MAS,
+   see [Matrix: Migrate the Synapse authentication to MAS](#matrix-migrate-the-synapse-authentication-to-mas).
+5. For Element calls, make the MatrixRTC SFU media ports reachable, see
+   [Matrix settings in `technical.matrix`](#new-helmfile-settings-matrix-migration-and-matrixrtc-sfu-in-technicalmatrix).
+
+**Quickest way**
+
+Steps 3 and 4 are designed as a dry run first, to be reviewed before anything is changed. When you skip these
+reviews, the upgrade takes two deployments:
+
+> [!warning]
+> Going the quickest way, you neither review the Matrix accounts that get deactivated (and possibly erased) nor
+> the result of the syn2mas dry run. Both changes are one-way. Have a **tested backup** at hand before you start:
+> at least the Synapse database, the Synapse media, the Synapse signing key and the IAM.
+
+1. Set the following in your environment values and upgrade openDesk as a whole. Adapt `maxOrphanPercent` to
+   the share of Matrix accounts you expect to be orphaned; the upgrade fails if more accounts would be deactivated.
+   If the limit is exceeded, review the reported candidates and investigate unexpected results. Raise the limit
+   only if the reported proportion is expected, then rerun the upgrade.
+   Synapse is down while the `element-syn2mas` Job migrates the accounts to MAS.
+
+   ```yaml
+   migrations:
+     actionOptions:
+       synapseDeactivateOrphanedUsers:
+         dryRun: false
+         maxOrphanPercent: 50
+   technical:
+     matrix:
+       migration:
+         enabled: true
+         dryRun: false
+   ```
+
+2. Once the `element-syn2mas` Job has succeeded and the `element-markers` ConfigMap reports `syn2mas_migrated`, finalize
+   the migration: set `technical.matrix.migration.enabled: false` (and reset
+   `technical.matrix.migration.dryRun` to its default `true`), then redeploy the Element release.
+   `dryRun` has no effect while the migration is disabled. The marker then reports `delegated_auth`. Keep these
+   settings for all future deployments.
+
+**Other changes and when they are relevant**
+
+| Change                                                                                                                                   | Relevant when                                                                                    |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| [Matrix release customizations](#changed-helmfile-structure-matrix-release-customizations)                                               | You use `customization.release` for Matrix releases: keys renamed or removed.                    |
+| [Matrix settings in `technical.matrix`](#new-helmfile-settings-matrix-migration-and-matrixrtc-sfu-in-technicalmatrix)                    | Rename `ingress.parameters.*.element` to `synapse` if you override it; review SFU networking.    |
+| [TURN shared secret](#changed-helmfile-structure-turn-shared-secret)                                                                     | You set `turn.credentials` in your values: moved to `secrets.turn.sharedSecret`.                 |
+| [Trust bundles with self-signed certificates](#changed-helmfile-structure-mounting-of-trust-bundles-when-using-self-signed-certificates) | You set `certificate.selfSigned`: root CA and trust bundle mount are now opt-in.                 |
+| [Minimum password length 14](#changed-helmfile-default-minimum-password-length-raised-from-8-to-14-characters)                           | Always; only relevant if you want to keep the previous minimum of 8 characters.                  |
+| [Redis consumer password fallbacks](#changed-helmfile-default-redis-consumer-password-fallbacks-removed)                                 | You override the bundled Redis password: set it for each consumer as well.                       |
+| [Nubus structured logging](#changed-nubus-default-structured-logging-enabled) (post-upgrade)                                             | You process Nubus logs with alerting rules, filters or parsers.                                  |
+| [Nubus Notifications API removed](#nubus-removed-notifications-api-its-database-can-be-dropped) (post-upgrade)                           | Optional clean-up; remove its settings from your values and drop its database after the upgrade. |
+
+#### Pre-upgrade to versions ≥ v1.19.0
+
+##### Changed Helmfile structure: Matrix release customizations
+
+**Target group:** Deployments with custom values files for Matrix releases in `customization.release`.
+
+**Required action**
+
+Rename the following keys in your deployment values. The names are case-sensitive:
+
+| Previous key below `customization.release` | New key                        |
+| ------------------------------------------ | ------------------------------ |
+| `matrixNeoboardWidget`                     | `matrixNeoBoardWidget`         |
+| `matrixNeochoiceWidget`                    | `matrixNeoChoiceWidget`        |
+| `matrixNeodatefixWidget`                   | `matrixNeoDateFixWidget`       |
+| `matrixNeodatefixBotBootstrap`             | `matrixNeoDateFixBotBootstrap` |
+| `matrixNeodatefixBot`                      | `matrixNeoDateFixBot`          |
+
+The following customization keys have been removed as part of the switch to the Matrix stack chart:
+
+- `opendeskSynapseWeb`
+- `opendeskSynapse`
+- `opendeskSynapseAdmin`
+- `opendeskSynapseAdminbotBootstrap`
+- `opendeskSynapseAdminbotPipe`
+- `opendeskSynapseAdminbotWeb`
+- `opendeskSynapseAuditbotBootstrap`
+- `opendeskSynapseAuditbotPipe`
+- `opendeskSynapseGroupsync`
+- `opendeskWellKnown`
+
+The `opendesk-well-known` release itself was replaced by the Matrix stack chart's `wellKnownDelegation`
+component; besides `customization.release.opendeskWellKnown`, its keys `resources.wellKnown` and
+`seLinuxOptions.wellKnown` have been removed as well.
+
+Port applicable overrides to the Matrix stack chart through `customization.release.opendeskElement`, which
+now covers Synapse and the Enterprise components. Adapt the values inside each file to the new chart structure;
+moving the file reference alone is insufficient. Remove obsolete overrides and the removed customization keys.
+
+##### New databases: Matrix
+
+**Target group:** Deployments using Matrix, especially those with externally managed PostgreSQL services.
+
+**Required action**
+
+For Matrix Authentication Service (MAS), configure the new `databases.matrixAuthenticationService` connection.
+Before starting the affected components, external database administrators must create the database and user,
+grant the required access, and provide the respective credentials:
+
+| Configuration                           | Default database        | Default user                 | Default password Secret         |
+| --------------------------------------- | ----------------------- | ---------------------------- | ------------------------------- |
+| `databases.matrixAuthenticationService` | `matrix_authentication` | `matrix_authentication_user` | `database-matrix-mas-password`  |
+
+The value tree defaults to `host: postgresql`, port `5432`, and `sslmode: prefer`.
+
+Passwords use the `{value, create, name, key}` convention; when `create: false`,
+provide the referenced Secret yourself. The bundled PostgreSQL configuration includes this database definition.
+Creating the MAS database does not migrate existing Synapse authentication data, see
+[Migrate the Synapse authentication to MAS](#matrix-migrate-the-synapse-authentication-to-mas).
+
+The removed `databases.umsNotificationsApi` configuration is covered in the
+[Notifications API cleanup instructions](#nubus-removed-notifications-api-its-database-can-be-dropped).
+
+##### New object storage: Synapse media
+
+**Target group:** Deployments running Synapse, including NeoBoard-only deployments.
+
+**Required action**
+
+Configure the new `objectstores.synapse` entry for Synapse media storage. The default bucket is `synapse`, the
+access-key username is `synapse_user`, and the region is `eu-west-1`. For external storage, provision the bucket
+and credentials with access to its objects, set `endpoint` to the S3 endpoint hostname, and configure `secretKey`
+using the `{value, create, name, key}` convention. The default Secret is `objectstore-synapse-secret-key`, key
+`secretKey`.
+
+The Synapse templates construct an HTTPS endpoint from `endpoint`. When it is empty, they use the configured
+MinIO or SeaweedFS ingress hostname; rendering fails if neither backend is enabled. Do not include an `https://`
+prefix in `endpoint`. The current Synapse templates do not consume the `port` or `useSSL` fields to select another
+port or plain HTTP.
+
+For installations already using S3, preserve the existing bucket, endpoint and credentials. For installations
+with media on a persistent volume, identify and back up the existing media PVC before upgrading. Keep referencing
+that PVC in your deployment values across subsequent deployments. For an installation using the default old
+claim name:
+
+```yaml
+persistence:
+  storages:
+    synapse:
+      existingClaim: "media-opendesk-synapse-0"
+```
+
+Replace the example with the actual claim name if it differs. Removing `existingClaim` will cause the chart to
+use a different volume and make media that has not yet been uploaded to S3 unavailable.
+
+**Media storage, local cache and cleanup**
+
+Community Edition uses the S3 storage provider; Enterprise uses the chart's native S3 integration. New media is
+written to S3 synchronously as well as to the local media volume. The PVC acts as a cache for recent media;
+media removed locally remains available from S3.
+
+Cleanup runs hourly by default and selects media that has not been accessed for one day (`1d`). CE runs the
+`opendesk-element-customization` media cleanup CronJob; EE runs a `local-media-cleanup` sidecar. Both use
+`s3_media_upload` to upload eligible media before deleting its local copy. This also gradually offloads existing
+media from the retained PVC. It is not an immediate bulk copy during the Helm upgrade, and syn2mas migrates
+authentication data, not media.
+
+Keep the existing PVC attached and backed up during the upgrade. Download old media, upload and download new
+media, confirm that objects reach the bucket, and check cleanup logs. Do not remove the PVC merely because S3
+is configured: older media may still be awaiting upload, and Synapse continues to use local storage as a cache.
+
+**S3 encryption**
+
+If existing objects use customer-provided server-side encryption (SSE-C), preserve the same key through
+`secrets.synapse.s3EncryptionCustomerKey`. Supply its value or reference an existing Secret with `create: false`;
+do not replace the key during the upgrade. With the default `create: true` and an empty value, SSE-C is disabled.
+This does not disable encryption configured independently on the storage backend.
+
+To use a pre-created Kubernetes Secret, configure:
+
+```yaml
+secrets:
+  synapse:
+    s3EncryptionCustomerKey:
+      create: false
+      name: "synapse-s3-encryption-customer-key"
+      key: "s3EncryptionCustomerKey"
+```
+
+Alternatively, keep `create: true` and supply `secrets.synapse.s3EncryptionCustomerKey.value` through your secure
+values configuration or the `SYNAPSE_S3_ENCRYPTION_CUSTOMER_KEY` environment variable. The key is not derived
+from `MASTER_PASSWORD`. Use the key format required by the deployed provider and an S3 backend supporting SSE-C.
+Back up the key separately from the bucket and preserve it for restores. Enabling SSE-C does not retroactively
+re-encrypt existing objects; changing or disabling the key can make previously encrypted objects unreadable.
+Do not rotate this setting without a separate object re-encryption procedure.
+
+##### Matrix: Decide whether the data of a deleted user is erased
+
+**Target group:** Deployments with the chat component (Element/Matrix) and the IAM (Nubus).
+
+**Context:**
+
+openDesk 1.19.0 introduces the openDesk Provisioning Connector for the chat component. From this release on the Matrix accounts follow the IAM, which treats deactivating and deleting a user differently. Note that the terms differ between the IAM and Matrix: A user *deactivated* in the IAM gets their Matrix account *locked*, while a user *deleted* from the IAM gets their Matrix account *deactivated*.
+
+- **Deactivated** in the IAM: The Matrix account is **locked**. The user can no longer sign in and their sessions and tokens are rejected, but they stay a member of their rooms and their data is kept. Activating the user in the IAM again unlocks the account. This does not depend on the setting below.
+- **Deleted** from the IAM: The Matrix account is **deactivated** through the Matrix Authentication Service. This ends the user's sessions and [deactivates the Synapse account](https://element-hq.github.io/synapse/latest/admin_api/user_admin_api.html#deactivate-account), which, among others, deletes the user's devices, E2EE keys and access tokens and removes them from all their rooms and from the user directory. Whether the account's data is erased along with it is a decision of your deployment.
+
+**Required action:**
+
+Take that decision before you upgrade, in `functional.dataProtection.matrixAccountErasure.enabled` ([`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl)):
+
+- `true` (default): The account is deactivated **and erased**. Synapse additionally removes the user's display name, avatar and custom profile fields and marks the user as erased (see the `erase` parameter of the [Synapse Admin API](https://element-hq.github.io/synapse/latest/admin_api/user_admin_api.html#deactivate-account)). Per the [Matrix specification](https://spec.matrix.org/latest/client-server-api/#post_matrixclientv3accountdeactivate), users and servers joining a room after the erasure are only served redacted copies of the events the account sent, while those who could already see the events keep seeing them unredacted. The events are not deleted from the database. The erasure cannot be undone.
+- `false`: The account is only deactivated, its profile is kept and its events stay visible to everyone in the rooms.
+
+This setting affects both use cases:
+
+- The ongoing provisioning from this release on
+- The one-time catch-up for the users that were deleted before it existed, see the [next step](#matrix-review-the-orphaned-matrix-accounts-before-they-are-deactivated).
+
+##### Matrix: Review the orphaned Matrix accounts before they are deactivated
+
+**Target group:** Deployments with the chat component (Element/Matrix).
+
+**Context:**
+
+To reconcile the Matrix accounts against the IAM, the automated migration action [`synapse_deactivate_orphaned_users`](./migrations-automated.md#synapse_deactivate_orphaned_users) is configured. It compares the Matrix accounts against the IAM and deactivates the ones that no IAM object accounts for any more. Only deleted users are its subject: The account of a user that still exists in the IAM is not touched by the migration action but will be reconciled and kept in sync by the openDesk Provisioning Connector introduced with v1.19.0.
+
+The action is the first step of the upgrade: It runs in the `migrations-pre` Job against the previous Synapse, before the users are migrated to the Matrix Authentication Service (see [Matrix: Migrate the Synapse authentication to MAS](#matrix-migrate-the-synapse-authentication-to-mas)), which takes the deactivated accounts over as they are. It only runs until the first upgrade deployment has completed, so the review below happens before you upgrade.
+
+> [!warning]
+> Deactivating an account cannot be undone, and unless you turned the erasure off in the
+> [previous step](#matrix-decide-whether-the-data-of-a-deleted-user-is-erased), the account's data is
+> erased along with it.
+
+The default run mode of the action is **dry run**: it reports every account it would deactivate without changing
+those accounts. Each run creates a temporary admin account and deactivates it afterwards, including dry runs;
+see [the automated migration](./migrations-automated.md#synapse_deactivate_orphaned_users). Deactivating the
+reported accounts remains a decision you take after reviewing the list.
+
+**Required action:**
+
+1. Before the upgrade, with the configuration of the new release and `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` left at `true`, deploy only the `opendesk-secrets` and `opendesk-migrations-pre` releases. This keeps the existing application releases running; the action still creates and deactivates its temporary admin account.
+2. Read the log of the `migrations-pre` Job, starting below the line saying `DRY RUN - would deactivate [..] of [..] active OIDC bound account(s)`. If at least one account would be deactivated, you will find an entry for each account with its:
+   - user name
+   - Matrix ID
+   - display name
+   - OIDC subject (`external_id`)
+   - creation date
+3. Review that list. Every account on it should belong to a user that really was deleted from the IAM. An account whose user still exists means the IAM was not read completely, and that has to be investigated before anything is applied. The action guards against this itself: It re-reads every account it classified as orphaned from the IAM and fails should the directory still know one of them, and the apply run refuses to deactivate anything when the reported accounts exceed `migrations.actionOptions.synapseDeactivateOrphanedUsers.maxOrphanPercent` (25% by default) of the active Matrix accounts. You should adapt the limit after you have reviewed the reported accounts to an integer value slightly above the value shown in the log for `would deactivate [..], 20.0% of them (erase=True)`.
+4. Set `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` to `false` in [`migrations.yaml.gotmpl`](../helmfile/environments/default/migrations.yaml.gotmpl) and upgrade. The action runs once more, in apply mode, as the first step of the upgrade.
+
+The action only runs until the first upgrade deployment has completed. If you upgrade with `dryRun` left at `true`, the accounts are only reported, and you handle them yourself afterwards - through the Matrix Authentication Service (e.g. Element Admin), not the Synapse Admin API, as deactivating an account only in Synapse leaves its MAS user active.
+
+> [!note]
+> To drop the action from the migration altogether, opt out of it through `migrations.actionsSkip`, see [Skip single actions of the automated migrations](./updates.md#skip-single-actions-of-the-automated-migrations).
+
+##### Matrix: Migrate the Synapse authentication to MAS
+
+**Target group:** Existing deployments with Element enabled.
+
+**Required action**
+
+Migrate existing accounts and sessions to Matrix Authentication Service (MAS) with
+[syn2mas](https://github.com/element-hq/ess-helm/blob/main/docs/syn2mas.md) in three deployments.
+
+Back up the Synapse database, media and signing key before starting, and include MAS data and secrets in
+subsequent backups. Schedule downtime for step 2. The migration is one-way; disabling it in step 3 finalizes it.
+
+The migration is controlled by two settings in
+[`technical.yaml.gotmpl`](../helmfile/environments/default/technical.yaml.gotmpl), which you override in your own
+environment values. By default the migration is **disabled**, and once enabled it starts as a **dry run**:
+
+```yaml
+technical:
+  matrix:
+    migration:
+      enabled: false
+      dryRun: true
+```
+
+Each of the three steps below is its own deployment. The first one is the regular upgrade of the whole openDesk
+deployment. Steps 2 and 3 only change the Element release, so it is sufficient to redeploy that release.
+
+Check the progress with the `MATRIX_STACK_MSC3861` value of the `element-markers` ConfigMap:
+
+```shell
+kubectl -n <NAMESPACE> get configmap element-markers -o jsonpath='{.data.MATRIX_STACK_MSC3861}'
+```
+
+1. **Dry run, as part of the upgrade:** Enable the migration and keep the dry run, then upgrade openDesk as a
+   whole:
+
+   ```yaml
+   technical:
+     matrix:
+       migration:
+         enabled: true
+         dryRun: true
+   ```
+
+   The upgrade must not be run with the migration disabled, see the note below this list. Review the logs of the
+   `element-syn2mas` Job and resolve every error it reports before proceeding. Nothing is migrated yet, users
+   keep signing in through the Synapse's own (legacy) authentication and the marker remains `legacy_auth`.
+
+2. **Migration:** Keep the migration enabled, switch off the dry run and redeploy the Element release:
+
+   ```yaml
+   technical:
+     matrix:
+       migration:
+         enabled: true
+         dryRun: false
+   ```
+
+   This is the step requiring the downtime: Synapse is unavailable down while `element-syn2mas` copies the accounts,
+   sessions and OIDC links to MAS. Wait until the Job completed successfully, check its logs and confirm the marker
+   is `syn2mas_migrated` before you continue.
+
+3. **Finalization:** Disable the migration and redeploy the Element release once more. Set `dryRun` back to
+   `true` as well, so that no setting that executes a migration is left behind in your values:
+
+   ```yaml
+   technical:
+     matrix:
+       migration:
+         enabled: false
+         dryRun: true
+   ```
+
+   Synapse now delegates authentication to MAS. Confirm the marker is `delegated_auth` and sign in with an existing
+   user to verify the migration. Keep `enabled: false` for all future deployments.
+
+Skipping migration causes upgrades from `legacy_auth` to fail. Keep migration enabled through step 2 so that
+the required legacy OIDC and password-import configuration remains available.
+
+**Signing key and deployment marker carry-over**
+
+For upgrades from v1.18, the pre-upgrade actions automatically
+[create the deployment marker](./migrations-automated.md#configmap_create) and
+[export the existing signing key](./migrations-automated.md#synapse_signing_key_export) to `element-generated`,
+key `SYNAPSE_SIGNING_KEY`. Keep the old Synapse available until the export succeeds. Do not manually change the
+marker or generate a replacement key. If the export reports a conflicting key, investigate before proceeding.
+
+By default, Synapse uses the exported key. If you configure `SYNAPSE_SIGNING_KEY`,
+`secrets.synapse.signingKey.value`, or an existing signing-key Secret with `create: false`, automatic export is
+skipped. The supplied key must match the existing one. Back up the signing-key Secret used by Synapse; this key
+is separate from the optional S3 encryption key.
+
+##### Changed Helmfile structure: TURN shared secret
+
+**Target group:** Deployments that set `turn.credentials` in their values instead of using `TURN_CREDENTIALS`.
+
+**Required action**
+
+Move the value to `secrets.turn.sharedSecret.value`, or reference an existing Secret with `create: false`.
+`turn.credentials` is no longer read.
+
+##### New Helmfile settings: Matrix migration and MatrixRTC SFU in `technical.matrix`
+
+**Target group:** Deployments using Matrix, especially those running more than one openDesk in a cluster, using
+`NodePort` services, or overriding the Element upload size or timeout.
+
+**Context**
+
+openDesk 1.19.0 introduces the `technical.matrix` settings in
+[`technical.yaml.gotmpl`](../helmfile/environments/default/technical.yaml.gotmpl). Relevant for the update are:
+
+- `migration`: The switches of the [MAS migration](#matrix-migrate-the-synapse-authentication-to-mas).
+- `sfu`: The network exposure of the MatrixRTC SFU (LiveKit) used for calls in Element. Clients send media to the SFU
+  through the services below, not through the HTTP ingress. Signalling still uses the ingress.
+  The service type is `service.type.matrixRTC`, falling back to `cluster.service.type` (default `LoadBalancer`).
+
+  | Setting       | Default          | Purpose                                                                  |
+  | ------------- | ---------------- | ------------------------------------------------------------------------ |
+  | `rtcTCP.port` | `30000`          | TCP media, always enabled as fallback for clients whose UDP is blocked.  |
+  | `rtcMuxedUDP` | enabled, `30001` | All UDP media over a single port. Disable only if UDP cannot be exposed. |
+
+  Outside `LoadBalancer` mode and without `cluster.networking.ingressGatewayIP`, the SFU automatically
+  discovers the IP to announce via a public STUN server.
+
+  - `LoadBalancer`: the `opendesk-element-customization` release creates one shared LoadBalancer for both ports
+    and waits for its IP, which the SFU announces to clients, for up to 90% of
+    `deployment.timeouts.releases.opendeskElementCustomization` (default `1200` seconds). The provider must support
+    TCP and UDP on one LoadBalancer, see [MatrixRTC SFU requirements](./requirements.md#matrixrtc-sfu).
+    Provider-specific settings go into `annotations.matrixRTC.serviceExternal`.
+    The IP is discovered at deployment time only: should the provider change the LoadBalancer's IP later, calls
+    fail until the next deployment, which updates the Secret and restarts the SFU.
+  - `NodePort`: each port is also used as node port. The SFU announces `cluster.networking.ingressGatewayIP`, if
+    set (the SFU services then also accept traffic for that IP), else the public IP discovered by a STUN server.
+
+  The SFU's UDP port range is not supported.
+
+The new, optional `technical.matrix.autoscaling` settings (openDesk Enterprise only) require no action, see
+[Autoscaling of the Matrix components](./updates.md#autoscaling-of-the-matrix-components).
+
+**Required action**
+
+1. If you override `ingress.parameters.bodySize.element` or `ingress.parameters.bodyTimeout.element`, rename the key
+   to `synapse`, as they apply to the Synapse ingress. The old keys are no longer read. `bodySize.synapse` (default
+   `100M`) also sets the maximum size of a Matrix media upload in Synapse.
+2. Make the SFU reachable for the clients: allow the configured ports (TCP `30000` and UDP `30001` by default) in
+   your firewalls and load balancers. Check that your setup meets the
+   [MatrixRTC SFU requirements](./requirements.md#matrixrtc-sfu).
+3. With `NodePort` services, each port is also used as node port, so it must be unique cluster-wide. Assign
+   distinct ports per openDesk deployment when running several in one cluster. The defaults are taken from
+   `30000`-`30085`, the lower band of the default Kubernetes node port range (`30000`-`32767`). Dynamic allocation
+   prefers the upper band but falls back to the lower band when it is exhausted. This reduces collisions with
+   auto-assigned ports (e.g. of the Jitsi video bridge); it does not prevent them. Check that no other service uses them.
+4. With `NodePort` services, set `cluster.networking.ingressGatewayIP` if the clients reach the SFU at your ingress
+   gateway's IP. Without this setting, the SFU announces the public IP discovered by a public STUN server; make
+   sure that IP forwards the configured media ports to the SFU. STUN discovers an address; it does not configure
+   port forwarding.
+
+Example for a deployment exposing the SFU through `NodePort` services on the IP of its ingress:
+
+```yaml
+cluster:
+  networking:
+    ingressGatewayIP: "192.0.2.10"
+service:
+  type:
+    matrixRTC: "NodePort"
+technical:
+  matrix:
+    sfu:
+      rtcTCP:
+        port: 30042
+      rtcMuxedUDP:
+        port: 30043
+```
+
+MatrixRTC uses the external TURN server configured in `turn`, if any, as a fallback connection path. It is
+configured when `turn.server.host` or `turn.tls.host` is set. See
+[TURN configuration](./getting-started.md#turn-configuration); the SFU's built-in TURN servers are not used.
+
+##### Changed Helmfile structure: Mounting of trust bundles when using self-signed certificates
+
+**Target group:** Deployments that set `certificate.selfSigned`.
+
+**Context:**
+
+Version 1.19.0 reworks the self-signed certificate support (see
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)). Two
+behaviors that were automatic before are now opt-in:
+
+* The `opendesk-certificates` chart no longer creates the root CA certificate and its issuer on its own when
+  `certificate.selfSigned` is set. Both are now controlled through `certificate.selfSignedOverrides` and default to
+  off, so a deployment that keeps only `certificate.selfSigned: true` no longer gets a CA-signed certificate chain.
+* The Kubernetes secret containing the trusted certificates is no longer mounted into the containers automatically;
+  the mount has to be enabled through `trust.secret.mount`.
+
+**Required action**
+
+To retain the previous behavior - a chart-managed root CA signing the certificate, and its secret mounted into all
+relevant containers - both have to be enabled explicitly:
+
+```yaml
+certificate:
+  selfSigned: true
+  selfSignedOverrides:
+    issuer:
+      create: true
+    caCertificate:
+      create: true
+trust:
+  secret:
+    mount: true
+```
+
+Optionally, additionally set `trust.create: true` to mount a trust bundle composed of the public Mozilla CAs and your
+root CA instead of the root CA alone, so that the components keep trusting publicly signed endpoints as well. This
+requires naming the CA source and a *different* secret for the composed bundle:
+
+```yaml
+trust:
+  create: true
+  certificateAuthorities:
+    secret: "opendesk-certificates-ca-tls"
+  secret:
+    mount: true
+    name: "opendesk-certificates-ca-bundle-tls"
+```
+
+See the [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section for details.
+
+##### Changed Helmfile default: Minimum password length raised from 8 to 14 characters
+
+**Target group:** All deployments.
+
+**Context:**
+
+openDesk 1.19.0 makes the password quality rules of the Nubus IAM configurable, see
+[`updates.md` > "Nubus password quality options"](./updates.md#nubus-password-quality-options). Along with this,
+the default minimum length for passwords is raised from 8 to 14 characters. The new minimum applies whenever a
+password is set or changed after the upgrade, e.g. via the portal's self-service or the admin portal; existing
+passwords are not affected and remain valid.
+
+**Required action:**
+
+None, if the new default is acceptable for your deployment. To keep the previous minimum of 8 characters, set the
+rule back in [`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl) and adapt the
+password complexity message accordingly:
+
+```yaml
+functional:
+  authentication:
+    password:
+      complexityMessage:
+        de: "Das Passwort muss mindestens 8 Zeichen lang sein und darf keine unsicheren Zeichenfolgen enthalten."
+        en: "Password must be at least 8 characters long and must not contain insecure character sequences."
+        fr: "Le mot de passe doit comporter au moins 8 caractères et ne doit pas contenir de chaînes de caractères peu sûres."
+      quality:
+        length:
+          min: 8
+```
+
+##### Changed Helmfile default: Redis consumer password fallbacks removed
+
+**Target group:** Deployments that use bundled Redis and override its default password.
+
+**Context**
+
+Redis and its consumers now derive the same default password from `MASTER_PASSWORD` in
+[`cache.yaml.gotmpl`](../helmfile/environments/default/cache.yaml.gotmpl). Each consumer uses its own
+`cache.<component>.password.value` directly. Explicitly configured empty strings are preserved and no longer fall back to
+`cache.redis.password.value`.
+
+**Required action**
+
+If you override `cache.redis.password.value`, configure each consumer that uses bundled Redis with the same password using the applicable settings below:
+
+- `cache.intercomService.password.value`
+- `cache.nextcloud.password.value`
+- `cache.notes.password.value`
+- `cache.oxAppSuite.password.value`
+
+Changing only the server password no longer updates the consumers’ passwords automatically. Components using an external cache must retain that cache’s credentials.
+
+##### Changed security contexts: Volume ownership now relies on fsGroup
+
+**Target group:** Deployments on Kubernetes clusters without `securityContext.fsGroup` support, e.g. `ReadWriteMany`
+storage such as NFS/CephFS or CSI drivers with `fsGroupPolicy: None`.
+
+**Context:**
+
+To comply with the Pod Security Standards *restricted* profile, Dovecot and Postfix no longer run as root with
+capabilities but as unprivileged users, and the root init container that fixed the ownership of the XWiki data volume
+is disabled. None of these charts executes `chown` any more; ownership of the persistent volumes is
+handled by Kubernetes through `podSecurityContext.fsGroup` only. On storage that applies `fsGroup` the kubelet fixes
+the ownership on the first mount after the upgrade and nothing has to be done. On storage that does not, files not
+already owned by the new user are inaccessible and the pods fail to start.
+
+| Component      | Runs as before | Runs as now | `fsGroup` | Volume                  |
+| -------------- | -------------- | ----------- | --------- | ----------------------- |
+| Dovecot (CE)   | root           | `1000:102`  | `102`     | `/var/lib/dovecot`      |
+| Postfix (both) | root           | `100:101`   | `101`     | `/var/spool/postfix`    |
+| XWiki          | `100:101`      | `100:101`   | `101`     | `/usr/local/xwiki/data` |
+
+**Required action:**
+
+Before the upgrade, while the pods of the previous version still have the privileges to change ownership:
+
+- **Dovecot:**
+  - None. Only the master process ran as root; the mail processes ran as `vmail` (`1000:102`) all along and created
+    the mail data accordingly. Mail data restored or copied with another owner must be owned by `1000`.
+
+- **Postfix:**
+  - The queue volume contains root-owned directories (queue root, `pid`) that the unprivileged `master` cannot write to.
+    Change the ownership from within the 1.18 pods:
+
+    ```shell
+    kubectl -n <NAMESPACE> exec deploy/postfix -c postfix -- chown -R 100:101 /var/spool/postfix /var/lib/postfix
+    kubectl -n <NAMESPACE> exec deploy/postfix-ox -c postfix -- chown -R 100:101 /var/spool/postfix /var/lib/postfix
+    ```
+
+    Alternatively delete the persistent volume claims of both releases, but only with an empty queue (`postqueue -p`),
+    as queued mails would be lost.
+
+- **XWiki:**
+  - None for a volume already used by a previous version, its content is owned by `100:101`. Data restored or copied into
+    the volume must be owned by `100:101` before XWiki starts. As a temporary fallback re-enable the root init container
+    through an additional values file for the `xwiki` release (`customization.release.xwiki` in
+    [`customization.yaml.gotmpl`](../helmfile/environments/default/customization.yaml.gotmpl)) and remove it again once
+    the ownership is fixed, as a cluster enforcing the restricted profile rejects it:
+
+    ```yaml
+    volumePermissions:
+      enabled: true
+    ```
+
+#### Post-upgrade to versions ≥ v1.19.0
+
+##### Changed Nubus default: Structured logging enabled
+
+**Target group:** Deployments that process Nubus logs with alerting rules, filters or parsers relying on the
+previous plain-text log format.
+
+**Context**
+
+Nubus v1.22.0 [activates structured logging by default](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#structured-logging).
+The affected components (UDM HTTP REST API, UMC Server, Directory Notifier and Directory Listener) now emit log lines
+in the format described in the
+[Nubus manual](https://docs.software-univention.de/nubus-manual/1.x/en/logging.html#nubus-logging-structured-components):
+An ISO 8601 timestamp, the severity padded to 8 characters, a request ID, the message and a tab-separated,
+logfmt-formatted set of key-value pairs with application data, the source code reference, PID, log facility and, if
+applicable, a traceback.
+
+Upstream declares plain logging deprecated and will remove it in a future Nubus release.
+
+**Required action**
+
+Review any alerting rules, filters, parsers or dashboards that match on the Nubus log output of the components listed
+above and adapt them to the structured format.
+
+As a temporary fallback you can restore the previous plain-text format by overriding the UCR variables through an
+additional values file for the `ums` release (see `customization.release` in `customization.yaml.gotmpl`) setting:
+
+```yaml
+global:
+  configUcr:
+    umc:
+      server:
+        debug:
+          structured-logging: "false"
+      module:
+        debug:
+          structured-logging: "false"
+    directory:
+      manager:
+        rest:
+          debug:
+            structured-logging: "false"
+    listener:
+      debug:
+        structured-logging: "false"
+    notifier:
+      debug:
+        structured-logging: "false"
+```
+
+> [!warning]
+> Plain logging is deprecated upstream. openDesk does not track this customization and will **not** announce when a
+> future Nubus update stops supporting it; the override will then silently stop having an effect. Treat the fallback as
+> a bridge while adapting your log processing, not as a permanent configuration.
+
+##### Nubus: Removed Notifications API, its database can be dropped
+
+**Target group:** All deployments.
+
+**Context**
+
+With the update to Nubus 1.23 the Notifications API component (`ums-notifications-api`) is no longer part of openDesk.
+The feature was never enabled in openDesk, but the component was deployed and used its own PostgreSQL database
+`notificationsapi` with the user `notificationsapi_user`.
+
+Consequently the related Helmfile settings have been removed:
+
+- `databases.umsNotificationsApi`
+- `replicas.umsNotificationsApi`
+- `resources.umsNotificationsApi`
+- `seLinuxOptions.umsNotificationsApi`
+
+The Kubernetes secret `database-ums-notificationsapi-password` managed by openDesk is removed with the upgrade.
+The database itself and its user are **not** removed automatically.
+
+**Recommended action**
+
+1. Remove `umsNotificationsApi` related settings from your custom deployment values, as they no longer have an effect.
+2. Drop the no longer used database and user once the upgrade succeeded.
 
 ### Versions ≥ v1.18.0
 

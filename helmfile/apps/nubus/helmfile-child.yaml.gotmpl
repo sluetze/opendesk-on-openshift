@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 repositories:
@@ -20,12 +20,20 @@ repositories:
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.intercomService.registry }}/{{ .Values.charts.intercomService.repository }}"  # openDesk Keycloak Bootstrap Chart
   - name: "opendesk-keycloak-bootstrap-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskKeycloakBootstrap.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.opendeskKeycloakBootstrap.registry }}/{{ .Values.charts.opendeskKeycloakBootstrap.repository }}"
+  # openDesk Provisioning Connector Chart (generic; one release per module)
+  - name: "provisioning-connector-repo"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
+    verify: {{ .Values.charts.provisioningConnector.verify }}
+    username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
+    password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
+    oci: true
+    url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.provisioningConnector.registry }}/{{ .Values.charts.provisioningConnector.repository }}"
 
 releases:
   # Univention Management Stack Umbrella Chart
@@ -38,7 +46,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.nubus.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.ums | default .Values.deployment.timeouts.default }}
     {{- if ne (env "OPENDESK_1_12_0_SKIP_PVC_MIGRATION") "" }}
     postRenderer: "./post-renderer-nubus-OPENDESK_1_12_0_SKIP_PVC_MIGRATION.sh"
     {{- end }}
@@ -53,6 +61,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.nubus.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.intercomService | default .Values.deployment.timeouts.default }}
 
   # openDesk Keycloak Bootstrap Chart
   - name: "opendesk-keycloak-bootstrap"
@@ -66,7 +75,21 @@ releases:
     needs:
       - "ums"
     installed: {{ .Values.apps.nubus.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskKeycloakBootstrap | default .Values.deployment.timeouts.default }}
+
+  # openDesk Provisioning Connector, running the "synapse" module
+  - name: "opendesk-provisioning-synapse"
+    chart: "provisioning-connector-repo/{{ .Values.charts.provisioningConnector.name }}"
+    version: "{{ .Values.charts.provisioningConnector.version }}"
+    values:
+      - "values-opendesk-provisioning-synapse.yaml.gotmpl"
+      {{- range .Values.customization.release.provisioningSynapse }}
+      - {{ . }}
+      {{- end }}
+    needs:
+      - "ums"
+    installed: {{ and .Values.apps.nubus.enabled (or .Values.apps.element.enabled .Values.apps.neoboard.enabled) }}
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskProvisioningSynapse | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

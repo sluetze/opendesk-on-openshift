@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -20,6 +20,8 @@ global:
       rootPassword: {{ .Values.databases.oxAppSuite.password.value | default .Values.secrets.mariadb.rootPassword.value | quote }}
       readUser: {{ .Values.databases.oxAppSuite.readUser | default .Values.databases.oxAppSuite.username | quote }}
       readPassword: {{ .Values.databases.oxAppSuite.readPassword.value | default .Values.databases.oxAppSuite.password.value | quote}}
+  core-cacheservice:
+    enabled: false
 
 nextcloud-integration-ui:
   image:
@@ -45,7 +47,7 @@ nextcloud-integration-ui:
       drop:
         - "ALL"
     privileged: false
-    readOnlyRootFilesystem: false
+    readOnlyRootFilesystem: true
     runAsGroup: 1000
     runAsNonRoot: true
     runAsUser: 1000
@@ -55,6 +57,9 @@ nextcloud-integration-ui:
       {{ .Values.seLinuxOptions.openxchangeNextcloudIntegrationUI | toYaml | nindent 6 }}
   serviceAccount:
     create: false
+  # The bundled ox-common does not support automountServiceAccountToken yet.
+  extraPodSpec:
+    automountServiceAccountToken: false
 
 public-sector-ui:
   image:
@@ -91,6 +96,9 @@ public-sector-ui:
       {{ .Values.seLinuxOptions.openxchangePublicSectorUI | toYaml | nindent 6 }}
   serviceAccount:
     create: false
+  # The bundled ox-common does not support automountServiceAccountToken yet.
+  extraPodSpec:
+    automountServiceAccountToken: false
 
 appsuite:
   appsuite-toolkit:
@@ -122,7 +130,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.appsuitebase }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -133,10 +140,8 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/path-type: "exact"
           haproxy-ingress.github.io/redirect-to: "/appsuite/"
-          haproxy-ingress.github.io/redirect-code: "301"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.rootredirect }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -147,7 +152,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.trailslash }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -162,7 +166,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.restRoutesAdmin }}
           {{ . | toYaml | nindent 10 }}
@@ -175,7 +178,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.restRoutesAdvertisement }}
           {{ . | toYaml | nindent 10 }}
@@ -188,7 +190,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.restRoutesChronos }}
           {{ . | toYaml | nindent 10 }}
@@ -201,7 +202,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.restRoutesPreliminary }}
           {{ . | toYaml | nindent 10 }}
@@ -214,7 +214,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.restRoutesUserfeedback }}
           {{ . | toYaml | nindent 10 }}
@@ -227,7 +226,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.staticRoutesServlet }}
           {{ . | toYaml | nindent 10 }}
@@ -240,7 +238,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.staticRoutesRealtime }}
           {{ . | toYaml | nindent 10 }}
@@ -253,7 +250,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.staticRoutesInfostore }}
           {{ . | toYaml | nindent 10 }}
@@ -266,7 +262,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.staticRoutesWebservices }}
           {{ . | toYaml | nindent 10 }}
@@ -280,10 +275,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/api/drive/client/windows/ox/install(.*)$ /\1
+          haproxy-ingress.github.io/rewrite-target: "/"
           haproxy-ingress.github.io/session-cookie-name: "drive-client-windows-ox-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.driveClientWindowsOxRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -296,10 +288,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/ui(.*)$ /ui\1
+          haproxy-ingress.github.io/rewrite-target: "/ui"
           haproxy-ingress.github.io/session-cookie-name: "core-ui-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.coreUiApiRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -312,11 +301,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/api(.*)$ /appsuite/api\1
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-api"
+          haproxy-ingress.github.io/rewrite-target: "/appsuite/api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesApi }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -328,11 +314,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/ajax(.*)$ /appsuite/api\1
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-ajax"
+          haproxy-ingress.github.io/rewrite-target: "/appsuite/api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesAjax }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -344,9 +327,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/path-type: "prefix"
-          haproxy-ingress.github.io/session-cookie-name: "http-api-routes-appsuite-api"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesAppsuiteApi }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -357,7 +339,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.httpApiRoutesAppRootApi }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -369,11 +350,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/rt2(.*)$ /rt2\1
-          haproxy-ingress.github.io/session-cookie-name: "rt2-route"
+          haproxy-ingress.github.io/rewrite-target: "/rt2"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.rt2Route }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -386,10 +364,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help-documents(.*)$ /help-documents\1
+          haproxy-ingress.github.io/rewrite-target: "/help-documents"
           haproxy-ingress.github.io/session-cookie-name: "documents-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.documentsHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -403,10 +378,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help-drive(.*)$ /help\1
+          haproxy-ingress.github.io/rewrite-target: "/help"
           haproxy-ingress.github.io/session-cookie-name: "drive-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.driveHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -419,10 +391,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/help(.*)$ /help\1
+          haproxy-ingress.github.io/rewrite-target: "/help"
           haproxy-ingress.github.io/session-cookie-name: "core-help-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.coreHelpRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -435,10 +404,7 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/office(.*)$ /appsuite\1
+          haproxy-ingress.github.io/rewrite-target: "/appsuite"
           haproxy-ingress.github.io/session-cookie-name: "office-web-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.officeWebRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -450,7 +416,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/redirect-to: "/caldav/"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.caldavWellKnownRedirect }}
           {{ . | toYaml | nindent 10 }}
@@ -462,7 +427,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/redirect-to: "/carddav/"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.carddavWellKnownRedirect }}
           {{ . | toYaml | nindent 10 }}
@@ -475,7 +439,6 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           haproxy-ingress.github.io/session-cookie-name: "authorization"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.davInfostoreRoute }}
           {{ . | toYaml | nindent 10 }}
@@ -488,11 +451,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/(.*)$ /servlet/dav/\1
-          haproxy-ingress.github.io/session-cookie-name: "dav-root-route"
+          haproxy-ingress.github.io/rewrite-target: "/servlet/dav/"
+          haproxy-ingress.github.io/session-cookie-name: "authorization"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.davRootRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -503,7 +463,6 @@ appsuite:
           nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.oxAppSuite | quote }}
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.wopiServerRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -516,11 +475,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/api/oxguard(.*)$ /oxguard\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-api-route"
+          haproxy-ingress.github.io/rewrite-target: "/oxguard"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardApiRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -532,11 +488,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/appsuite/api/guardsupport(.*)$ /guardsupport\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-support-api-route"
+          haproxy-ingress.github.io/rewrite-target: "/guardsupport"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardSupportApiRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -548,11 +501,8 @@ appsuite:
           haproxy-ingress.github.io/affinity: "cookie"
           haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.oxAppSuite | quote }}
           haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.oxAppSuite }}s"
-          haproxy-ingress.github.io/path-type: "regex"
-          haproxy-ingress.github.io/config-backend: |
-            http-request replace-path ^/pks(.*)$ /pgp\1
-          haproxy-ingress.github.io/session-cookie-name: "guard-pgp-route"
+          haproxy-ingress.github.io/rewrite-target: "/pgp"
+          haproxy-ingress.github.io/session-cookie-name: "appsuite-core-mw-http-api-route"
           {{- with .Values.annotations.openxchangeAppsuiteIngress.guardPgpRoute }}
           {{ . | toYaml | nindent 10 }}
           {{- end }}
@@ -735,17 +685,14 @@ appsuite:
         seLinuxOptions:
           {{ .Values.seLinuxOptions.openxchangeGotenberg | toYaml | nindent 10 }}
       serviceAccount:
-        create: false
-    documentConverterClient:
-      cache:
-        remoteCache:
-          url: ""
+        create: true
     {{ if .Values.functional.groupware.mail.encryption.enabled }}
     hooks:
       beforeAppsuiteStart:
         create-guard-dir.sh: |
+          # No chown: the middleware already runs as open-xchange, and with a read-only root filesystem
+          # the directory is an emptyDir (world-writable, owned by root), which a non-root user cannot chown.
           mkdir -p /opt/open-xchange/guard-files
-          chown open-xchange:open-xchange /opt/open-xchange/guard-files
     {{ end }}
     packages:
       status:
@@ -822,8 +769,8 @@ appsuite:
       # Various Capability settings
       com.openexchange.capability.document_preview_xrechnung: "true"
       # Schedule Outgoing Mail
-      com.openexchange.capability.scheduled_mail: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
-      com.openexchange.mail.scheduled.enabled: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
+      com.openexchange.capability.scheduled_mail: "false"
+      com.openexchange.mail.scheduled.enabled: "false"
       com.openexchange.mail.scheduled.requireMasterAuth: "false"
       # PDF Export
       com.openexchange.capability.mail_export_pdf: "true"
@@ -963,6 +910,7 @@ appsuite:
       # Secondary Accounts
       com.openexchange.mail.secondary.authType: "XOAUTH2"
       com.openexchange.mail.transport.secondary.authType: "xoauth2"
+      com.openexchange.mail.filter.secondary.preferredSaslMech: "XOAUTH2"
       # Nextcloud integration
       com.openexchange.file.storage.nextcloud.oauth.url: "http://opendesk-nextcloud-aio/"
       com.openexchange.file.storage.nextcloud.oauth.webdav.username.strategy: "user"
@@ -970,7 +918,7 @@ appsuite:
       # Element integration
       com.openexchange.conference.element.enabled: {{ .Values.apps.element.enabled | quote }}
       com.openexchange.conference.element.meetingHostUrl: http://matrix-neodatefix-bot
-      com.openexchange.conference.element.matrixLoginUrl: http://opendesk-synapse-web:8008/_matrix/client/v3/login
+      com.openexchange.conference.element.matrixLoginUrl: http://element-synapse:8008/_matrix/client/v3/login
       com.openexchange.conference.element.matrixUuidClaimName: {{ ternary "opendesk_objectid" "opendesk_username" .Values.functional.chat.matrix.profile.useImmutableIdentifierForLocalpart }}
       # GDPR
       com.openexchange.gdpr.dataexport.enabled: "false"
@@ -1016,7 +964,7 @@ appsuite:
       {{- end }}
       # Other
       com.openexchange.secret.secretSource: "\"<user-id> + '@' + <context-id> + '/' + <random>\""
-      {{- if .Values.certificate.selfSigned }}
+      {{- if .Values.trust.secret.mount }}
       # Selfsigned
       com.openexchange.net.ssl.default.truststore.enabled: "false"
       com.openexchange.net.ssl.custom.truststore.enabled: "true"
@@ -1028,23 +976,92 @@ appsuite:
       com.openexchange.authentication.application.storage.rdb.loginNameSource: "mail"
       com.openexchange.authentication.application.storage.rdb.contextLookupNamePart: "full"
       {{- end }}
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     extraEnv:
     - name: "JAVA_OPTS_APPEND"
       value: {{ printf "%s %s=%s" "-Djavax.net.ssl.trustStore=/etc/ssl/certs/truststore.jks -Djavax.net.ssl.trustStoreType=jks" "-Djavax.net.ssl.trustStorePassword" .Values.secrets.certificates.password.value | quote }}
+    {{- end }}
+    # The image writes into these paths at runtime. They are emptyDirs so the root filesystem can be
+    # read-only; `/configuration`, `etc` and `osgi` are seeded with the image's contents by
+    # `seed-writable-dirs`.
     extraVolumes:
+      - name: "mw-configuration"
+        emptyDir: {}
+      - name: "mw-etc"
+        emptyDir: {}
+      - name: "mw-osgi"
+        emptyDir: {}
+      - name: "mw-guard-files"
+        emptyDir: {}
+      - name: "mw-tmp"
+        emptyDir: {}
+      {{- if .Values.trust.secret.mount }}
       - name: "trusted-cert-secret-volume"
         secret:
-          secretName: "opendesk-certificates-ca-tls"
+          secretName: {{ .Values.trust.secret.name | quote }}
           items:
             - key: "truststore.jks"
               path: "truststore.jks"
             - key: "ca.crt"
               path: "ca-certificates.crt"
+      {{- end }}
     extraMounts:
+      - name: "mw-configuration"
+        mountPath: "/configuration"
+      - name: "mw-etc"
+        mountPath: "/opt/open-xchange/etc"
+      - name: "mw-osgi"
+        mountPath: "/opt/open-xchange/osgi"
+      - name: "mw-guard-files"
+        mountPath: "/opt/open-xchange/guard-files"
+      - name: "mw-tmp"
+        mountPath: "/tmp"
+      {{- if .Values.trust.secret.mount }}
       - name: "trusted-cert-secret-volume"
         mountPath: "/etc/ssl/certs/"
+      {{- end }}
+    # Runs after the chart's init-middleware, which in openDesk only waits for the database and does
+    # not touch /opt/open-xchange. The emptyDirs are mounted aside, so the image's originals are copied.
+    # As lists do not merge we refrain from using `values-openxchange-enterprise.yaml.gotmpl` but do the
+    # "EE" split here, as it is anyway a temporary solution until upstream directly supports RO RootFS.
+    {{- $mwRegistry := .Values.repositories.image.registryOpencodeDe }}
+    {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
+    {{- $mwRegistry = .Values.repositories.image.registryOpencodeDeEnterprise }}
     {{- end }}
+    extraInitContainers:
+      - name: "seed-writable-dirs"
+        image: "{{ coalesce $mwRegistry .Values.global.imageRegistry .Values.images.openxchangeCoreMW.registry }}/{{ .Values.images.openxchangeCoreMW.repository }}:{{ .Values.images.openxchangeCoreMW.tag }}"
+        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+        command:
+          - "/bin/sh"
+          - "-c"
+          # No `-a`: The chart's subPath mounts (e.g. etc/logback.xml) leave root-owned entries in the emptyDirs that
+          # cannot be overwritten or get their times preserved. `-u` skips them, as they are newer than the image's
+          # files, and keeps restarts of the init container idempotent.
+          - "cp -Ru /configuration/. /seed/configuration/ && cp -Ru /opt/open-xchange/etc/. /seed/etc/ && cp -Ru /opt/open-xchange/osgi/. /seed/osgi/"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - "ALL"
+          privileged: false
+          readOnlyRootFilesystem: true
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: "RuntimeDefault"
+          seLinuxOptions:
+            {{ .Values.seLinuxOptions.openxchangeCoreMW | toYaml | nindent 12 }}
+        resources:
+          {{ .Values.resources.openxchangeCoreMW | toYaml | nindent 10 }}
+        volumeMounts:
+          - name: "mw-configuration"
+            mountPath: "/seed/configuration"
+          - name: "mw-etc"
+            mountPath: "/seed/etc"
+          - name: "mw-osgi"
+            mountPath: "/seed/osgi"
     secretProperties:
       com.openexchange.cookie.hash.salt: {{ .Values.secrets.oxAppSuite.cookieHashSalt.value | quote }}
       com.openexchange.sessiond.encryptionKey: {{ .Values.secrets.oxAppSuite.sessiondEncryptionKey.value | quote }}
@@ -1056,7 +1073,7 @@ appsuite:
       com.openexchange.guard.guestSMTPPassword: {{ .Values.secrets.postfix.opendeskSystemPassword.value | quote }}
       com.openexchange.guard.guestSMTPUsername: {{ printf "%s@%s" "opendesk-system" ( .Values.global.mailDomain | default .Values.global.domain ) }}
       {{- end }}
-      {{- if .Values.certificate.selfSigned }}
+      {{- if .Values.trust.secret.mount }}
       com.openexchange.net.ssl.custom.truststore.password: {{ .Values.secrets.certificates.password.value | quote }}
       {{- end }}
     secretPropertiesFiles:
@@ -1082,19 +1099,15 @@ appsuite:
       /opt/open-xchange/etc/AdminUser.properties:
         USERNAME_CHANGEABLE: "true"
       /opt/open-xchange/etc/antivirus.properties:
-        com.openexchange.antivirus.enabled: "true"
         {{- if .Values.antivirus.icap.host }}
+        com.openexchange.antivirus.enabled: "true"
         com.openexchange.antivirus.server: {{ .Values.antivirus.icap.host | quote }}
         com.openexchange.antivirus.port: {{ .Values.antivirus.icap.port | quote }}
+        com.openexchange.antivirus.service: {{ .Values.antivirus.icap.serviceName | quote }}
         {{- else }}
-        {{- if .Values.apps.clamavDistributed.enabled }}
-        com.openexchange.antivirus.server: "clamav-icap"
-        {{- else if .Values.apps.clamavSimple.enabled }}
-        com.openexchange.antivirus.server: "clamav-simple"
+        com.openexchange.antivirus.enabled: "false"
         {{- end }}
-        com.openexchange.antivirus.port: "1344"
-        {{- end }}
-        com.openexchange.antivirus.maxFileSize: "1024"
+        com.openexchange.antivirus.maxFileSize: {{ .Values.functional.groupware.mail.maxSize | quote }}
       /opt/open-xchange/etc/filestore-s3.properties:
         {{- if .Values.objectstores.openxchange.endpoint }}
         com.openexchange.filestore.s3.ox-filestore-s3.endpoint: {{ .Values.objectstores.openxchange.endpoint | quote }}
@@ -1133,7 +1146,7 @@ appsuite:
       io.ox/core//features/managedResources: "true"
       # Features
       io.ox/core//features/categories: {{ .Values.functional.groupware.mail.categories.enabled | quote }}
-      io.ox/core//features/scheduleSend: {{ .Values.functional.groupware.mail.outbound.sendLater.enabled | quote }}
+      io.ox/core//features/scheduleSend: "false"
       io.ox/core//features/signatureDesigner: "true"
       io.ox/core//categories/predefined: >
         [{ "name": "Predefined", "color": "orange", "icon": "bi/exclamation-circle.svg" }]
@@ -1177,15 +1190,27 @@ appsuite:
       auth:
         enabled: true
         username: {{ .Values.cache.oxAppSuite.username | quote }}
-        password: {{ .Values.cache.oxAppSuite.password.value | default .Values.cache.redis.password.value | quote }}
+        password: {{ .Values.cache.oxAppSuite.password.value | quote }}
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.openxchangeCoreMW.registry | quote }}
       repository: {{ .Values.images.openxchangeCoreMW.repository | quote }}
       tag: {{ .Values.images.openxchangeCoreMW.tag | quote }}
       pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
-    # Security context for core-mw has no effect yet
-    # podSecurityContext: {}
-    # securityContext: {}
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - "ALL"
+      privileged: false
+      # Paths the image writes into are emptyDirs, see extraVolumes.
+      readOnlyRootFilesystem: true
+      runAsGroup: 1000
+      runAsNonRoot: true
+      runAsUser: 1000
+      seccompProfile:
+        type: "RuntimeDefault"
+      seLinuxOptions:
+        {{ .Values.seLinuxOptions.openxchangeCoreMW | toYaml | nindent 8 }}
     update:
       podAnnotations:
         {{ .Values.annotations.openxchangeAppsuiteCoreMw.updatePod | toYaml | nindent 8 }}
@@ -1202,9 +1227,10 @@ appsuite:
     initContainer:
       resources:
         {{ .Values.resources.openxchangeCoreMW | toYaml | nindent 8 }}
+    # The YAML filenames are hardcoded, so do not update them (e.g. streamline their extension)
     yamlFiles:
-    {{- if or .Values.databases.oxAppSuite.useSSL }}
-      dbconnector.yml:
+    {{- if .Values.databases.oxAppSuite.useSSL }}
+      dbconnector.yaml:
         com.mysql.jdbc:
         # The driver properties should be kept at their defaults
             useUnicode: true
@@ -1223,6 +1249,7 @@ appsuite:
             nullCatalogMeansCurrent: {{ .Values.databases.oxAppSuite.nullCatalogMeansCurrent }}
     {{- end }}
     {{- if .Values.functional.groupware.davSupport.enabled }}
+      # Ref.: https://documentation.open-xchange.com/8/middleware/login_and_sessions/application_passwords.html#application-details
       app-password-apps.yml:
         caldav:
           displayName_t10e: "Calendar Client (CalDAV)"
@@ -1248,6 +1275,11 @@ appsuite:
       tag: {{ .Values.images.openxchangeCoreUI.tag | quote }}
       pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     replicaCount: {{ .Values.replicas.openxchangeCoreUI }}
+    probe:
+      liveness:
+        enabled: true
+      readiness:
+        enabled: true
     podAnnotations:
       intents.otterize.com/service-name: "open-xchange-core-ui"
       {{- with .Values.annotations.openxchangeAppsuiteCoreUi.pod }}
@@ -1269,6 +1301,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUI | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1315,7 +1348,7 @@ appsuite:
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUIMiddleware | toYaml | nindent 8 }}
     serviceAccount:
-      create: false
+      create: true
 
   core-cacheservice:
     enabled: false
@@ -1326,11 +1359,6 @@ appsuite:
     basicAuthLogin: "oxlogin"
     basicAuthPassword: {{ .Values.secrets.oxAppSuite.basicAuthPassword.value | quote }}
     enabled: true
-    documentConverter:
-      cache:
-        remoteCache:
-          enabled: false
-          url: ""
     imagePullSecrets:
     {{- range .Values.global.imagePullSecrets }}
       - name: {{ . | quote }}
@@ -1365,6 +1393,7 @@ appsuite:
           - "ALL"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeDocumentConverter | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1465,6 +1494,7 @@ appsuite:
           - "ALL"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeImageConverter | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1498,6 +1528,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeGuardUI | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 
@@ -1537,6 +1568,7 @@ appsuite:
         type: "RuntimeDefault"
       seLinuxOptions:
         {{ .Values.seLinuxOptions.openxchangeCoreUserGuide | toYaml | nindent 8 }}
+    automountServiceAccountToken: false
     serviceAccount:
       create: false
 ...

@@ -1,13 +1,74 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
+# Manage certificates within kubernetes.
+# Requires cert-manager.io to be installed.
 certificate:
+  # Create and manage certificate resources
+  # If you prefer to manage certificates on your own, please set create to false and provide a kubernetes tls
+  # certificate with the name: 'opendesk-certificates-tls'.
+  create: true
   issuerRef:
     name: "letsencrypt-prod"
     kind: "ClusterIssuer"
+    group: "cert-manager.io"
   # When using `wildcard: true` please ensure you configure the cert-manager accordingly, e.g. using DNS
-  # validation (`DNS-01`) in case of letsencrypt.
+  # validation (`DNS-01`) in case of Let's Encrypt.
   wildcard: false
+  # When setting `selfSigned` to `true` ensure you define a non default value for `trust.secret.name`.
   selfSigned: false
+  selfSignedOverrides:
+    # Create a certificate Issuer
+    issuer:
+      create: false
+    # Root CA certificate settings.
+    caCertificate:
+      # Create a new root CA certificate.
+      create: false
+      # Alternatively specify or create kubernetes secret which is used as root ca.
+      secret:
+        # Create a root certificate with plain values.
+        value:
+          # Root certificate public certificate content (tls.crt).
+          certificate: ~
+          # Root certificate private key content (tls.key).
+          key: ~
+          # Root certificate Java truststore (truststore.jks).
+          truststore: ~
+          # Root certificate Java keystore (keystore.jks).
+          keystore: ~
+        # Alternatively specify kubernetes secret which is used as root ca (higher precedence than plain value).
+        name: ""
+    # Organization used in the self-signed certificate resource.
+    organizations:
+      - "European Company that Makes Everything (ECME) Inc."
+    # organizationalUnits used in the self-signed certificate resource.
+    organizationalUnits:
+      - "Datacenter Operations"
+    # Private key settings
+    privateKey:
+      # Private key algorithm.
+      algorithm: "ECDSA"
+      # Private key length. When unset, cert-manager applies its per-algorithm default
+      # (RSA: 2048, ECDSA: 256). Keep algorithm and size consistent: RSA requires at least 2048.
+      size: ~
+
+trust:
+  # Let openDesk create the trust bundle, but composing Mozilla default bundle with generated and below provided
+  # certificates.
+  # When enabling this, you need to enable the mounting of the created secret as well via "trust.secret.mount=true"
+  create: false
+  certificateAuthorities:
+    # Additional certificate authorities which should be added to trust bundle.
+    # Certificates have to end with ".crt" to be added to the bundle.
+    values: {}
+    # Use an existing secret containing certificates to be added to trust bundle (higher precedence than values).
+    # Certificates have to end with ".crt" to be added to the bundle.
+    secret: ""
+  secret:
+    # Mount trust bundle into certificates store in containers.
+    mount: false
+    # Name of the secret containing the trust bundle and is mounted to containers.
+    name: "opendesk-certificates-ca-tls"
 ...

@@ -7,11 +7,11 @@ global:
   imagePullSecrets:
     {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -92,8 +92,6 @@ podAnnotations:
   {{- with .Values.annotations.nubusOxConnector.pod }}
   {{ . | toYaml | nindent 2 }}
   {{- end }}
-
-replicaCount: {{ .Values.replicas.oxConnector }}
 
 podSecurityContext:
   fsGroup: 1000

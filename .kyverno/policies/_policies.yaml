@@ -1,9 +1,10 @@
-# SPDX-FileCopyrightText: 2024-2026 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 pod:
-  - name: "require-tag-and-digest"
-    rule: "require-tag-and-digest"
+  - name: "require-digest"
+    rule: "require-digest"
     type: "required"
     kinds:
       - "StatefulSet"

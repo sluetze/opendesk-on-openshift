@@ -29,13 +29,23 @@ global:
     portal: {{ .Values.global.hosts.nubus | quote }}
     keycloak: {{ .Values.global.hosts.keycloak | quote }}
 
-  # -- Extensions to load. Add entries to load additional extensions into Nubus.
+  # Extensions to load.
   extensions:
+    {{- if .Values.technical.nubus.extensions.toggle.a2gMapper }}
     - name: "opendesk-a2g-mapper"
       image:
         registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusOpendeskExtensionA2gMapper.registry | quote }}
         repository: {{ .Values.images.nubusOpendeskExtensionA2gMapper.repository }}
         tag: {{ .Values.images.nubusOpendeskExtensionA2gMapper.tag }}
+    {{- end }}
+    {{- range .Values.technical.nubus.extensions.custom }}
+    - name: {{ .name | quote }}
+      image:
+        registry: {{ coalesce (index .image "registry") $.Values.global.imageRegistry | required (printf "technical.nubus.extensions.custom: image.registry is required for extension \"%s\" as global.imageRegistry is not set" .name) | quote }}
+        repository: {{ .image.repository | quote }}
+        tag: {{ .image.tag | quote }}
+        pullPolicy: {{ coalesce (index .image "pullPolicy") $.Values.global.imagePullPolicy | quote }}
+    {{- end }}
 
   # -- Allows to configure the system extensions to load. This is intended for
   # internal usage, prefer to use `global.extensions` for user configured
@@ -101,10 +111,23 @@ global:
               disabled: "No"
     ldap:
       index:
-        eq:
-          # Currently, we need to define all LDAP indices again to add a new index (https://forge.univention.org/bugzilla/show_bug.cgi?id=58993)
-          # Upstream indices at the time of writing start at "aRecord", the openDesk specific ones are added before that.
-          univentionFreeAttribute1,univentionFreeAttribute2,aRecord,automountInformation,cNAMERecord,cn,description,dhcpHWAddress,displayName,entryUUID,gidNumber,givenName,homeDirectory,krb5PrincipalName,macAddress,mail,mailAlternativeAddress,mailPrimaryAddress,memberUid,objectClass,ou,pTRRecord,relativeDomainName,sambaAcctFlags,sambaDomainName,sambaGroupType,sambaPrimaryGroupSID,sambaSID,sambaSIDList,secretary,shadowExpire,sn,uid,uidNumber,uniqueMember,univentionCanonicalRecipientRewriteEnabled,univentionDataType,univentionInventoryNumber,univentionLicenseModule,univentionLicenseObject,univentionMailHomeServer,univentionNagiosHostname,univentionObjectFlag,univentionObjectType,univentionPolicyReference,univentionServerRole,univentionService,univentionShareGid,univentionShareSambaName,univentionShareWriteable,univentionUDMOptionModule,univentionUDMPropertyCLIName,univentionUDMPropertyCopyable,univentionUDMPropertyDefault,univentionUDMPropertyDeleteObjectClass,univentionUDMPropertyDoNotSearch,univentionUDMPropertyHook,univentionUDMPropertyLayoutOverwritePosition,univentionUDMPropertyLayoutOverwriteTab,univentionUDMPropertyLayoutPosition,univentionUDMPropertyLayoutTabAdvanced,univentionUDMPropertyLayoutTabName,univentionUDMPropertyLdapMapping,univentionUDMPropertyLongDescription,univentionUDMPropertyModule,univentionUDMPropertyMultivalue,univentionUDMPropertyObjectClass,univentionUDMPropertyOptions,univentionUDMPropertyShortDescription,univentionUDMPropertySyntax,univentionUDMPropertyTranslationLongDescription,univentionUDMPropertyTranslationShortDescription,univentionUDMPropertyTranslationTabName,univentionUDMPropertyValueMayChange,univentionUDMPropertyValueRequired,univentionUDMPropertyVersion,zoneName,univentionObjectIdentifier
+        # Nubus requires the complete list of indexed attributes to add an index
+        # (https://forge.univention.org/bugzilla/show_bug.cgi?id=58993). Upstream defaults from the Nubus chart
+        # (`charts/stack-data-ums/config/default-base.conf`), the openDesk specific and custom attributes are
+        # configured in `technical.nubus.ldap.index`.
+        {{- $upstreamEq := "aRecord,automountInformation,cNAMERecord,cn,description,dhcpHWAddress,displayName,entryUUID,gidNumber,givenName,homeDirectory,krb5PrincipalName,macAddress,mail,mailAlternativeAddress,mailPrimaryAddress,memberUid,objectClass,ou,pTRRecord,relativeDomainName,sambaAcctFlags,sambaDomainName,sambaGroupType,sambaPrimaryGroupSID,sambaSID,sambaSIDList,secretary,shadowExpire,sn,uid,uidNumber,uniqueMember,univentionCanonicalRecipientRewriteEnabled,univentionDataType,univentionInventoryNumber,univentionLicenseModule,univentionLicenseObject,univentionMailHomeServer,univentionNagiosHostname,univentionObjectFlag,univentionObjectType,univentionPolicyReference,univentionServerRole,univentionService,univentionShareGid,univentionShareSambaName,univentionShareWriteable,univentionUDMOptionModule,univentionUDMPropertyCLIName,univentionUDMPropertyCopyable,univentionUDMPropertyDefault,univentionUDMPropertyDeleteObjectClass,univentionUDMPropertyDoNotSearch,univentionUDMPropertyHook,univentionUDMPropertyLayoutOverwritePosition,univentionUDMPropertyLayoutOverwriteTab,univentionUDMPropertyLayoutPosition,univentionUDMPropertyLayoutTabAdvanced,univentionUDMPropertyLayoutTabName,univentionUDMPropertyLdapMapping,univentionUDMPropertyLongDescription,univentionUDMPropertyModule,univentionUDMPropertyMultivalue,univentionUDMPropertyObjectClass,univentionUDMPropertyOptions,univentionUDMPropertyShortDescription,univentionUDMPropertySyntax,univentionUDMPropertyTranslationLongDescription,univentionUDMPropertyTranslationShortDescription,univentionUDMPropertyTranslationTabName,univentionUDMPropertyValueMayChange,univentionUDMPropertyValueRequired,univentionUDMPropertyVersion,zoneName,univentionObjectIdentifier" }}
+        eq: {{ join "," (uniq (concat .Values.technical.nubus.ldap.index.eq.opendesk (splitList "," $upstreamEq) (.Values.technical.nubus.ldap.index.eq.custom | default list))) | quote }}
+
+    password:
+      quality:
+        length:
+          min: {{ .Values.functional.authentication.password.quality.length.min }}
+        credit:
+          digits: {{ .Values.functional.authentication.password.quality.credit.digits }}
+          upper: {{ .Values.functional.authentication.password.quality.credit.upper }}
+          lower: {{ .Values.functional.authentication.password.quality.credit.lower }}
+          other: {{ .Values.functional.authentication.password.quality.credit.other }}
+        mspolicy: {{ .Values.functional.authentication.password.quality.mspolicy | quote }}
 
     ucs:
       web:
@@ -119,8 +142,9 @@ global:
         show: "false"
       login:
         password-complexity-message:
-          de: "Das Passwort muss mindestens 8 Zeichen lang sein und darf keine Zahlenabfolge oder ganze Worte enthalten, wie '1234Test'."
-          en: "Password must be at least 8 characters long and cannot include a number series or regular words, like '1234Test'."
+          {{- range $language, $message := .Values.functional.authentication.password.complexityMessage }}
+          {{ $language }}: {{ $message | quote }}
+          {{- end }}
       module:
         udm:
           oxmail:
@@ -237,17 +261,21 @@ keycloak:
   serviceAccount:
     annotations:
       {{ .Values.annotations.nubusKeycloak.serviceAccount | toYaml | nindent 6 }}
-  {{- if .Values.certificate.selfSigned }}
+  serviceMonitor:
+    enabled: {{ .Values.monitoring.prometheus.serviceMonitors.enabled }}
+    labels:
+      {{ .Values.monitoring.prometheus.serviceMonitors.labels | toYaml | nindent 6 }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-crt-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
     - name: "trusted-cert-jks-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "truststore.jks"
             path: "truststore.jks"
@@ -265,7 +293,7 @@ keycloak:
     - name: "KC_SPI_EVENTS_LISTENER_JBOSS_LOGGING_SUCCESS_LEVEL"
       value: "info"
   {{- end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
     - name: "KC_HTTPS_TRUST_STORE_FILE"
       value: "/etc/ssl/certs/truststore.jks"
     - name: "KC_TRUSTSTORE_PATHS"
@@ -281,72 +309,6 @@ nubusGuardian:
 
 nubusTwofaHelpdesk:
   enabled: false
-
-nubusNotificationsApi:
-  enabled: false
-  additionalAnnotations:
-    {{- with .Values.annotations.nubusNotificationsApi.additional }}
-    {{ . | toYaml | nindent 4 }}
-    {{- end }}
-  containerSecurityContext:
-    privileged: false
-    allowPrivilegeEscalation: false
-    capabilities:
-      add: []
-      drop:
-        - "ALL"
-    enabled: true
-    runAsUser: 1000
-    runAsGroup: 1000
-    seccompProfile:
-      type: "RuntimeDefault"
-    readOnlyRootFilesystem: true
-    runAsNonRoot: true
-    seLinuxOptions:
-      {{ .Values.seLinuxOptions.umsNotificationsApi | toYaml | nindent 6 }}
-  image:
-    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNotificationsApi.registry | quote }}
-    repository: {{ .Values.images.nubusNotificationsApi.repository }}
-    tag: {{ .Values.images.nubusNotificationsApi.tag }}
-  ingress:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.ingress | toYaml | nindent 6 }}
-    certManager:
-      enabled: false
-    tls:
-      enabled: {{ .Values.ingress.tls.enabled }}
-      secretName: {{ .Values.ingress.tls.secretName | quote }}
-  persistence:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.persistence | toYaml | nindent 6 }}
-  podAnnotations:
-    intents.otterize.com/service-name: "ums-notifications-api"
-    {{- with .Values.annotations.nubusNotificationsApi.pod }}
-    {{ . | toYaml | nindent 4 }}
-    {{- end }}
-  postgresql:
-    connection:
-      host: {{ .Values.databases.umsNotificationsApi.host | quote }}
-      port: {{ .Values.databases.umsNotificationsApi.port | quote }}
-    auth:
-      username: {{ .Values.databases.umsNotificationsApi.username | quote }}
-      database: {{ .Values.databases.umsNotificationsApi.name | quote }}
-      password: {{ .Values.databases.umsNotificationsApi.password.value | quote }}
-      # NOTE: Nubus has still an existing secret configured for legacy reasons.
-      # This disables the existing secret and ensures that the value from above
-      # is used.
-      existingSecret:
-        name: null
-  service:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.service | toYaml | nindent 6 }}
-  serviceAccount:
-    annotations:
-      {{ .Values.annotations.nubusNotificationsApi.serviceAccount | toYaml | nindent 6 }}
-    create: true
-  replicaCount: {{ .Values.replicas.umsNotificationsApi }}
-  resources:
-    {{ .Values.resources.umsNotificationsApi | toYaml | nindent 4 }}
 
 nubusPortalFrontend:
   additionalAnnotations:
@@ -622,8 +584,7 @@ nubusPortalConsumer:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
       repository: {{ .Values.images.nubusWaitForDependency.repository }}
       tag: {{ .Values.images.nubusWaitForDependency.tag }}
-    extraEnvVars: []
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     extraVolumeMounts:
       - name: "trusted-cert-secret-volume"
         readOnly: true
@@ -634,15 +595,15 @@ nubusPortalConsumer:
         mountPath: "/usr/local/lib/python3.11/dist-packages/certifi/cacert.pem"
         subPath: "cacert.pem"
     extraEnvVars:
-      - name: "REQUESTS_CA_BUNDLE"
-        value: "/etc/ssl/certs/ca-certificates.crt"
       - name: "DEFAULT_CA_BUNDLE_PATH"
         value: "/etc/ssl/certs/ca-certificates.crt"
       - name: "SSL_CERT_FILE"
         value: "/etc/ssl/certs/ca-certificates.crt"
+    {{- else }}
+    extraEnvVars: []
     {{- end }}
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
     # The following two environment variables are required for AWS S3 compatible object storage to work with the AWS SDK v2
     # and are not yet set upstream (see https://forge.univention.org/bugzilla/show_bug.cgi?id=59716)
@@ -650,11 +611,11 @@ nubusPortalConsumer:
       value: "when_required"
     - name: "AWS_RESPONSE_CHECKSUM_VALIDATION"
       value: "when_required"
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
@@ -672,7 +633,7 @@ nubusPortalConsumer:
 
 nubusPortalServer:
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
   additionalAnnotations:
     {{- with .Values.annotations.nubusPortalServer.additional }}
@@ -775,11 +736,11 @@ nubusPortalServer:
     annotations:
       {{ .Values.annotations.nubusPortalServer.serviceAccount | toYaml | nindent 6 }}
     create: true
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-crt-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
@@ -932,7 +893,7 @@ nubusLdapServer:
   podSecurityContext:
     seLinuxOptions:
       {{ .Values.seLinuxOptions.umsLdapServer | toYaml | nindent 6 }}
-  dhInitcontainer:
+  dhInitContainer:
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusLdapServerDhInitContainer.registry | quote }}
       repository: {{ .Values.images.nubusLdapServerDhInitContainer.repository }}
@@ -989,11 +950,20 @@ nubusLdapServer:
 nubusLicenseImport:
   enabled: {{ not (empty .Values.enterpriseKeys.nubus.license) }}
   license: {{ .Values.enterpriseKeys.nubus.license | quote }}
+  image:
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusLicenseImport.registry | quote }}
+    repository: {{ .Values.images.nubusLicenseImport.repository }}
+    tag: {{ .Values.images.nubusLicenseImport.tag }}
+  waitForDependency:
+    image:
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
+      repository: {{ .Values.images.nubusWaitForDependency.repository }}
+      tag: {{ .Values.images.nubusWaitForDependency.tag }}
 
 nubusProvisioning:
   enabled: true
   extraEnvVars:
-    - name: AWS_DEFAULT_REGION
+    - name: "AWS_DEFAULT_REGION"
       value: {{ .Values.objectstores.nubus.region | quote }}
   additionalAnnotations:
     {{ .Values.annotations.nubusProvisioning.additional | toYaml | nindent 4 }}
@@ -1088,27 +1058,18 @@ nubusProvisioning:
         {{ .Values.seLinuxOptions.umsProvisioningNats | toYaml | nindent 8 }}
     nats:
       image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNats.registry | quote }}
+        registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNats.registry | quote }}
         repository: {{ .Values.images.nubusNats.repository }}
         tag: {{ .Values.images.nubusNats.tag }}
     natsBox:
       enabled: {{ or .Values.technical.nubus.provisioning.nats.natsBox.enabled .Values.debug.enabled }}
       image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNatsBox.registry | quote }}
+        registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusNatsBox.registry | quote }}
         repository: {{ .Values.images.nubusNatsBox.repository }}
         tag: {{ .Values.images.nubusNatsBox.tag }}
     persistence:
       size: {{ .Values.persistence.storages.nubusProvisioningNats.size }}
       storageClassName: {{ coalesce .Values.persistence.storages.nubusProvisioningNats.storageClassName .Values.persistence.storageClassNames.RWO | quote }}
-    reloader:
-      image:
-        registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusNatsReloader.registry | quote }}
-        repository: {{ .Values.images.nubusNatsReloader.repository }}
-        tag: {{ .Values.images.nubusNatsReloader.tag }}
-        # NOTE: The subchart does not yet fully support
-        # "global.imagePullPolicy". This can be removed once the subchart has
-        # been adjusted.
-        imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
     resources:
       {{ .Values.resources.umsProvisioningNats | toYaml | nindent 6 }}
     serviceAccount:
@@ -1169,13 +1130,22 @@ nubusProvisioning:
       {{- with .Values.annotations.nubusProvisioning.registerConsumersAdditional }}
       {{ . | toYaml | nindent 6 }}
       {{- end }}
-    {{- if .Values.apps.oxAppSuite.enabled }}
+    {{- if or .Values.apps.oxAppSuite.enabled .Values.apps.element.enabled }}
     createUsers:
+      {{- if .Values.apps.oxAppSuite.enabled }}
       oxConsumer:
         existingSecret:
           name: "ums-ox-connector-provisioning-api"
           keyMapping:
             registration: "registration"
+      {{- end }}
+      {{- if (or .Values.apps.element.enabled .Values.apps.neoboard.enabled) }}
+      provisioningSynapse:
+        existingSecret:
+          name: "opendesk-provisioning-synapse-provisioning"
+          keyMapping:
+            registration: "registration"
+      {{- end }}
     {{- end }}
     image:
       registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusWaitForDependency.registry | quote }}
@@ -1381,6 +1351,18 @@ nubusStackDataUms:
   serviceAccount:
     annotations:
       {{ .Values.annotations.nubusStackDataUms.serviceAccount | toYaml | nindent 6 }}
+  {{- with .Values.functional.portal.custom.extraDataFiles }}
+  stackDataUms:
+    # Additional data files for the Nubus data loader, configured through
+    # "functional.portal.custom.extraDataFiles". The sub-chart applies Helm templating ("tpl") to each
+    # file's content, so any curly braces in the content (i.e. Jinja2 expressions meant for the data
+    # loader) are escaped here to pass through that stage unchanged.
+    extraDataFiles:
+      {{- range $filename, $content := . }}
+      {{ $filename | quote }}: |
+        {{- $content | replace "{{" "\x00" | replace "}}" "\x01" | replace "\x00" "{{ \"{{\" }}" | replace "\x01" "{{ \"}}\" }}" | nindent 8 }}
+      {{- end }}
+  {{- end }}
   templateContext:
     initialPasswordAdministrator: {{ .Values.secrets.nubus.systemAccounts.administratorPassword.value | quote }}
     additionalMailDomains: {{ .Values.global.additionalMailDomains | toYaml | nindent 6 }}
@@ -1402,13 +1384,15 @@ nubusStackDataUms:
     portalEnforceLogin: {{ .Values.functional.portal.enforceLogin }}
     portalHeaderLogo: {{ toYaml .Values.theme.imagery.logoHeaderSvg | quote }}
     portalTiles: {{ toYaml .Values.theme.imagery.portalTiles | nindent 6 }}
-    portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.element .Values.global.domain }}
+    portalRealtimeCollaborationLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.elementWeb .Values.global.domain }}
+    portalRealtimeCollaborationAdminLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.elementAdmin .Values.global.domain }}
     portalRealtimeVideoconferenceLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.jitsi .Values.global.domain }}
     portalManagementProjectLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.openproject .Values.global.domain }}
     portalManagementKnowledgeLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.xwiki .Values.global.domain }}
     portalGroupwareLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.openxchange .Values.global.domain }}
     portalFileshareLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.nextcloud .Values.global.domain }}
     portalNotesLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.notes .Values.global.domain }}
+    portalWhiteboardLinkBase: {{ printf "https://%s.%s" .Values.global.hosts.whiteboard .Values.global.domain }}
     portalTitleDE: "Portal - {{ .Values.theme.texts.productName }}"
     portalTitleEN: "Portal - {{ .Values.theme.texts.productName }}"
     portalLinkLegalNotice: {{ .Values.functional.portal.linkLegalNotice | quote }}
@@ -1448,6 +1432,8 @@ nubusStackDataUms:
       - "cn=managed-by-attribute-Learnmanagement,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupLiveCollaboration:
       - "cn=managed-by-attribute-Livecollaboration,cn=groups,{{ .Values.ldap.baseDn }}"
+    portaltileGroupLiveCollaborationAdmin:
+      - "cn=managed-by-attribute-LivecollaborationAdmin,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupVideoconference:
       - "cn=managed-by-attribute-Videoconference,cn=groups,{{ .Values.ldap.baseDn }}"
     portaltileGroupNotes:
@@ -1573,7 +1559,7 @@ nubusUmcServer:
           name: null
   proxy:
     image:
-      registry: {{ coalesce .Values.repositories.image.dockerHub .Values.global.imageRegistry .Values.images.nubusUmcServerProxy.registry | quote }}
+      registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.nubusUmcServerProxy.registry | quote }}
       repository: {{ .Values.images.nubusUmcServerProxy.repository }}
       tag: {{ .Values.images.nubusUmcServerProxy.tag }}
     replicaCount: {{ .Values.replicas.umsUmcServerProxy }}
@@ -1660,10 +1646,7 @@ nubusKeycloakBootstrap:
       oxContextIDNum:
         alwaysReadFromLdap: true
       univentionObjectIdentifier:
-        # This is a read-only attribute, just for openDesk 1.18.0 it will be updated.
-        # We keep it always read from LDAP to avoid any issues with the attribute being out of sync.
-        # But that can be changed to "false" with 1.19+
-        alwaysReadFromLdap: true
+        alwaysReadFromLdap: false
     twoFactorAuthentication:
       enabled: true
   config:

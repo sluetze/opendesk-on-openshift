@@ -12,19 +12,41 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
 
 <!-- TOC -->
 * [Updates and features](#updates-and-features)
-  * [1.18.0](#1180)
+  * [1.19.0](#1190)
+    * [`certificate.yaml.gotmpl`](#certificateyamlgotmpl)
+      * [Upgrade to `opendesk-certificates` v4](#upgrade-to-opendesk-certificates-v4)
+      * [Template `group` in `issuerRef`](#template-group-in-issuerref)
+      * [Allow overriding of `opendesk-certificates` chart options](#allow-overriding-of-opendesk-certificates-chart-options)
+      * [Certificate Trust chain/build support](#certificate-trust-chainbuild-support)
+    * [`customization.yaml.gotmpl`](#customizationyamlgotmpl)
+      * [Additional release customization hooks](#additional-release-customization-hooks)
+    * [`deployment.yaml.gotmpl`](#deploymentyamlgotmpl)
+      * [Timeouts of the Helm releases](#timeouts-of-the-helm-releases)
     * [`functional.yaml.gotmpl`](#functionalyamlgotmpl)
+      * [Enterprise Matrix client access policy](#enterprise-matrix-client-access-policy)
+      * [Erasure of the Matrix account data of deleted users](#erasure-of-the-matrix-account-data-of-deleted-users)
+      * [Load additional data files into the Nubus data loader](#load-additional-data-files-into-the-nubus-data-loader)
+      * [Nubus password quality options](#nubus-password-quality-options)
+    * [`opendesk_main.yaml.gotmpl`](#opendesk_mainyamlgotmpl)
+      * [Standalone NeoBoard whiteboard](#standalone-neoboard-whiteboard)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
+      * [Autoscaling of the Matrix components](#autoscaling-of-the-matrix-components)
+      * [Configure Nubus extensions](#configure-nubus-extensions)
+      * [Configure LDAP indices](#configure-ldap-indices)
+      * [Notes API rate limits](#notes-api-rate-limits)
+  * [1.18.0](#1180)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
       * [Options to configure the list views of the admin portal](#options-to-configure-the-list-views-of-the-admin-portal)
       * [Identity a user schedules under in a Shared Account's calendar](#identity-a-user-schedules-under-in-a-shared-accounts-calendar)
     * [`migrations.yaml.gotmpl`](#migrationsyamlgotmpl)
       * [Timeout and log retention of the migration jobs](#timeout-and-log-retention-of-the-migration-jobs)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-1)
       * [Allow overriding HTTP request rate limiting for the core-mw component of the OX App Suite](#allow-overriding-http-request-rate-limiting-for-the-core-mw-component-of-the-ox-app-suite)
     * [`theme.yaml.gotmpl`](#themeyamlgotmpl)
       * [Dedicated mobile logo and touch icon for OpenProject](#dedicated-mobile-logo-and-touch-icon-for-openproject)
       * [Custom fonts for OpenProject's PDF export](#custom-fonts-for-openprojects-pdf-export)
   * [1.17.0](#1170)
-    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-1)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-2)
       * [Enable the "Send later" (scheduled mail) feature for OX App Suite](#enable-the-send-later-scheduled-mail-feature-for-ox-app-suite)
       * [Configurable "Remember Me" SSO session timeouts](#configurable-remember-me-sso-session-timeouts)
     * [`helmfile-defaults.yaml.gotmpl`](#helmfile-defaultsyamlgotmpl)
@@ -35,7 +57,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
       * [Provide selected secrets as pre-created Kubernetes Secrets](#provide-selected-secrets-as-pre-created-kubernetes-secrets)
     * [`smtp.yaml.gotmpl`](#smtpyamlgotmpl)
       * [Postfix HELO names](#postfix-helo-names)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-1)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-2)
       * [OX App Suite LDAP caching for contact picker](#ox-app-suite-ldap-caching-for-contact-picker)
       * [Postfix](#postfix)
         * [SPF validation for incoming mail](#spf-validation-for-incoming-mail)
@@ -44,7 +66,7 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
   * [1.16.0](#1160)
     * [`theme.yaml.gotmpl`](#themeyamlgotmpl-1)
       * [OpenProject PDF export theming](#openproject-pdf-export-theming)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-2)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-3)
       * [Nextcloud worker and memory tuning](#nextcloud-worker-and-memory-tuning)
     * [`service.yaml.gotmpl`](#serviceyamlgotmpl)
       * [Option to set a `loadBalancerIp` for Dovecot and Postfix](#option-to-set-a-loadbalancerip-for-dovecot-and-postfix)
@@ -53,13 +75,330 @@ While [migrations-manual.md](./migrations-manual.md) provides information about 
     * [`cache.yaml.gotmpl`](#cacheyamlgotmpl)
       * [Options to enable SSL/TLS Redis connection for the Intercom Service, Notes, and OX App Suite](#options-to-enable-ssltls-redis-connection-for-the-intercom-service-notes-and-ox-app-suite)
   * [1.15.0](#1150)
-    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-2)
+    * [`functional.yaml.gotmpl`](#functionalyamlgotmpl-3)
       * [Per user-quota for external sharing](#per-user-quota-for-external-sharing)
       * [Virtual alias limits](#virtual-alias-limits)
-    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-3)
+    * [`technical.yaml.gotmpl`](#technicalyamlgotmpl-4)
       * [Proxy protocol support for Postfix](#proxy-protocol-support-for-postfix)
       * [Set limitation on maximum number of objects (for tasks, contacts, attachments)](#set-limitation-on-maximum-number-of-objects-for-tasks-contacts-attachments)
 <!-- TOC -->
+
+## 1.19.0
+
+### `certificate.yaml.gotmpl`
+
+#### Upgrade to `opendesk-certificates` v4
+
+Reworking the certificates helm chart to support most of the community requested TLS certificate use-cases.
+
+Read more in [Certificates](./enhanced-configuration/self-signed-certificates.md#certificates) section of
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
+
+#### Template `group` in `issuerRef`
+
+Supporting `cert-manager.io` extensions, the `group` can now be modified and defaults to `group: "cert-manager.io"`.
+
+```yaml
+certificate:
+  issuerRef:
+    name: "letsencrypt-prod"
+    kind: "ClusterIssuer"
+    group: "cert-manager.io"
+```
+
+#### Allow overriding of `opendesk-certificates` chart options
+
+To support the most common TLS certificate use-cases, most options in the `opendesk-certificates` helm chart can now be
+overridden.
+
+```yaml
+certificate:
+  selfSignedOverrides:
+    issuer:
+      create: false
+    caCertificate:
+      create: false
+      secret:
+        value:
+          certificate: ~
+          key: ~
+          truststore: ~
+          keystore: ~
+        name: ""
+    organizations:
+      - "European Company that Makes Everything (ECME) Inc."
+    organizationalUnits:
+      - "Datacenter Operations"
+    privateKey:
+      algorithm: "ECDSA"
+      size: ~
+```
+
+#### Certificate Trust chain/build support
+
+openDesk now has built-in eval support for generating a certificate trust bundle. It composes the public default CA
+bundle with self-signed or organization-signed certificates, so that clients reach the applications through the
+deployment's own certificate while the applications keep trusting endpoints protected by publicly signed
+certificates.
+
+```yaml
+trust:
+  create: false
+  certificateAuthorities:
+    values: {}
+    secret: ""
+  secret:
+    mount: false
+    name: "opendesk-certificates-ca-tls"
+```
+
+Read more in [Trust](./enhanced-configuration/self-signed-certificates.md#trust) section of
+[enhanced-configuration/self-signed-certificates.md](./enhanced-configuration/self-signed-certificates.md)
+
+### `customization.yaml.gotmpl`
+
+#### Additional release customization hooks
+
+Additional releases now accept custom values files through these keys:
+
+```yaml
+customization:
+  release:
+    opendeskElementCustomization: {}
+    neoboard: {}
+    provisioningSynapse: {}
+    opendeskTrust: {}
+```
+
+These customize the Element configuration generation, standalone NeoBoard, Synapse provisioning connector, and
+trust bundle releases, respectively. Each entry is a map of names to values-file paths, following the existing
+customization convention; adding a customization does not enable the corresponding component.
+
+Renamed and removed Matrix customization keys require action and are documented in
+[the migration requirements](./migrations-manual.md#changed-helmfile-structure-matrix-release-customizations).
+
+### `deployment.yaml.gotmpl`
+
+The file is added with openDesk 1.19.0.
+
+#### Timeouts of the Helm releases
+
+The time Helm waits for a release to become ready is now configured centrally, instead of being hard-coded per
+release in the application helmfiles:
+
+```yaml
+deployment:
+  timeouts:
+    # Seconds Helm waits for a release that has no timeout of its own.
+    default: 300
+    releases:
+      # A release with a timeout of its own.
+      openproject: 600
+      # A release following `default`.
+      cryptpad: ~
+```
+
+Every release has its own key below `releases`, named after the release in camelCase (e.g. `opendesk-nextcloud`
+becomes `opendeskNextcloud`). The two migration releases are not listed; their timeout is set with
+`migrations.job.timeoutSeconds`.
+
+> [!note]
+> `helmfile apply --timeout <seconds>` overrides all of these values for a single run.
+
+### `functional.yaml.gotmpl`
+
+#### Enterprise Matrix client access policy
+
+Enterprise deployments can configure MAS client access through the following options:
+
+```yaml
+functional:
+  chat:
+    matrix:
+      clients:
+        restrictAllowedClients: true
+        denyLegacyClients: true
+        allowElementDesktopClients: true
+        additionalAllowedClientUris: []
+```
+
+With `restrictAllowedClients: true`, the OIDC client URI allowlist includes enabled Element Web, Element Admin
+and NeoBoard clients, the Element URI pattern when `allowElementDesktopClients` is enabled, and any entries in
+`additionalAllowedClientUris`. Additional entries can use a trailing `*` wildcard. If no clients are configured,
+the rendered allowlist is explicitly empty and no clients are allowed by that policy.
+
+Set `restrictAllowedClients: false` to omit the allowlist and allow any client URI. Independently,
+`denyLegacyClients: true` blocks legacy Matrix compatibility logins; set it to `false` to lift that policy block.
+Disabling the allowlist does not enable legacy logins automatically.
+
+Setting `allowElementDesktopClients: false` also disables the device code grant used for QR sign-in. This remains
+in effect even when URI restrictions are disabled. These options configure Enterprise policy only; they do not
+add a Pro policy to Community Edition.
+
+#### Erasure of the Matrix account data of deleted users
+
+Deleting a user in central identity management now also deactivates their Matrix account. The openDesk
+Provisioning Connector does this through the Matrix Authentication Service, which deactivates the account in
+Synapse as well. The following option controls whether deactivation also erases the account's data:
+
+```yaml
+functional:
+  dataProtection:
+    matrixAccountErasure:
+      enabled: true
+```
+
+`true`, the default, erases the data (GDPR erasure): The profile is dropped and the user's events are marked for redaction, which cannot be undone. `false` only deactivates the account and keeps its data.
+
+#### Load additional data files into the Nubus data loader
+
+The content can now be customized beyond the existing options by loading additional data files into the
+Nubus data loader (Nubus chart option `nubusStackDataUms.stackDataUms.extraDataFiles`). Additional portal
+categories, folders, entries (tiles) or announcements are the typical use-cases, but any object type the data
+loader supports can be managed this way.
+
+```yaml
+functional:
+  portal:
+    custom:
+      extraDataFiles: {}
+```
+
+#### Nubus password quality options
+
+The global password quality rules the Nubus IAM enforces whenever a password is set or changed (e.g. via the portal's
+self-service or the admin portal) can now be configured. The options map 1:1 to the options from [the upstream documentation](https://docs.software-univention.de/ucs-operation/5.2/en/iam/password-management/policies.html#password-policy-settings).
+
+The message shown in the login and self-service dialogues when a new password does not comply with the rules
+can now be configured as well. The message is a static text that is not derived from the
+rules, so keep the two in sync.
+
+```yaml
+functional:
+  authentication:
+    password:
+      complexityMessage:
+        en: "Password must be at least 14 characters long and must not contain insecure character sequences."
+      quality:
+        length:
+          min: 14
+        credit:
+          digits: 0
+          upper: 0
+          lower: 0
+          other: 0
+        mspolicy: "false"
+```
+
+### `opendesk_main.yaml.gotmpl`
+
+#### Standalone NeoBoard whiteboard
+
+NeoBoard is now available as a standalone whiteboard application, deployed as a release of its own and served at
+`https://whiteboard.<domain>`. The component is not enabled by default:
+
+```yaml
+apps:
+  neoboard:
+    enabled: false
+```
+
+Set `enabled: true` to deploy it. The standalone application is independent of the NeoBoard widget used inside
+Element rooms: The widget continues to ship with the Element release (`apps.element`) and is not affected by this
+toggle, and the standalone application does not require the widget, so it can also be enabled on deployments that
+run without Element.
+
+### `technical.yaml.gotmpl`
+
+#### Autoscaling of the Matrix components
+
+openDesk Enterprise only: The Element Pro HAProxy, the Matrix Authentication Service and the Synapse workers can be
+scaled by a HorizontalPodAutoscaler instead of their static replica counts from `replicas.yaml.gotmpl`. All are
+disabled by default; the Community Edition ignores the settings.
+
+```yaml
+technical:
+  matrix:
+    autoscaling:
+      haproxy:
+        enabled: false
+        minReplicas: 2
+        maxReplicas: 20
+        targetCPUUtilizationPercentage: 200
+      matrixAuthenticationService:
+        enabled: false
+        # ...
+      synapse:
+        # One entry per worker, e.g. `clientReader`, `eventCreator`, `federationInbound`, `synchrotron`.
+        clientReader:
+          enabled: false
+          # ...
+```
+
+#### Configure Nubus extensions
+
+Nubus extensions are container images that add plugins (e.g. LDAP schemas, UDM/UMC modules, portal extensions) to
+Nubus (Nubus chart option `global.extensions`). The extensions openDesk ships can now be toggled and additional
+custom extensions can be loaded:
+
+```yaml
+technical:
+  nubus:
+    extensions:
+      toggle:
+        a2gMapper: true
+      custom:
+        - name: "my-extension"
+          image:
+            registry: "registry.example.org"
+            repository: "my-org/my-nubus-extension"
+            tag: "1.0.0"
+```
+
+Extensions are extremely powerful and a faulty extension can easily break the deployment, so make sure to test
+custom extensions on a non-production environment first.
+
+#### Configure LDAP indices
+
+The attributes indexed by the Nubus LDAP server can now be configured. The openDesk specific attributes that are
+indexed in addition to the upstream Nubus defaults are shown in `opendesk` and additional attributes, e.g. added
+through custom extensions, can be indexed via `custom`:
+
+```yaml
+technical:
+  nubus:
+    ldap:
+      index:
+        eq:
+          opendesk:
+            - "univentionFreeAttribute1"
+            - "univentionFreeAttribute2"
+          custom: []
+```
+
+#### Notes API rate limits
+
+Notes throttles its API per user and answers `429 Too Many Requests` above the limit. The limits can now be
+configured, for example raised for load tests or lowered to harden a deployment:
+
+```yaml
+technical:
+  notes:
+    rateLimit:
+      document: "80/minute"
+      documentAccess: "50/minute"
+      invitation: "60/minute"
+      documentAskForAccess: "30/minute"
+      config: "30/minute"
+      userListBurst: "30/minute"
+      userListSustained: "180/hour"
+```
+
+Each value is a throttle rate in the form `<count>/<period>`, where the period is one of `second`, `minute`, `hour`
+or `day`. Leaving an option unset (`~`) keeps the upstream default for that limit instead of passing an override.
+
+`documentAskForAccess` is the only limit facing people who do not have access to the document yet, so raise it with
+care.
 
 ## 1.18.0
 

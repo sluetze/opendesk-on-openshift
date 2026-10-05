@@ -1,9 +1,9 @@
-# SPDX-FileCopyrightText: 2024 Center for Digital Sovereignty of Public Administration (ZenDiS) GmbH
-# SPDX-FileCopyrightText: 2023 Federal Ministry of the Interior and Community, PG ZenDiS "Project group for the development of ZenDiS"
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 additionalAnnotations:
-  {{ .Values.annotations.elementMatrixNeoboardWidget.additional | toYaml | nindent 2 }}
+  {{ .Values.annotations.matrixNeoBoardWidget.additional | toYaml | nindent 2 }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -41,11 +41,11 @@ ingress:
     enabled: {{ .Values.ingress.tls.enabled }}
     secretName: {{ .Values.ingress.tls.secretName | quote }}
   annotations:
-    {{ .Values.annotations.elementMatrixNeoboardWidget.ingress | toYaml | nindent 4 }}
+    {{ .Values.annotations.matrixNeoBoardWidget.ingress | toYaml | nindent 4 }}
 
 podAnnotations:
   intents.otterize.com/service-name: "matrix-neoboard-widget"
-  {{- with .Values.annotations.elementMatrixNeoboardWidget.pod }}
+  {{- with .Values.annotations.matrixNeoBoardWidget.pod }}
   {{ . | toYaml | nindent 2 }}
   {{- end }}
 
@@ -60,11 +60,11 @@ resources:
 
 service:
   annotations:
-    {{ .Values.annotations.elementMatrixNeoboardWidget.service | toYaml | nindent 4 }}
+    {{ .Values.annotations.matrixNeoBoardWidget.service | toYaml | nindent 4 }}
 
 serviceAccount:
   annotations:
-    {{ .Values.annotations.elementMatrixNeoboardWidget.serviceAccount | toYaml | nindent 4 }}
+    {{ .Values.annotations.matrixNeoBoardWidget.serviceAccount | toYaml | nindent 4 }}
 
 theme:
   {{ .Values.theme | toYaml | nindent 2 }}
@@ -72,4 +72,11 @@ theme:
 nginx:
   ipv4Only: {{ if eq .Values.cluster.networking.ipFamilies "IPv4" }}true{{ else }}false{{ end }}
 
+extraEnvVars:
+  - name: "REACT_APP_WIDGET_BASE"
+    value: "https://{{ .Values.global.hosts.matrixNeoBoardWidget }}.{{ .Values.global.domain }}"
+  - name: "REACT_APP_RTC"
+    value: "matrixrtc"
+  - name: "REACT_APP_INFINITE_CANVAS"
+    value: "true"
 ...

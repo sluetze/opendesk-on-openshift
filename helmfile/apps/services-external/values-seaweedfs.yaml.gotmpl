@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024-2025 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -19,6 +19,19 @@ image:
 
 allInOne:
   enabled: true
+  {{- $identities := list }}
+  {{- range $name, $store := .Values.objectstores }}
+  {{- if or (not (dig "enterprise" false $store)) (eq (env "OPENDESK_ENTERPRISE") "true") }}
+  {{- $actions := list }}
+  {{- range $store.actions }}
+  {{- $actions = append $actions (printf "%s:%s" . $store.bucket) }}
+  {{- end }}
+  {{- $identities = append $identities (dict "name" $name "credentials" (list (dict "accessKey" $store.username "secretKey" $store.secretKey.value)) "actions" $actions) }}
+  {{- end }}
+  {{- end }}
+  podAnnotations:
+    # Match values-seaweedfs-config.yaml.gotmpl: restart when the admin credential or active identities change.
+    checksum/s3-config: {{ dict "admin" (dict "accessKey" "admin" "secretKey" .Values.secrets.minio.rootPassword.value) "identities" $identities | toJson | sha256sum | quote }}
   {{- if .Values.cluster.persistence.readWriteMany.enabled }}
   replicas: {{ .Values.replicas.seaweedfs }}
   {{- else }}
@@ -90,6 +103,22 @@ volume:
 
 filer:
   enabled: false
+  podSecurityContext:
+    enabled: true
+    fsGroup: 1000
+  containerSecurityContext:
+    enabled: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    runAsUser: 1000
+    runAsGroup: 1000
+    runAsNonRoot: true
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
 
 s3:
   createBucketsHook:
@@ -107,7 +136,6 @@ s3:
       nginx.org/client-max-body-size: "4G"
       {{- else if eq .Values.ingress.ingressClassName "haproxy" }}
       haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
-      haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
       {{- end }}
       {{- with .Values.annotations.servicesExternalSeaweedfs.apiIngress }}
       {{ . | toYaml | nindent 6 }}

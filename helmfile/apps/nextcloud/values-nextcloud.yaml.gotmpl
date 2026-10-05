@@ -93,7 +93,7 @@ aio:
         username:
           value: {{ .Values.cache.nextcloud.username }}
         password:
-          value: {{ .Values.cache.nextcloud.password.value | default .Values.cache.redis.password.value | quote }}
+          value: {{ .Values.cache.nextcloud.password.value | quote }}
       host: {{ .Values.cache.nextcloud.host | quote }}
       port: {{ .Values.cache.nextcloud.port | quote }}
       tls: {{ .Values.cache.nextcloud.tls }}
@@ -150,16 +150,16 @@ aio:
     successfulJobsHistoryLimit: {{ if .Values.debug.enabled }}"3"{{ else }}"1"{{ end }}
   debug:
     loglevel: {{ if .Values.debug.enabled }}"0"{{ else }}"2"{{ end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraEnvVars:
     - name: "FS_IMPORT_CA_CERTIFICATES"
       value: "true"
   {{- end }}
-  {{- if .Values.certificate.selfSigned }}
+  {{- if .Values.trust.secret.mount }}
   extraVolumes:
     - name: "trusted-cert-secret-volume"
       secret:
-        secretName: "opendesk-certificates-ca-tls"
+        secretName: {{ .Values.trust.secret.name | quote }}
         items:
           - key: "ca.crt"
             path: "ca-certificates.crt"
@@ -181,7 +181,6 @@ aio:
       nginx.ingress.kubernetes.io/proxy-send-timeout: {{ .Values.ingress.parameters.bodyTimeout.nextcloud | quote }}
       haproxy-ingress.github.io/proxy-body-size: {{ .Values.ingress.parameters.bodySize.nextcloud | quote }}
       haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
-      haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.nextcloud}}s"
       {{- with .Values.annotations.nextcloudAio.ingress }}
         {{ . | toYaml | nindent 6 }}
       {{- end }}

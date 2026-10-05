@@ -55,13 +55,6 @@ service.
 |                    |                    | Port      | `databases.keycloakExtension.port`            | `5432`                       |
 |                    |                    | Username  | `databases.keycloakExtension.username`        | `keycloak_extensions_user`   |
 |                    |                    | Password  | `databases.keycloakExtension.password`        |                              |
-|                    | Notifications API  |           |                                               |                              |
-|                    |                    | Type      | `databases.umsNotificationsApi.type`          | `postgresql`                 |
-|                    |                    | Name      | `databases.umsNotificationsApi.name`          | `notificationsapi`           |
-|                    |                    | Host      | `databases.umsNotificationsApi.host`          | `postgresql`                 |
-|                    |                    | Port      | `databases.umsNotificationsApi.port`          | `5432`                       |
-|                    |                    | Username  | `databases.umsNotificationsApi.username`      | `notificationsapi_user`      |
-|                    |                    | Password  | `databases.umsNotificationsApi.password`      |                              |
 |                    | Self Service       |           |                                               |                              |
 |                    |                    | Type      | `databases.umsSelfservice.type`               | `postgresql`                 |
 |                    |                    | Name      | `databases.umsSelfservice.name`               | `selfservice`                |
@@ -121,6 +114,7 @@ service.
 | XWiki[^4]          | XWiki              |           |                                               |                              |
 |                    |                    | Type      | `databases.xwiki.type`                        | `postgresql`                 |
 |                    |                    | Name      | `databases.xwiki.name`                        | `xwiki`                      |
+|                    |                    | Schema    | `databases.xwiki.schema`                      | `public`[^5]                 |
 |                    |                    | Host      | `databases.xwiki.host`                        | `postgresql`                 |
 |                    |                    | Port      | `databases.xwiki.port`                        | `5432`                       |
 |                    |                    | Username  | `databases.xwiki.username`                    | `xwiki_user`                 |
@@ -176,3 +170,5 @@ service.
 [^3] openDesk Enterprise only.
 
 [^4] XWiki requires root access when using MariaDB due to the fact that sub-wikis use separate databases that are managed by XWiki. When using PostgreSQL with XWiki no root user is required as the sub-wikis are managed within multiple schemas within a single database.
+
+[^5] PostgreSQL only. The schema holding the main wiki has to exist before XWiki starts, as XWiki only creates the schemas of sub-wikis; `public` exists in every PostgreSQL database. Creating the sub-wiki schemas requires the configured user to hold the `CREATE` privilege on the database, which the database owner has by default.

@@ -1,178 +1,398 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
+
 ---
-commonAnnotations:
-  {{ .Values.annotations.element.common | toYaml | nindent 2 }}
-
-configuration:
-  endToEndEncryption: true
-  additionalConfiguration:
-    logout_redirect_url: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}/protocol/openid-connect/logout?client_id=opendesk-matrix&post_logout_redirect_uri=https%3A%2F%2F{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}"
-
-    "net.nordeck.element_web.module.opendesk":
-      config:
-        banner:
-          ics_navigation_json_url: "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/navigation.json"
-          ics_silent_url: "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/silent"
-          portal_logo_svg_url: "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/univention/portal/icons/logos/domain.svg"
-          portal_url: "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/"
-        custom_css_variables:
-          --cpd-color-bg-action-primary-rest: {{ .Values.theme.colors.primary | quote }}
-          --cpd-color-text-action-accent: {{ .Values.theme.colors.primary | quote }}
-
-    "net.nordeck.element_web.module.widget_lifecycle":
-      widget_permissions:
-        "https://{{ .Values.global.hosts.element }}.{{ .Values.global.domain }}/jitsi.html":
-          identity_approved: true
-        "https://{{ .Values.global.hosts.matrixNeoBoardWidget }}.{{ .Values.global.domain }}/*":
-          preload_approved: true
-          capabilities_approved:
-            - org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.create
-            - org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.create
-            - org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.chunk
-            - org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.chunk
-            - org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.snapshot
-            - org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.snapshot
-            - org.matrix.msc2762.receive.state_event:m.room.create
-            - org.matrix.msc2762.send.state_event:m.room.power_levels#
-            - org.matrix.msc2762.receive.state_event:m.room.power_levels#
-            - org.matrix.msc2762.receive.state_event:m.room.member
-            - org.matrix.msc2762.receive.state_event:m.room.name
-            - org.matrix.msc2762.send.state_event:net.nordeck.whiteboard
-            - org.matrix.msc2762.receive.state_event:net.nordeck.whiteboard
-            - org.matrix.msc2762.send.state_event:net.nordeck.whiteboard.sessions#*
-            - org.matrix.msc2762.receive.state_event:net.nordeck.whiteboard.sessions
-            - org.matrix.msc3819.send.to_device:net.nordeck.whiteboard.connection_signaling
-            - org.matrix.msc3819.receive.to_device:net.nordeck.whiteboard.connection_signaling
-            - town.robin.msc3846.turn_servers
-            - org.matrix.msc4039.upload_file
-            - org.matrix.msc4039.download_file
-        "https://{{ .Values.global.hosts.matrixNeoChoiceWidget }}.{{ .Values.global.domain }}/*":
-          preload_approved: true
-          capabilities_approved:
-            - org.matrix.msc2762.send.event:net.nordeck.poll.vote
-            - org.matrix.msc2762.receive.event:net.nordeck.poll.vote
-            - org.matrix.msc2762.send.state_event:net.nordeck.poll
-            - org.matrix.msc2762.receive.state_event:net.nordeck.poll
-            - org.matrix.msc2762.send.state_event:net.nordeck.poll.settings
-            - org.matrix.msc2762.receive.state_event:net.nordeck.poll.settings
-            - org.matrix.msc2762.receive.state_event:m.room.create
-            - org.matrix.msc2762.receive.state_event:m.room.power_levels
-            - org.matrix.msc2762.receive.state_event:m.room.name
-            - org.matrix.msc2762.receive.state_event:m.room.member
-            - org.matrix.msc2762.send.state_event:net.nordeck.poll.group
-            - org.matrix.msc2762.receive.state_event:net.nordeck.poll.group
-            - org.matrix.msc2762.send.event:net.nordeck.poll.start
-            - org.matrix.msc2762.receive.event:net.nordeck.poll.start
-        "https://{{ .Values.global.hosts.matrixNeoDateFixWidget }}.{{ .Values.global.domain }}/*":
-          preload_approved: true
-          identity_approved: true
-          capabilities_approved:
-            - org.matrix.msc2931.navigate
-            - org.matrix.msc2762.timeline:*
-            - org.matrix.msc2762.receive.state_event:m.room.power_levels
-            - org.matrix.msc2762.receive.event:m.reaction
-            - org.matrix.msc2762.receive.state_event:m.room.create
-            - org.matrix.msc2762.receive.state_event:m.room.tombstone
-            - org.matrix.msc2762.receive.state_event:m.room.member
-            - org.matrix.msc2762.send.state_event:m.room.member
-            - org.matrix.msc2762.receive.state_event:m.room.name
-            - org.matrix.msc2762.receive.state_event:m.room.topic
-            - org.matrix.msc2762.receive.state_event:m.space.parent
-            - org.matrix.msc2762.receive.state_event:m.space.child
-            - org.matrix.msc2762.receive.state_event:net.nordeck.meetings.metadata
-            - org.matrix.msc2762.receive.state_event:im.vector.modular.widgets
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.create
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.create
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.breakoutsessions.create
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.breakoutsessions.create
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.close
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.close
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.widgets.handle
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.widgets.handle
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.participants.handle
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.participants.handle
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.update
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.update
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.change.message_permissions
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.change.message_permissions
-            - org.matrix.msc2762.send.event:net.nordeck.meetings.sub_meetings.send_message
-            - org.matrix.msc2762.receive.event:net.nordeck.meetings.sub_meetings.send_message
-            - org.matrix.msc3973.user_directory_search
-  welcomeUserId: "@meetings-bot:{{ .Values.global.matrixDomain | default .Values.global.domain }}"
-  {{- if eq .Values.functional.internationalization.defaultLanguage "de_DE" }}
-  welcomeText: "Willkommen"
-  welcomeLinktextToPlanner: "Terminplaner öffnen"
-  {{- else }}
-  welcomeText: "Welcome"
-  welcomeLinktextToPlanner: "Open meeting planner"
-  {{- end }}
-
-containerSecurityContext:
-  allowPrivilegeEscalation: false
-  capabilities:
-    drop:
-      - "ALL"
-  enabled: true
-  privileged: false
-  readOnlyRootFilesystem: true
-  runAsGroup: 101
-  runAsNonRoot: true
-  runAsUser: 101
-  seccompProfile:
-    type: "RuntimeDefault"
-  seLinuxOptions:
-    {{ .Values.seLinuxOptions.element | toYaml | nindent 4 }}
-
-global:
-  domain: {{ .Values.global.domain | quote }}
-  hosts:
-    {{ .Values.global.hosts | toYaml | nindent 4 }}
-  imagePullSecrets:
-    {{ .Values.global.imagePullSecrets | toYaml | nindent 4 }}
-
-image:
-  imagePullPolicy: {{ .Values.global.imagePullPolicy | quote }}
-  registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.element.registry | quote }}
-  repository: {{ .Values.images.element.repository | quote }}
-  tag: {{ .Values.images.element.tag | quote }}
-
-ingress:
-  host: "{{ .Values.global.hosts.element }}.{{ .Values.global.domain }}"
-  enabled: {{ .Values.ingress.enabled }}
-  ingressClassName: {{ .Values.ingress.ingressClassName | quote }}
-  tls:
-    enabled: {{ .Values.ingress.tls.enabled }}
-    secretName: {{ .Values.ingress.tls.secretName | quote }}
-  annotations:
-    {{ .Values.annotations.element.ingress | toYaml | nindent 4 }}
-
-podAnnotations:
-  intents.otterize.com/service-name: "opendesk-element"
-  {{- with .Values.annotations.element.pod }}
-  {{ . | toYaml | nindent 2 }}
-  {{- end }}
-
-podSecurityContext:
-  enabled: true
-  fsGroup: 101
-
-replicaCount: {{ .Values.replicas.element }}
-
-resources:
-  {{ .Values.resources.element | toYaml | nindent 2 }}
-
-service:
-  annotations:
-    {{ .Values.annotations.element.service | toYaml | nindent 4 }}
-
-serviceAccount:
-  annotations:
-    {{ .Values.annotations.element.serviceAccount | toYaml | nindent 4 }}
-
-theme:
-  title: "Chat - {{ .Values.theme.texts.productName }}"
-  {{ .Values.theme | toYaml | nindent 2 }}
-
+{{- $sidebarLogoDarkStyle := printf "<style>@media (prefers-color-scheme: dark) { path[fill='black'] { fill: %s; } }</style></svg>" .Values.theme.colors.white }}
+{{- /* The banner module renders the logo at a fixed 32px height; padding the viewBox vertically scales the wordmark to 70% of that. */}}
+{{- $sidebarLogoSvg := .Values.theme.imagery.logoHeaderSvg | b64dec | replace `width="82" height="16" viewBox="0 0 82 16"` `width="82" height="23" viewBox="0 -3.5 82 23"` | replace "</svg>" $sidebarLogoDarkStyle | b64enc }}
+elementWeb:
+  enabled: {{ .Values.apps.element.enabled }}
+  additional:
+    user-config.json: |
+      {
+        "jitsi": {
+          "preferred_domain": "{{ .Values.global.hosts.jitsi }}.{{ .Values.global.domain }}"
+        },
+        "jitsi_widget": {
+          "skip_built_in_welcome_screen": true
+        },
+        "logout_redirect_url": "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}/protocol/openid-connect/logout?client_id=opendesk-matrix&post_logout_redirect_uri=https%3A%2F%2F{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}",
+        {{- if .Values.ingress.tls.enabled }}
+        "permalink_prefix": "https://{{ printf "%s.%s" .Values.global.hosts.elementWeb .Values.global.domain }}",
+        {{- else }}
+        "permalink_prefix": "http://{{ printf "%s.%s" .Values.global.hosts.elementWeb .Values.global.domain }}",
+        {{- end }}
+        "default_federate": false,
+        "disable_custom_urls": true,
+        "integrations_ui_url": "",
+        "integrations_rest_url": "",
+        "integrations_widgets_urls": [],
+        "features": {
+            "feature_rust_crypto": true,
+            "feature_video_rooms": false,
+            "feature_ask_to_join": true
+        },
+        "enable_presence_by_hs_url": {
+            "https://matrix.org": false,
+            "https://matrix-client.matrix.org": false
+        },
+        "setting_defaults": {
+            "custom_themes": [
+                {
+                    "name": "openDesk",
+                    "is_dark": false,
+                    "compound": {
+                        "--cpd-color-text-primary": {{ .Values.theme.colors.black | quote }},
+                        "--cpd-color-text-secondary": {{ .Values.theme.colors.black | quote }},
+                        "--cpd-color-bg-action-primary-rest": {{ .Values.theme.colors.primary | quote }},
+                        "--cpd-color-text-action-accent": {{ .Values.theme.colors.primary | quote }},
+                        "--cpd-color-icon-accent-tertiary": {{ .Values.theme.colors.primary | quote }},
+                        "--cpd-color-icon-on-solid-primary": {{ .Values.theme.colors.white | quote }}
+                    }
+                },
+                {
+                    "name": "openDesk Dark",
+                    "is_dark": true,
+                    "compound": {
+                        "--cpd-color-bg-action-primary-rest": {{ .Values.theme.colors.primary | quote }},
+                        "--cpd-color-text-action-accent": {{ .Values.theme.colors.primary65 | quote }},
+                        "--cpd-color-icon-accent-tertiary": {{ .Values.theme.colors.primary65 | quote }},
+                        "--cpd-color-icon-on-solid-primary": {{ .Values.theme.colors.white | quote }}
+                    }
+                }
+            ],
+            "UIFeature.feedback": false,
+            "UIFeature.advancedSettings": true,
+            "UIFeature.shareQrCode": false,
+            "UIFeature.shareSocial": false,
+            "UIFeature.identityServer": false,
+            "UIFeature.thirdPartyId": false,
+            "UIFeature.registration": false,
+            "UIFeature.passwordReset": false,
+            "UIFeature.deactivate": false,
+            "UIFeature.advancedEncryption": false,
+            "UIFeature.roomHistorySettings": true,
+            "UIFeature.allowCreatingPublicRooms": true,
+            "UIFeature.allowCreatingPublicSpaces": false,
+            "MessageComposerInput.showStickersButton": false,
+            "breadcrumbs": false,
+            "fallbackICEServerAllowed": false
+        },
+        "default_theme": "custom-openDesk",
+        "brand": "Chat - {{ .Values.theme.texts.productName }}",
+        "branding": {
+            "auth_header_logo_url": "data:image/svg+xml;base64,{{ .Values.theme.imagery.logoHeaderSvg }}",
+            "welcome_background_url": "data:image/gif;base64,R0lGODlhAQABAPAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+        },
+        "custom_translations_url": "/custom-translations.json",
+        "embedded_pages": {
+          "home_url": "/custom-home.html"
+        },
+        "io.element.element-web-modules.restricted-guests": {
+          "guest_user_homeserver_url": {{ printf "https://%s.%s" .Values.global.hosts.synapse .Values.global.domain | quote }},
+          "guest_user_prefix": "@guest-",
+          "skip_single_sign_on": true
+        },
+        "io.element.element-web-modules.banner": {
+          "logo_url": "data:image/svg+xml;base64,{{ $sidebarLogoSvg }}",
+          "heading_href": "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/",
+          "title": "",
+          "theme": {
+            "triggerBackgroundColorHover": {{ .Values.theme.colors.primary | quote }},
+            "triggerBackgroundColorPressed": {{ .Values.theme.colors.primary | quote }}
+          },
+          "menu": {
+            "logo_url": "data:image/svg+xml;base64,{{ $sidebarLogoSvg }}",
+            "logo_href": "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/",
+            "type": "univention",
+            "ics_url": "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}"
+          }
+        },
+        "io.element.element-web-modules.widget-lifecycle": {
+          "widget_permissions": {
+            "https://{{ .Values.global.hosts.elementWeb }}.{{ .Values.global.domain }}/jitsi.html#*": {
+              "identity_approved": true,
+              "preload_approved": true
+            },
+            "https://{{ .Values.global.hosts.elementWeb }}.{{ .Values.global.domain }}/widgets/element-call/index.html*": {
+              "capabilities_approved": [
+                "m.always_on_screen",
+                "org.matrix.msc4039.download_file",
+                "org.matrix.msc2762.timeline:*",
+                "org.matrix.msc2762.send.event:org.matrix.msc4075.call.notify",
+                "org.matrix.msc2762.send.event:org.matrix.msc4075.rtc.notification",
+                "org.matrix.msc2762.send.event:org.matrix.rageshake_request",
+                "org.matrix.msc2762.receive.event:org.matrix.rageshake_request",
+                "org.matrix.msc2762.send.event:io.element.call.encryption_keys",
+                "org.matrix.msc2762.receive.event:io.element.call.encryption_keys",
+                "org.matrix.msc2762.send.event:io.element.call.reaction",
+                "org.matrix.msc2762.receive.event:io.element.call.reaction",
+                "org.matrix.msc2762.send.event:m.reaction",
+                "org.matrix.msc2762.receive.event:m.reaction",
+                "org.matrix.msc2762.send.event:m.room.redaction",
+                "org.matrix.msc2762.receive.event:m.room.redaction",
+                "org.matrix.msc2762.send.event:org.matrix.msc4310.rtc.decline",
+                "org.matrix.msc2762.receive.event:org.matrix.msc4310.rtc.decline",
+                "org.matrix.msc2762.send.event:org.matrix.msc4143.rtc.member",
+                "org.matrix.msc2762.receive.event:org.matrix.msc4143.rtc.member",
+                "org.matrix.msc2762.send.state_event:org.matrix.msc3401.call.member#*",
+                "org.matrix.msc2762.receive.state_event:org.matrix.msc3401.call.member",
+                "org.matrix.msc2762.receive.state_event:m.room.create",
+                "org.matrix.msc2762.receive.state_event:m.room.encryption",
+                "org.matrix.msc2762.receive.state_event:m.room.member",
+                "org.matrix.msc2762.receive.state_event:m.room.name",
+                "org.matrix.msc3819.send.to_device:m.call.invite",
+                "org.matrix.msc3819.receive.to_device:m.call.invite",
+                "org.matrix.msc3819.send.to_device:m.call.candidates",
+                "org.matrix.msc3819.receive.to_device:m.call.candidates",
+                "org.matrix.msc3819.send.to_device:m.call.answer",
+                "org.matrix.msc3819.receive.to_device:m.call.answer",
+                "org.matrix.msc3819.send.to_device:m.call.hangup",
+                "org.matrix.msc3819.receive.to_device:m.call.hangup",
+                "org.matrix.msc3819.send.to_device:m.call.reject",
+                "org.matrix.msc3819.receive.to_device:m.call.reject",
+                "org.matrix.msc3819.send.to_device:m.call.select_answer",
+                "org.matrix.msc3819.receive.to_device:m.call.select_answer",
+                "org.matrix.msc3819.send.to_device:m.call.negotiate",
+                "org.matrix.msc3819.receive.to_device:m.call.negotiate",
+                "org.matrix.msc3819.send.to_device:m.call.sdp_stream_metadata_changed",
+                "org.matrix.msc3819.receive.to_device:m.call.sdp_stream_metadata_changed",
+                "org.matrix.msc3819.send.to_device:org.matrix.call.sdp_stream_metadata_changed",
+                "org.matrix.msc3819.receive.to_device:org.matrix.call.sdp_stream_metadata_changed",
+                "org.matrix.msc3819.send.to_device:m.call.replaces",
+                "org.matrix.msc3819.receive.to_device:m.call.replaces",
+                "org.matrix.msc3819.send.to_device:io.element.call.encryption_keys",
+                "org.matrix.msc3819.receive.to_device:io.element.call.encryption_keys",
+                "org.matrix.msc4157.send.delayed_event",
+                "org.matrix.msc4157.update_delayed_event",
+                "org.matrix.msc4407.send.sticky_event",
+                "org.matrix.msc4407.receive.sticky_event",
+                "org.matrix.msc4515.rtc_transports"
+              ],
+              "identity_approved": true,
+              "preload_approved": true
+            },
+            "https://{{ .Values.global.hosts.matrixNeoBoardWidget }}.{{ .Values.global.domain }}/*": {
+              "capabilities_approved": [
+                "org.matrix.msc2762.send.state_event:org.matrix.msc4143.rtc.slot",
+                "org.matrix.msc2762.receive.state_event:org.matrix.msc4143.rtc.slot",
+                "org.matrix.msc4157.send.delayed_event",
+                "org.matrix.msc4157.update_delayed_event",
+                "org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.create",
+                "org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.create",
+                "org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.chunk",
+                "org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.chunk",
+                "org.matrix.msc2762.send.event:net.nordeck.whiteboard.document.snapshot",
+                "org.matrix.msc2762.receive.event:net.nordeck.whiteboard.document.snapshot",
+                "org.matrix.msc2762.send.event:org.matrix.msc4143.rtc.member",
+                "org.matrix.msc2762.receive.event:org.matrix.msc4143.rtc.member",
+                "org.matrix.msc2762.receive.state_event:m.room.create",
+                "org.matrix.msc2762.send.state_event:m.room.power_levels#",
+                "org.matrix.msc2762.receive.state_event:m.room.power_levels#",
+                "org.matrix.msc2762.receive.state_event:m.room.member",
+                "org.matrix.msc2762.receive.state_event:m.room.name",
+                "org.matrix.msc2762.send.state_event:net.nordeck.whiteboard",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.whiteboard",
+                "org.matrix.msc2762.send.state_event:net.nordeck.whiteboard.sessions#*",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.whiteboard.sessions",
+                "org.matrix.msc3819.send.to_device:net.nordeck.whiteboard.connection_signaling",
+                "org.matrix.msc3819.receive.to_device:net.nordeck.whiteboard.connection_signaling",
+                "town.robin.msc3846.turn_servers",
+                "org.matrix.msc4039.upload_file",
+                "org.matrix.msc4039.download_file",
+                "org.matrix.msc4515.rtc_transports",
+                "org.matrix.msc4407.send.sticky_event",
+                "org.matrix.msc4407.receive.sticky_event"
+              ],
+              "identity_approved": true,
+              "preload_approved": true
+            },
+            "https://{{ .Values.global.hosts.matrixNeoChoiceWidget }}.{{ .Values.global.domain }}/*": {
+              "capabilities_approved": [
+                "org.matrix.msc2762.send.event:net.nordeck.poll.vote",
+                "org.matrix.msc2762.receive.event:net.nordeck.poll.vote",
+                "org.matrix.msc2762.send.state_event:net.nordeck.poll",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.poll",
+                "org.matrix.msc2762.send.state_event:net.nordeck.poll.settings",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.poll.settings",
+                "org.matrix.msc2762.receive.state_event:m.room.create",
+                "org.matrix.msc2762.receive.state_event:m.room.power_levels",
+                "org.matrix.msc2762.receive.state_event:m.room.name",
+                "org.matrix.msc2762.receive.state_event:m.room.member",
+                "org.matrix.msc2762.send.state_event:net.nordeck.poll.group",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.poll.group",
+                "org.matrix.msc2762.send.event:net.nordeck.poll.start",
+                "org.matrix.msc2762.receive.event:net.nordeck.poll.start"
+              ],
+              "preload_approved": true
+            },
+            "https://{{ .Values.global.hosts.matrixNeoDateFixWidget }}.{{ .Values.global.domain }}/*": {
+              "capabilities_approved": [
+                "org.matrix.msc2931.navigate",
+                "org.matrix.msc2762.timeline:*",
+                "org.matrix.msc2762.receive.state_event:m.room.power_levels",
+                "org.matrix.msc2762.receive.event:m.reaction",
+                "org.matrix.msc2762.receive.state_event:m.room.create",
+                "org.matrix.msc2762.receive.state_event:m.room.tombstone",
+                "org.matrix.msc2762.receive.state_event:m.room.member",
+                "org.matrix.msc2762.send.state_event:m.room.member",
+                "org.matrix.msc2762.receive.state_event:m.room.name",
+                "org.matrix.msc2762.receive.state_event:m.room.topic",
+                "org.matrix.msc2762.receive.state_event:m.space.parent",
+                "org.matrix.msc2762.receive.state_event:m.space.child",
+                "org.matrix.msc2762.receive.state_event:net.nordeck.meetings.metadata",
+                "org.matrix.msc2762.receive.state_event:im.vector.modular.widgets",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.create",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.create",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.breakoutsessions.create",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.breakoutsessions.create",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.close",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.close",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.widgets.handle",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.widgets.handle",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.participants.handle",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.participants.handle",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.update",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.update",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.meeting.change.message_permissions",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.meeting.change.message_permissions",
+                "org.matrix.msc2762.send.event:net.nordeck.meetings.sub_meetings.send_message",
+                "org.matrix.msc2762.receive.event:net.nordeck.meetings.sub_meetings.send_message",
+                "org.matrix.msc3973.user_directory_search"
+              ],
+              "identity_approved": true,
+              "preload_approved": true
+            }
+          }
+        },
+        "io.element.element-web-modules.widget-toggles": {
+          "types": [
+            "jitsi",
+            "m.call",
+            "net.nordeck.meetings.widget.breakoutsessions",
+            "net.nordeck.meetings.widget.cockpit",
+            "net.nordeck.neoboard",
+            "net.nordeck.neochoice"
+          ]
+        },
+        "sso_redirect_options": {
+          "on_welcome_page": true
+        }
+      }
+  annotations: {{ merge
+    (dict "intents.otterize.com/service-name" "element" )
+    (.Values.annotations.elementWeb.pod | default dict)
+    (.Values.annotations.elementWeb.common | default dict)
+    | toYaml | nindent 4 }}
+  containersSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - "ALL"
+    privileged: false
+    readOnlyRootFilesystem: true
+    seccompProfile:
+      type: "RuntimeDefault"
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10004
+    runAsGroup: 10004
+    seccompProfile:
+      type: "RuntimeDefault"
+    seLinuxOptions:
+      {{ .Values.seLinuxOptions.elementWeb | toYaml | nindent 6 }}
+  # Element's custom theme entrypoints use legacy styling. As workaround we Copy the image's modern
+  # built-in styles into those entrypoints so custom themes only override colors but inherit the modern styling.
+  extraInitContainers:
+    - name: "prepare-opendesk-themes"
+      image: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.elementWeb.registry }}/{{ .Values.images.elementWeb.repository }}:{{ .Values.images.elementWeb.tag }}"
+      imagePullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+      command:
+        - "/bin/sh"
+        - "-ec"
+        - |
+          cp -R /app/bundles/. /themes/
+          for mode in light dark; do
+            find /themes -name "theme-${mode}.css" > /tmp/theme-files
+            test -s /tmp/theme-files
+            while IFS= read -r builtin; do
+              custom="${builtin%.css}-custom.css"
+              test -f "$custom"
+              cp "$builtin" "$custom"
+            done < /tmp/theme-files
+          done
+      securityContext:
+        allowPrivilegeEscalation: false
+        privileged: false
+        capabilities:
+          drop: ["ALL"]
+        readOnlyRootFilesystem: true
+        runAsNonRoot: true
+        runAsUser: 10010
+        runAsGroup: 10010
+        seccompProfile:
+          type: "RuntimeDefault"
+        seLinuxOptions: {{ .Values.seLinuxOptions.elementWeb | toYaml | nindent 10 }}
+      resources:
+        requests:
+          cpu: "10m"
+          memory: "32Mi"
+        limits:
+          cpu: "100m"
+          memory: "128Mi"
+      volumeMounts:
+        - name: "opendesk-theme-bundles"
+          mountPath: "/themes"
+        - name: "opendesk-theme-tmp"
+          mountPath: "/tmp"
+  extraVolumes:
+    - name: "opendesk-theme-bundles"
+      emptyDir: {}
+    - name: "opendesk-theme-tmp"
+      emptyDir: {}
+    - name: "customization"
+      configMap:
+        name: "opendesk-element-customization"
+        defaultMode: 420
+  extraVolumeMounts:
+    - name: "opendesk-theme-bundles"
+      mountPath: "/app/bundles"
+      readOnly: true
+    - mountPath: "/app/custom-home.html"
+      name: "customization"
+      readOnly: true
+      subPath: "custom-home.html"
+    - mountPath: "/app/custom-translations.json"
+      name: "customization"
+      readOnly: true
+      subPath: "custom-translations.json"
+  image:
+    {{- $tagdata := splitn "@" 2 .Values.images.elementWeb.tag }}
+    digest: {{ $tagdata._1 | quote }}
+    pullPolicy: {{ .Values.global.imagePullPolicy | default "IfNotPresent" | quote }}
+    registry: {{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.elementWeb.registry | quote }}
+    repository: {{ .Values.images.elementWeb.repository | quote }}
+    tag: {{ $tagdata._0 | quote }}
+  ingress:
+    annotations: {{- merge
+      (dict)
+      (.Values.annotations.elementWeb.ingress | default dict)
+      (.Values.annotations.elementWeb.common | default dict)
+      | toYaml | nindent 6 }}
+    host: "{{ .Values.global.hosts.elementWeb }}.{{ .Values.global.domain }}"
+    service:
+      annotations: {{ merge
+        (.Values.annotations.elementWeb.service | default dict)
+        (.Values.annotations.elementWeb.common | default dict)
+        | toYaml | nindent 8 }}
+    tlsEnabled: {{ .Values.ingress.tls.enabled }}
+    tlsSecret: {{ .Values.ingress.tls.secretName | quote }}
+  replicas: {{ .Values.replicas.elementWeb }}
+  resources: {{ .Values.resources.elementWeb | toYaml | nindent 4 }}
+  serviceAccount:
+    annotations: {{ merge
+      (.Values.annotations.elementWeb.serviceAccount | default dict)
+      (.Values.annotations.elementWeb.common | default dict)
+      | toYaml | nindent 6 }}
 ...

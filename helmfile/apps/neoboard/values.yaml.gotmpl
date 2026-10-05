@@ -1,0 +1,148 @@
+# SPDX-FileCopyrightText: 2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-License-Identifier: Apache-2.0
+---
+image:
+  pullPolicy: {{ .Values.global.imagePullPolicy | quote }}
+  # The chart takes the registry as part of `image.repository`, so the private
+  # registry override has to be prefixed here.
+  repository: "{{ coalesce .Values.repositories.image.registryOpencodeDe .Values.global.imageRegistry .Values.images.neoboard.registry }}/{{ .Values.images.neoboard.repository }}"
+  tag: {{ .Values.images.neoboard.tag | quote }}
+
+# The chart expects a list of `name` mappings, while `global.imagePullSecrets`
+# holds plain secret names.
+imagePullSecrets:
+{{- range .Values.global.imagePullSecrets }}
+  - name: {{ . | quote }}
+{{- end }}
+
+replicaCount: {{ .Values.replicas.neoboard }}
+
+podAnnotations:
+  {{ .Values.annotations.neoboard.pod | default dict | toYaml | nindent 2 }}
+
+resources:
+  {{ .Values.resources.neoboard | toYaml | nindent 2 }}
+
+# The image runs nginx as UID/GID 101, see the `widget-server` base image of
+# https://github.com/nordeck/matrix-neoboard-standalone.
+podSecurityContext:
+  fsGroup: 101
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - "ALL"
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsGroup: 101
+  runAsNonRoot: true
+  runAsUser: 101
+  seccompProfile:
+    type: "RuntimeDefault"
+  {{- if .Values.seLinuxOptions.neoboard }}
+  seLinuxOptions:
+    {{ .Values.seLinuxOptions.neoboard | toYaml | nindent 4 }}
+  {{- end }}
+
+ingress:
+  enabled: {{ .Values.ingress.enabled }}
+  className: {{ .Values.ingress.ingressClassName | quote }}
+  annotations:
+    {{ .Values.annotations.neoboard.ingress | toYaml | nindent 4 }}
+  hosts:
+    - host: "{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}"
+      paths:
+        - path: "/"
+          pathType: "ImplementationSpecific"
+  tls:
+    - secretName: {{ .Values.ingress.tls.secretName | quote }}
+      hosts:
+        - "{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}"
+
+env:
+  - name: "REACT_APP_HOMESERVER"
+    value: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+  - name: "REACT_APP_SKIP_LOGIN"
+    value: "true"
+  - name: "REACT_APP_LOGOUT_REDIRECT_URL"
+    value: "https://{{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}/realms/{{ .Values.platform.realm }}/protocol/openid-connect/logout?client_id=opendesk-matrix&post_logout_redirect_uri=https%3A%2F%2F{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}"
+  - name: "REACT_APP_WIDGET_BASE"
+    value: "https://{{ .Values.global.hosts.matrixNeoBoardWidget }}.{{ .Values.global.domain }}"
+  - name: "REACT_APP_APPEARANCE"
+    value: "opendesk"
+  - name: "REACT_APP_OPENDESK_BANNER_ICS_NAVIGATION_JSON_URL"
+    value: "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/navigation.json"
+  - name: "REACT_APP_OPENDESK_BANNER_ICS_SILENT_URL"
+    value: "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/silent"
+  - name: "REACT_APP_OPENDESK_BANNER_PORTAL_LOGO_SVG_URL"
+    value: "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/univention/portal/icons/logos/domain.svg"
+  - name: "REACT_APP_OPENDESK_BANNER_PORTAL_URL"
+    value: "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/"
+  - name: "REACT_APP_RTC"
+    value: "matrixrtc"
+  - name: "REACT_APP_INFINITE_CANVAS"
+    value: "true"
+  - name: "CSP_FRAME_SRC"
+    value: "{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }} {{ .Values.global.hosts.keycloak }}.{{ .Values.global.domain }}"
+
+  ## Look and feel
+  ##
+  ## Implements the top bar attributes from
+  ## https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk/-/blob/develop/docs/baseline-requirements.md#look-and-feel
+  ##
+
+  - name: "REACT_APP_PRODUCT_NAME"
+    value: "Whiteboard"
+
+  # Palette
+  - name: "REACT_APP_LIGHT_PRIMARY_COLOR"
+    value: {{ .Values.theme.colors.primary | quote }}
+  - name: "REACT_APP_LIGHT_PRIMARY_COLOR_LIGHT"
+    value: {{ .Values.theme.colors.primary | quote }}
+  - name: "REACT_APP_LIGHT_PRIMARY_COLOR_DARK"
+    value: {{ .Values.theme.colors.primary | quote }}
+  - name: "REACT_APP_LIGHT_BACKGROUND_LOGGED_IN"
+    value: {{ .Values.theme.colors.secondaryGreyLight | quote }}
+  - name: "REACT_APP_LIGHT_BACKGROUND_CARD"
+    value: {{ .Values.theme.colors.primary35 | quote }}
+
+  # Top bar foreground and background colors, including hover and active.
+
+  - name: "REACT_APP_OPENDESK_BANNER_BACKGROUND_COLOR"
+    value: {{ .Values.theme.colors.white | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_BACKGROUND_COLOR_HOVER"
+    value: {{ .Values.theme.colors.primary15 | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_BACKGROUND_COLOR_ACTIVE"
+    value: {{ .Values.theme.colors.primary | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_COLOR_TEXT_PRIMARY"
+    value: {{ .Values.theme.colors.black | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_COLOR_TEXT_PRIMARY_HOVER"
+    value: {{ .Values.theme.colors.black | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_COLOR_TEXT_PRIMARY_ACTIVE"
+    value: {{ .Values.theme.colors.white | quote }}
+  - name: "REACT_APP_OPENDESK_BANNER_TEXT_ACTION_ACCENT"
+    value: {{ .Values.theme.colors.secondaryGreyLight | quote }}
+
+  # Top bar geometry. openDesk has no central values for height, bottom line and
+  # logo width, so these are pinned to the portal's own top bar
+  # (`--layout-height-header` in helmfile/files/theme/portal/stylesheet.css) and
+  # to the logo width OX App Suite uses (`io.ox/dynamic-theme//logoWidth`).
+  - name: "REACT_APP_OPENDESK_BANNER_HEIGHT"
+    value: "60px"
+  - name: "REACT_APP_OPENDESK_BANNER_BORDER_BOTTOM"
+    value: "1px solid #d3d7de"
+  - name: "REACT_APP_OPENDESK_BANNER_PORTAL_LOGO_WIDTH"
+    value: "113px"
+
+  # App icon left of the title in the top bar, plus the browser favicons. Served
+  # by the opendesk-static-files module from `theme.imagery.whiteboard`.
+  - name: "REACT_APP_OPENDESK_BANNER_APP_HOME_ICON_SVG_URL"
+    value: "https://{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}/opendesk-static-files/whiteboard/favicon.svg"
+  - name: "REACT_APP_FAVICON_16"
+    value: "https://{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}/opendesk-static-files/whiteboard/favicon.png"
+  - name: "REACT_APP_FAVICON_32"
+    value: "https://{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}/opendesk-static-files/whiteboard/favicon.png"
+  - name: "REACT_APP_APPLE_TOUCH_ICON"
+    value: "https://{{ .Values.global.hosts.whiteboard }}.{{ .Values.global.domain }}/opendesk-static-files/whiteboard/favicon.png"
+...

@@ -32,17 +32,15 @@ configuration:
         key: {{ .Values.secrets.nextcloud.adminPassword.key | quote }}
 
   antivirus:
-    enabled: true
     {{- if .Values.antivirus.icap.host }}
+    enabled: true
     host: {{ .Values.antivirus.icap.host | quote }}
     port: {{ .Values.antivirus.icap.port | quote }}
+    icap:
+      requestService: {{ .Values.antivirus.icap.serviceName | quote }}
+      mode: "respmod"
     {{- else }}
-    {{- if .Values.apps.clamavDistributed.enabled }}
-    host: "clamav-icap"
-    {{- else if .Values.apps.clamavSimple.enabled }}
-    host: "clamav-simple"
-    {{- end }}
-    port: 1344
+    enabled: false
     {{- end }}
 
   cache:
@@ -51,7 +49,7 @@ configuration:
       username:
         value: {{ .Values.cache.nextcloud.username }}
       password:
-        value: {{ .Values.cache.nextcloud.password.value | default .Values.cache.redis.password.value | quote }}
+        value: {{ .Values.cache.nextcloud.password.value | quote }}
     host: {{ .Values.cache.nextcloud.host | quote }}
     port: {{ .Values.cache.nextcloud.port | quote }}
     tls: {{ .Values.cache.nextcloud.tls }}
@@ -86,7 +84,8 @@ configuration:
       enabled: true
 
   collabora:
-    # internalWopiUrl: ""
+    internalWopiUrl: "http://{{ printf "collabora.%s.svc.%s:9980" (.Values.apps.collabora.namespace | default .Release.Namespace) .Values.cluster.networking.domain }}"
+    callbackUrl: "http://{{ printf "opendesk-nextcloud-aio.%s.svc.%s" (.Values.apps.nextcloud.namespace | default .Release.Namespace) .Values.cluster.networking.domain }}"
     wopiAllowlist: {{ join ", " ( concat .Values.cluster.networking.cidr .Values.cluster.networking.incomingCIDR ) | quote }}
     defaultFormat: {{ .Values.functional.weboffice.defaultFormat | quote }}
 
@@ -206,6 +205,7 @@ configuration:
     token:
       value: {{ .Values.secrets.nextcloud.metricsToken.value | quote }}
 
+  trustedDomains: {{ printf "opendesk-nextcloud-aio.%s.svc.%s" (.Values.apps.nextcloud.namespace | default .Release.Namespace) .Values.cluster.networking.domain | quote }}
   forbiddenChars: {{ join " " .Values.functional.filestore.naming.forbiddenChars | quote }}
 
 containerSecurityContext:
@@ -228,14 +228,14 @@ debug:
   loglevel: {{ if .Values.debug.enabled }}"0"{{ else }}"2"{{ end }}
   bootstrap: {{ .Values.debug.enabled }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraEnvVars:
   - name: "FS_IMPORT_CA_CERTIFICATES"
     value: "true"
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"

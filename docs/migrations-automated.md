@@ -38,6 +38,10 @@ SPDX-License-Identifier: Apache-2.0
     * [`ox_connector_restart`](#ox_connector_restart)
     * [`ox_shared_accounts_import`](#ox_shared_accounts_import)
     * [`flush_intercom_sessions`](#flush_intercom_sessions)
+    * [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)
+    * [`configmap_create`](#configmap_create)
+    * [`synapse_signing_key_export`](#synapse_signing_key_export)
+    * [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)
   * [Development](#development)
 <!-- TOC -->
 
@@ -165,38 +169,6 @@ something while the old release is still there and act on it once the new one is
 first leaves what it worked out as an object for the second to pick up - see
 [`ox_functional_accounts_export`](#ox_functional_accounts_export), which is what needed it first.
 
-It is declared once, below `migrations`, and not per action: which object store a deployment has is a fact about
-the deployment and the same answer for every action, so declaring it per action would repeat it and make it
-possible to tell two actions different things about the same store. What stays with an action is *what* it puts
-there, its object key.
-
-openDesk provisions the `migrations` bucket and its identity for exactly this (`objectstores.migrations`), and the
-values below are derived from it; the identity's secret key is not declared here but mounted through
-[`secretFiles`](#secretfiles) as `objectstore-migrations-secret-key`. Only actions that hand work over read any of
-it, and they fail naming what is missing, so a deployment running none of them needs none of it.
-
-```yaml
-objectStore:
-  endpoint: "<the deployment's object store>"
-  bucket: "migrations"
-  username: "migration_user"
-  region: "eu-west-1"
-  port: 443
-  useSSL: true
-  pathStyle: true
-  requestTimeoutSeconds: 30
-  # The store is reached under the endpoint its other consumers use, which is the deployment's
-  # public one. Both are configurable in `migrations.objectStore` of your environment.
-  verifySSL: true
-  caBundle: ""
-```
-
-Two of these are yours to set, in `migrations.objectStore`: `caBundle` is the path of a mounted CA certificate, for
-a deployment whose object store certificate is issued by a CA the migrations image does not know (mount it through
-the migration releases' `extraVolumes`/`extraVolumeMounts`), and `verifySSL` exists for test deployments with a
-self-signed certificate - switching it off means the handover between the two stages travels over a connection
-nothing authenticates.
-
 ## Automated migrations overview
 
 The following table lists the actions the openDesk releases declare, in the order they are executed.
@@ -210,19 +182,23 @@ removed it again.
 `Always` (on every migration run, an action declared without a `tag`). Every action applies its change.
 - *Upgrades covered*: The action's `versions` window, so the range of installed releases the call is executed for.
 
-| Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered |
-| ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ---------------- |
-| [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_names_to_object_identifier`](#ox_names_to_object_identifier)             | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`provisioning_drop_subscriptions`](#provisioning_drop_subscriptions)         | -                | `migrations-pre`  | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_shared_accounts_import`](#ox_shared_accounts_import)                     | -                | `migrations-post` | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`flush_intercom_sessions`](#flush_intercom_sessions)                         | -                | `migrations-post` | v1.18.0       | -            | Once | v1.15 - v1.17    |
-| [`ox_connector_restart`](#ox_connector_restart)                               | -                | `migrations-post` | v1.17.0       | v1.18.0      | Once | v1.15 - v1.16    |
+| Action                                                                        | Optional context | Stage             | Declared with | Dropped with | Runs | Upgrades covered  |
+| ----------------------------------------------------------------------------- | ---------------- | ----------------- | ------------- | ------------ | ---- | ----------------- |
+| [`synapse_deactivate_orphaned_users`](#synapse_deactivate_orphaned_users)     | -                | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x           |
+| [`synapse_signing_key_export`](#synapse_signing_key_export)                   | -                | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
+| [`configmap_create`](#configmap_create)                                       | Element markers  | `migrations-pre`  | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
+| [`udm_remove_legacy_hashes`](#udm_remove_legacy_hashes)                       | -                | `migrations-post` | v1.19.0       | -            | Once | v1.18.x - v1.x.x  |
+| [`workload_scale`](#workload_scale)                                           | OX Connector     | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_functional_accounts_export`](#ox_functional_accounts_export)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ldap_entryuuid_to_object_identifier`](#ldap_entryuuid_to_object_identifier) | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_names_to_object_identifier`](#ox_names_to_object_identifier)             | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`provisioning_drop_subscriptions`](#provisioning_drop_subscriptions)         | -                | `migrations-pre`  | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_shared_accounts_import`](#ox_shared_accounts_import)                     | -                | `migrations-post` | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`flush_intercom_sessions`](#flush_intercom_sessions)                         | -                | `migrations-post` | v1.18.0       | v1.19.0      | Once | v1.15.x - v1.17.x |
+| [`ox_connector_restart`](#ox_connector_restart)                               | -                | `migrations-post` | v1.17.0       | v1.18.0      | Once | v1.15.x - v1.16.x |
 
 > [!note]
-> Action are gated by their respective component prerequiste(s), e.g. the `ox_connector_restart` should only fire when:
+> Actions are gated by their respective component prerequisite(s), e.g. the `ox_connector_restart` should only fire when:
 > - Nubus and
 > - OX App Suite
 > are installed.
@@ -623,6 +599,131 @@ secretFiles:
     secret:
       name: "cache-intercom-service-password"
       key: "password"
+```
+
+### `synapse_deactivate_orphaned_users`
+
+Reconciles Matrix accounts against the LDAP directory and deactivates any Matrix account that no longer has a counterpart there.
+
+The action only affects Matrix accounts that are no longer backed by a leading IAM object in the LDAP. All other accounts that live in the LDAP are reconciled by the openDesk Provisioning Connector introduced with openDesk 1.19.0.
+
+It is the first action of the upgrade from v1.18 and runs in `migrations-pre` before the Element release of the upgrade and `syn2mas` move the users to the Matrix Authentication Service (MAS). `syn2mas` carries a deactivated account over as a deactivated MAS user without sessions, so the cleanup in Synapse is all it takes. The action never acts on a Synapse behind MAS, where deactivating only in Synapse would leave the MAS user active.
+
+Whether it only reports the affected accounts (dry run, the default) or deactivates them is set in `migrations.actionOptions.synapseDeactivateOrphanedUsers.dryRun` ([`migrations.yaml.gotmpl`](../helmfile/environments/default/migrations.yaml.gotmpl)). Its version window closes once the first upgrade deployment completed its `migrations-post` stage, as only that advances the recorded release. Until then the `migrations-pre` stage can be deployed on its own, so the dry run can be reviewed before the upgrade applies the cleanup.
+
+Whether the data is erased along with the deactivation can be set using `functional.dataProtection.matrixAccountErasure.enabled` in [`functional.yaml.gotmpl`](../helmfile/environments/default/functional.yaml.gotmpl). This is a shared setting also used by the openDesk Provisioning Connector.
+
+Set it to `false` to only deactivate the accounts and keep their data.
+
+As `syn2mas` does not migrate guest accounts, the action also turns every Synapse guest
+account into a deactivated regular account, directly in the Synapse database
+(`UPDATE users SET is_guest = 0, deactivated = 1 WHERE is_guest <> 0;`).
+The dry run mode only lists the affected guest accounts.
+
+```yaml
+- id: "synapse_deactivate_orphaned_users"
+  config:
+    ldap:
+      pod: "ums-ldap-server-primary-0"
+      container: "main"
+    synapse:
+      connection:
+        url: "http://opendesk-synapse.<namespace>.svc.cluster.local:8008"
+      dryRun: true
+      erase: true
+      postgres:
+        host: "postgresql"
+        port: 5432
+        name: "matrix"
+        user: "matrix_user"
+        sslMode: "prefer"
+    safety:
+      maxOrphanPercent: 25
+```
+
+The action registers the admin it acts as through the previous Synapse's registration shared secret, so it needs no
+admin account prepared for it. Every run registers its own temporary admin (`odmigs-<timestamp>-<random>`) and
+deactivates it again at the end - on a dry run as well, which therefore leaves one deactivated account in Synapse.
+
+The shared secret is read from the configuration of the previous Synapse (`/config/homeserver.yaml` in
+`opendesk-synapse-0`) and not mounted, so the action always uses the value that Synapse actually runs with. It
+resolves it the way Synapse does: the inline `registration_shared_secret` (set by openDesk Enterprise), otherwise
+the file `registration_shared_secret_path` points to (generated by Synapse itself in openDesk Community Edition).
+
+Its database password is mounted through the stage's [`secretFiles`](#secretfiles):
+
+```yaml
+secretFiles:
+  - name: "synapse-db-password"
+    secret:
+      name: "database-synapse-password"
+      key: "password"
+```
+
+### `configmap_create`
+
+Creates the ConfigMap named in `configmap.name` with the key/value pairs of `configmap.data` and the labels of
+`configmap.labels` in an idempotent way.
+
+```yaml
+- id: "configmap_create"
+  tag: "v1.19.0"
+  runMode: "apply"
+  config:
+    configmap:
+      name: "element-markers"
+      data:
+        MATRIX_STACK_MSC3861: "legacy_auth"
+      labels:
+        app.kubernetes.io/managed-by: "matrix-tools-deployment-markers"
+```
+
+### `synapse_signing_key_export`
+
+Carries the signing key of the running Synapse over into the Secret the Synapse that replaces it reads its key from.
+The signing key is the homeserver's identity towards other servers and clients: A Synapse coming up with a new key
+signs with a key nobody has seen before, and what was signed with the old one can no longer be verified against it.
+
+The action never replaces a key. If the Secret already carries a different signing key, the action fails and
+leaves the decision to the operator. If it carries the same key, the action has nothing to do. Only the key's
+algorithm and key id are logged, never the key itself.
+
+```yaml
+- id: "synapse_signing_key_export"
+  tag: "v1.19.0"
+  runMode: "apply"
+  config:
+    source:
+      pod: "opendesk-synapse-0"
+      container: "synapse"
+      path: "/media/generatedSecrets/signingKey"
+    target:
+      secret: "element-generated"
+      key: "SYNAPSE_SIGNING_KEY"
+      labels:
+        app.kubernetes.io/managed-by: "matrix-tools-init-secrets"
+```
+
+### `udm_remove_legacy_hashes`
+
+Removes the two kinds of legacy password material that Nubus 1.22.0 stopped generating from every account still
+carrying them, by running the two cleanup tools that release ships in the UDM HTTP REST API container - the tools its
+[release notes](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#udm-http-rest-api)
+ask to be run after the upgrade. Both are executed with a pod exec into the UDM REST API.
+
+With Nubus 1.22.0 UDM no longer writes the NT hash - the new setting `password/samba/nthash` defaults to
+`false` - and writes `krb5Key` with
+[strong encryption types only](https://docs.software-univention.de/nubus-kubernetes-release-notes/1.x/en/1.22.html#kerberos-encryption-types).
+
+```yaml
+- id: "udm_remove_legacy_hashes"
+  runMode: "apply"
+  config:
+    dryRun: false
+    udm:
+      podSelector: "app.kubernetes.io/name=udm-rest-api,app.kubernetes.io/instance=ums"
+      container: "main"
+      timeoutSeconds: 300
 ```
 
 ## Development

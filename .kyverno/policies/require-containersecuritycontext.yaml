@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -132,18 +133,30 @@ spec:
           kinds:
             - "Pod"
       validate:
-        message: "Container must run as non-root user."
-        pattern:
-          spec:
-            =(ephemeralContainers):
-              - securityContext:
-                  runAsUser: ">0"
-            =(initContainers):
-              - securityContext:
-                  runAsUser: ">0"
-            containers:
-              - securityContext:
-                  runAsUser: ">0"
+        message: "Container must run as non-root user, either on the container itself or inherited from the Pod."
+        anyPattern:
+          - spec:
+              =(ephemeralContainers):
+                - securityContext:
+                    runAsUser: ">0"
+              =(initContainers):
+                - securityContext:
+                    runAsUser: ">0"
+              containers:
+                - securityContext:
+                    runAsUser: ">0"
+          - spec:
+              securityContext:
+                runAsUser: ">0"
+              =(ephemeralContainers):
+                - =(securityContext):
+                    =(runAsUser): ">0"
+              =(initContainers):
+                - =(securityContext):
+                    =(runAsUser): ">0"
+              containers:
+                - =(securityContext):
+                    =(runAsUser): ">0"
 
     - name: "require-run-as-group"
       match:
@@ -151,18 +164,30 @@ spec:
           kinds:
             - "Pod"
       validate:
-        message: "Container must run as non-root group."
-        pattern:
-          spec:
-            =(ephemeralContainers):
-              - securityContext:
-                  runAsGroup: ">0"
-            =(initContainers):
-              - securityContext:
-                  runAsGroup: ">0"
-            containers:
-              - securityContext:
-                  runAsGroup: ">0"
+        message: "Container must run as non-root group, either on the container itself or inherited from the Pod."
+        anyPattern:
+          - spec:
+              =(ephemeralContainers):
+                - securityContext:
+                    runAsGroup: ">0"
+              =(initContainers):
+                - securityContext:
+                    runAsGroup: ">0"
+              containers:
+                - securityContext:
+                    runAsGroup: ">0"
+          - spec:
+              securityContext:
+                runAsGroup: ">0"
+              =(ephemeralContainers):
+                - =(securityContext):
+                    =(runAsGroup): ">0"
+              =(initContainers):
+                - =(securityContext):
+                    =(runAsGroup): ">0"
+              containers:
+                - =(securityContext):
+                    =(runAsGroup): ">0"
 
     - name: "require-seccomp-profile"
       match:
@@ -192,18 +217,30 @@ spec:
           kinds:
             - "Pod"
       validate:
-        message: "Container must run in non-root mode."
-        pattern:
-          spec:
-            =(ephemeralContainers):
-              - securityContext:
-                  runAsNonRoot: true
-            =(initContainers):
-              - securityContext:
-                  runAsNonRoot: true
-            containers:
-              - securityContext:
-                  runAsNonRoot: true
+        message: "Container must run in non-root mode, either on the container itself or inherited from the Pod."
+        anyPattern:
+          - spec:
+              =(ephemeralContainers):
+                - securityContext:
+                    runAsNonRoot: true
+              =(initContainers):
+                - securityContext:
+                    runAsNonRoot: true
+              containers:
+                - securityContext:
+                    runAsNonRoot: true
+          - spec:
+              securityContext:
+                runAsNonRoot: true
+              =(ephemeralContainers):
+                - =(securityContext):
+                    =(runAsNonRoot): true
+              =(initContainers):
+                - =(securityContext):
+                    =(runAsNonRoot): true
+              containers:
+                - =(securityContext):
+                    =(runAsNonRoot): true
 
     - name: "require-empty-seLinuxOptions"
       match:
@@ -216,13 +253,25 @@ spec:
           spec:
             =(ephemeralContainers):
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
             =(initContainers):
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
             containers:
               - securityContext:
-                  seLinuxOptions:
+                  =(seLinuxOptions):
+                    X(level): "null"
+                    X(role): "null"
+                    X(type): "null"
+                    X(user): "null"
 
     - name: "require-default-procMount"
       match:

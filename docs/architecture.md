@@ -432,6 +432,8 @@ class Dovecot,extSvcDC dovecot;
      * mails sent from mail clients using LDAP Auth
    * Used exclusively when OX App Suite is deployed
 
+Both Postfix instances are also wired to the antivirus milter; see [malware](./configuration-yamls/antivir.md) for how mail passing through them is scanned.
+
 ## Applications vs. services
 
 openDesk consists of a variety of open-source projects, please find an overview below:
@@ -494,6 +496,8 @@ In openDesk, Jitsi is used for video conferencing and online meetings. It integr
 
 [Nextcloud](https://nextcloud.com) is a file storage and sync platform with powerful collaboration capabilities with desktop, mobile and web interfaces.
 
+Uploaded files are scanned for malware via ICAP; see [malware](./configuration-yamls/antivir.md).
+
 ### Nubus (identity and access management / portal)
 
 [Nubus](https://www.univention.com/products/nubus/) is a unified Identity & Access Management, providing you with full control and digital sovereignty over your IAM processes and data.
@@ -509,6 +513,8 @@ In openDesk, Nubus provides the management required for users, groups and other 
 [OX App Suite](https://www.open-xchange.com/products/ox-app-suite) is a groupware application using [OX Dovecot](https://www.dovecot.org/) as its backend mail store.
 
 In openDesk, OX App Suite is used for email, calendar, address book and personal task management.
+
+Mail attachments are scanned for malware via ICAP; see [malware](./configuration-yamls/antivir.md).
 
 ### XWiki (knowledge management)
 

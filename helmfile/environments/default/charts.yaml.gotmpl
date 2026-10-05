@@ -9,42 +9,34 @@ charts:
   cassandra:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "bitnamicharts/cassandra"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/external/charts/bitnami-charts"
     name: "cassandra"
-    version: "12.0.4"
+    version: "12.3.13"
     verify: true
   certificates:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-certificates/opendesk-certificates"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-certificates"
     name: "opendesk-certificates"
-    version: "3.1.4"
+    version: "4.0.5"
     verify: true
   clamav:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-clamav/opendesk-clamav"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-clamav"
     name: "opendesk-clamav"
-    version: "4.2.0"
+    version: "4.4.3"
     verify: true
   clamavSimple:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-clamav/clamav-simple"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-clamav"
     name: "clamav-simple"
-    version: "4.2.0"
+    version: "4.4.3"
     verify: true
   collabora:
     # providerCategory: "Supplier"
@@ -59,13 +51,16 @@ charts:
     version: "1.3.0"
     verify: true
   collaboraController:
-    # Enterprise Component
+    # enterpriseRegistryBase: "COOL_EE_REGISTRY"
+    # enterpriseRegistryPath: "COOL_EE_REGISTRY_PATH_COCO_CHART"
     # providerCategory: "Supplier"
     # providerResponsible: "Collabora"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["1", "2", "1"]
     registry: "registry.opencode.de"
     repository: "zendis/opendesk-enterprise/components/supplier/collabora/charts-mirror"
     name: "cool-controller"
-    version: "1.2.1"
+    version: "1.4.1"
     verify: false
   cryptpad:
     # providerCategory: "Supplier"
@@ -77,47 +72,45 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/xwiki/charts-mirror"
     name: "cryptpad"
-    version: "0.0.24"
+    version: "0.1.0"
     verify: true
   dkimpy:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-dkimpy-milter/opendesk-dkimpy-milter"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-dkimpy-milter"
     name: "opendesk-dkimpy-milter"
-    version: "1.0.0"
+    version: "1.0.3"
     verify: true
   dovecot:
     # providerCategory: "Platform"
     # providerResponsible: "Open-Xchange"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-dovecot/dovecot"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-dovecot"
     name: "dovecot"
-    version: "4.1.1"
+    version: "4.2.6"
     verify: true
   element:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Element"
+    # upstreamRegistry: "https://ghcr.io/element-hq/ess-helm"
+    # upstreamRepository: "matrix-stack"
+    # upstreamMirrorTagFilterRegEx: '^(\d+)\.(\d+)\.(\d+)$'
+    # upstreamMirrorStartFrom: ["25", "11", "0"]
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/element/charts-mirror"
+    name: "matrix-stack"
+    version: "26.9.3"
+    verify: false
+  elementCustomization:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
     # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-element"
+    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element-customization/element-customization"
     registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-element"
-    version: "6.2.2"
-    verify: true
-  elementWellKnown:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-well-known"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-well-known"
-    version: "6.2.2"
+    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element-customization"
+    name: "element-customization"
+    version: "1.4.0"
     verify: true
   home:
     # providerCategory: "Platform"
@@ -127,7 +120,7 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-home"
     name: "opendesk-home"
-    version: "1.2.1"
+    version: "1.2.4"
     verify: true
   intercomService:
     # providerCategory: "Supplier"
@@ -139,167 +132,145 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/charts-mirror"
     name: "intercom-service"
-    version: "2.24.0"
+    version: "2.24.8"
     verify: true
   jitsi:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-jitsi/opendesk-jitsi"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-jitsi"
     name: "opendesk-jitsi"
-    version: "3.10.0"
+    version: "3.12.4"
     verify: true
   mariadb:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-mariadb/mariadb"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-mariadb"
     name: "mariadb"
-    version: "3.0.3"
+    version: "3.0.5"
     verify: true
-  matrixNeoboardWidget:
+  matrixNeoBoardWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets/matrix-neoboard-widget"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neoboard-widget"
-    version: "3.5.2"
+    version: "3.6.5"
     verify: true
-  matrixNeochoiceWidget:
+  matrixNeoChoiceWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets/matrix-neochoice-widget"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neochoice-widget"
-    version: "3.5.2"
+    version: "3.6.5"
     verify: true
-  matrixNeodatefixBot:
+  matrixNeoDateFixBot:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets/matrix-neodatefix-bot"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neodatefix-bot"
-    version: "3.5.2"
+    version: "3.6.5"
     verify: true
-  matrixNeodatefixWidget:
+  matrixNeoDateFixWidget:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets/matrix-neodatefix-widget"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-matrix-widgets"
     name: "matrix-neodatefix-widget"
-    version: "3.5.2"
+    version: "3.6.5"
     verify: true
   matrixUserVerificationService:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-matrix-user-verification-service"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-matrix-user-verification-service"
-    version: "6.2.2"
+    version: "6.2.5"
     verify: true
   memcached:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "bitnamicharts/memcached"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/external/charts/bitnami-charts"
     name: "memcached"
-    version: "6.7.1"
+    version: "8.0.0"
     verify: true
   migrations:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-migrations"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-migrations"
     name: "opendesk-migrations"
-    version: "1.10.0"
+    version: "1.13.3"
     verify: true
   minio:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "bitnamicharts/minio"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/external/charts/bitnami-charts"
     name: "minio"
-    version: "16.0.10"
+    version: "16.0.11"
     verify: true
+  neoboard:
+    # providerCategory: "Supplier"
+    # providerResponsible: "Nordeck"
+    # upstreamRegistry: "https://ghcr.io/nordeck/charts"
+    # upstreamRepository: "matrix-neoboard-standalone"
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/supplier/nordeck/charts-mirror"
+    name: "matrix-neoboard-standalone"
+    version: "0.0.10"
+    verify: false
   nextcloud:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud/opendesk-nextcloud"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud"
     name: "opendesk-nextcloud"
-    version: "4.10.6"
+    version: "4.11.1"
     verify: true
   nextcloudManagement:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud/opendesk-nextcloud-management"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud"
     name: "opendesk-nextcloud-management"
-    version: "4.10.6"
+    version: "4.11.1"
     verify: true
   nextcloudNotifyPush:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud/opendesk-nextcloud-notifypush"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-nextcloud"
     name: "opendesk-nextcloud-notifypush"
-    version: "4.10.6"
+    version: "4.11.1"
     verify: true
   nginx:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "bitnamicharts/nginx"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/external/charts/bitnami-charts"
     name: "nginx"
-    version: "15.9.3"
+    version: "22.1.1"
     verify: true
   notes:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-impress/impress"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-impress"
     name: "impress"
-    version: "1.1.3"
+    version: "1.3.2"
     verify: true
   notesCustomization:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-impress-customization/impress-customization"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-impress-customization"
     name: "impress-customization"
-    version: "1.0.0"
+    version: "1.1.2"
     verify: true
   nubus:
     # providerCategory: "Supplier"
@@ -311,17 +282,15 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/univention/charts-mirror"
     name: "nubus"
-    version: "1.21.0"
+    version: "1.23.0"
     verify: true
   opendeskAlerts:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-alerts"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-alerts"
     name: "opendesk-alerts"
-    version: "1.1.2"
+    version: "1.1.5"
     verify: true
   opendeskDashboards:
     # providerCategory: "Platform"
@@ -331,37 +300,41 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-dashboards"
     name: "opendesk-dashboards"
-    version: "1.1.2"
+    version: "1.1.5"
     verify: true
   opendeskKeycloakBootstrap:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-keycloak-bootstrap/opendesk-keycloak-bootstrap"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-keycloak-bootstrap"
     name: "opendesk-keycloak-bootstrap"
-    version: "2.9.0"
+    version: "2.9.3"
     verify: true
   opendeskSecrets:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-secrets/opendesk-secrets"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-secrets"
     name: "opendesk-secrets"
-    version: "1.0.0"
+    version: "1.0.3"
     verify: true
   opendeskStaticFiles:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-static-files/opendesk-static-files"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-static-files"
     name: "opendesk-static-files"
-    version: "4.2.0"
+    version: "4.2.3"
+    verify: true
+  opendeskTrust:
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
+    # upstreamRegistry: "https://registry.opencode.de"
+    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-certificates/opendesk-trust"
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/platform-development/charts/opendesk-certificates"
+    name: "opendesk-trust"
+    version: "4.0.5"
     verify: true
   openproject:
     # providerCategory: "Supplier"
@@ -373,27 +346,23 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/openproject/charts-mirror"
     name: "openproject"
-    version: "13.10.2"
+    version: "13.12.0"
     verify: true
   openprojectBootstrap:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-openproject-bootstrap/opendesk-openproject-bootstrap"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-openproject-bootstrap"
     name: "opendesk-openproject-bootstrap"
-    version: "2.3.0"
+    version: "2.3.3"
     verify: true
   otterize:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-otterize/opendesk-otterize"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-otterize"
     name: "opendesk-otterize"
-    version: "2.1.3"
+    version: "2.1.6"
     verify: true
   oxAppSuite:
     # providerCategory: "Supplier"
@@ -405,17 +374,15 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/open-xchange/charts-mirror"
     name: "appsuite-public-sector"
-    version: "2.33.66"
+    version: "2.34.114"
     verify: false
   oxAppSuiteBootstrap:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-open-xchange-bootstrap/opendesk-open-xchange-bootstrap"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-open-xchange-bootstrap"
     name: "opendesk-open-xchange-bootstrap"
-    version: "4.3.0"
+    version: "4.3.4"
     verify: true
   oxConnector:
     # providerCategory: "Supplier"
@@ -432,32 +399,34 @@ charts:
   postfix:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-postfix/postfix"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-postfix"
     name: "postfix"
-    version: "6.1.1"
+    version: "6.2.5"
     verify: true
   postgresql:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-postgresql/postgresql"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-postgresql"
     name: "postgresql"
-    version: "2.1.2"
+    version: "2.1.6"
+    verify: true
+  provisioningConnector:
+    # providerCategory: "Platform"
+    # providerResponsible: "openDesk"
+    registry: "registry.opencode.de"
+    repository: "bmi/opendesk/components/platform-development/charts/opendesk-provisioning-connector"
+    name: "opendesk-provisioning"
+    version: "1.2.9"
     verify: true
   redis:
     # providerCategory: "Community"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry-1.docker.io"
-    # upstreamRepository: "bitnamicharts/redis"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/external/charts/bitnami-charts"
     name: "redis"
-    version: "18.6.1"
+    version: "23.1.2"
     verify: true
   seaweedfs:
     # providerCategory: "Community"
@@ -472,78 +441,18 @@ charts:
   seaweedfsConfig:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-seaweedfs-config/opendesk-seaweedfs-config"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-seaweedfs-config"
     name: "opendesk-seaweedfs-config"
-    version: "2.2.0"
-    verify: true
-  synapse:
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse"
-    version: "6.2.2"
-    verify: true
-  synapseAdmin:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-admin"
-    version: "6.2.2"
-    verify: true
-  synapseAdminbotWeb:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-adminbot-web"
-    version: "6.2.2"
+    version: "2.2.2"
     verify: true
   synapseCreateAccount:
     # providerCategory: "Platform"
     # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-create-account"
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
     name: "opendesk-synapse-create-account"
-    version: "6.2.2"
-    verify: true
-  synapseGroupsync:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-groupsync"
-    version: "6.2.2"
-    verify: true
-  synapsePipe:
-    # Enterprise Component
-    # providerCategory: "Supplier"
-    # providerResponsible: "Element"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-pipe"
-    version: "6.2.2"
-    verify: true
-  synapseWeb:
-    # providerCategory: "Platform"
-    # providerResponsible: "openDesk"
-    # upstreamRegistry: "https://registry.opencode.de"
-    # upstreamRepository: "bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-web"
-    registry: "registry.opencode.de"
-    repository: "bmi/opendesk/components/platform-development/charts/opendesk-element"
-    name: "opendesk-synapse-web"
-    version: "6.2.2"
+    version: "6.2.7"
     verify: true
   xwiki:
     # providerCategory: "Supplier"
@@ -555,6 +464,6 @@ charts:
     registry: "registry.opencode.de"
     repository: "bmi/opendesk/components/supplier/xwiki/charts-mirror"
     name: "xwiki"
-    version: "1.7.0"
+    version: "1.7.2"
     verify: true
 ...

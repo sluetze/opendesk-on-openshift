@@ -18,7 +18,7 @@ However, contributions are possible using the [CLA](https://gitlab.opencode.de/b
       * [Disable linting selectively](#disable-linting-selectively)
     * [Renovate](#renovate)
     * [Mirroring](#mirroring)
-      * [Get new artifacts mirrored](#get-new-artifacts-mirrored)
+      * [Get artifacts mirrored](#get-artifacts-mirrored)
   * [Creating new charts/images](#creating-new-chartsimages)
 <!-- TOC -->
 
@@ -125,31 +125,46 @@ Checks for newer versions of the given artifact and creates an MR containing the
 
 ### Mirroring
 
-- See also: https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror
-
-> [!note]
-> The mirror is scheduled to run every hour at 42 minutes past the hour.
-
 openDesk strives to make all relevant artifacts available on openCode so there is a mirroring process
 configured to pull artifacts that do not originate from openCode into projects called `*-Mirror` within the
 [openDesk Components section](https://gitlab.opencode.de/bmi/opendesk/components).
 
-The mirror script takes the information on what artifacts to mirror from the annotation inside the two yaml files:
-- `# upstreamRegistry` *required*: To identify the source registry
-- `# upstreamRegistryCredentialId`: *optional*: In case the source registry is not public, the access credentials have to be specified as environment variables and contain the value of this key in their name, so you want to specify the key in uppercase:
-  - `MIRROR_CREDENTIALS_SRC_<upstreamRegistryCredentialId>_USERNAME`
-  - `MIRROR_CREDENTIALS_SRC_<upstreamRegistryCredentialId>_PASSWORD`
+The mirror follows a release-oriented strategy: It mirrors exactly the artifact versions (tag and digest)
+pinned in the `charts.yaml.gotmpl` and `images.yaml.gotmpl` files of the environments `default` and
+`default-enterprise-overrides` into the target repositories referenced in those files
+(`registry`/`repository`/`name`). Related artifacts of the pinned version (SBOM, VEX, attestations and
+signatures) are mirrored as well and refreshed when they change at the source.
+
+The mirror script takes the information on where to pull an artifact from the annotations inside the two yaml files:
+- `# upstreamRegistry` *required*: To identify the source registry. Sources already located on openCode are skipped.
 - `# upstreamRepository` *required*: To identify the source repository
-- `# upstreamMirrorTagFilterRegEx` *required*: If this annotation is set, the mirror for the component will be activated. Only tags that match the given regular expression will be mirrored. **Note:** You must use single quotes for this attribute's value if you use backslash leading regex notation like `\d`.
-- `# upstreamMirrorStartFrom` *optional*: Array of numeric values in case you want to mirror only artifacts beginning with a specific version. You must use capturing group
+
+Enterprise components that are pulled from a supplier's non-public registry use the following annotations in addition.
+Their values name environment variables that are configured in the mirror's CI:
+- `# enterpriseRegistryBase`: Prefix of the environment variables holding the source registry connection details:
+  - `<enterpriseRegistryBase>_URL`
+  - `<enterpriseRegistryBase>_USERNAME`
+  - `<enterpriseRegistryBase>_PASSWORD`
+- `# enterpriseRegistryPath`: Name of the environment variable holding the source repository path within that registry.
+
+The tag-range annotations are evaluated to log newer versions as potential mirror candidates -
+they are no longer mirrored automatically:
+- `# upstreamMirrorTagFilterRegEx` *optional*: Only tags that match the given regular expression and are newer than the pinned version are listed as candidates. **Note:** You must use single quotes for this attribute's value if you use backslash leading regex notation like `\d`.
+- `# upstreamMirrorStartFrom` *optional*: Array of numeric values defining the minimum version for candidate listing in case the pinned version does not match the filter regex. You must use capturing group
  in `# upstreamMirrorTagFilterRegEx` to identify the single numeric elements of the version within the tag and use per capturing group (left to right) one numeric array
- element here to define the version the mirror should start with.
+ element here to define the version the candidate listing should start with.
 
-#### Get new artifacts mirrored
+Find more details and the code of the mirror script here: https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror
 
-If you want new images or charts mirrored that are not yet included in one of the yaml files, you can add them in your branch, including the aforementioned mirror annotations, and ask somebody from the platform development team to trigger the mirror's CI based on your branch.
+#### Get artifacts mirrored
 
-Once your branch is merged into develop, your artifacts are mirrored hourly.
+Create a work item in the [oci-pull-mirror](https://gitlab.opencode.de/bmi/opendesk/tooling/oci-pull-mirror/-/work_items)
+project using your branch name to run the mirror for in the items title. Nothing else is needed. Every 15min the script
+will be triggered and process the work items. Once a work item defined branch was successfully mirrored the item will
+be commented on and closed.
+
+> [!note]
+> Once a day the mirror is executed for the `develop` branch to update potential `.att` data.
 
 ## Creating new charts/images
 

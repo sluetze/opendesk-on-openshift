@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 
@@ -15,4 +16,10 @@ ldap:
 ## Define Keycloak realmname for openDesk
 platform:
   realm: "opendesk"
+  # ULID identifying the `opendesk-matrix` OIDC provider
+  matrixMasProviderId: "01M6TR1XE1EMENT0PENDESKMAS"
+  # ULID identifying the Synapse guest module's MAS client
+  matrixGuestModuleMasClientId: "00000000PENDESKG0ESTM0DADM"
+  # ULID identifying the openDesk Provisioning Connector's MAS client
+  matrixProvisioningMasClientId: "00000000PENDESKPR0V1S10NER"
 ...

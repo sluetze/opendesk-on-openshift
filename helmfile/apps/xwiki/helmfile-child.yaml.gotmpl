@@ -23,7 +23,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.xwiki.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.xwiki | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

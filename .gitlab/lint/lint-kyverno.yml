@@ -1,3 +1,4 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2024 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -5,6 +6,7 @@ include:
   - local: "/.gitlab/lint/lint-common.yml"
 
 helmfile-template:
+  interruptible: true
   allow_failure: false
   artifacts:
     paths:
@@ -19,6 +21,7 @@ helmfile-template:
           - "cryptpad"
           - "element"
           - "jitsi"
+          - "neoboard"
           - "nextcloud"
           - "notes"
           - "nubus"
@@ -39,15 +42,22 @@ helmfile-template:
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
     - >
+      printf 'apps:\n  notes:\n    enabled: true\n  neoboard:\n    enabled: true\n'
+      > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
+    - >
       helmfile template
       -f "${CI_PROJECT_DIR}/helmfile/apps/${APP}/helmfile.yaml.gotmpl"
       -e test
       --include-needs
       --skip-tests
       > "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
-
+    - >
+      test -s "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml"
+      || { echo "ERROR: helmfile rendered an empty manifest for '${APP}'.
+      Is the app enabled in the 'test' environment?"; exit 1; }
 
 helmfile-template-diff:
+  interruptible: true
   allow_failure: true
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
@@ -65,12 +75,18 @@ helmfile-template-diff:
     - "git fetch"
     - "git checkout develop"
     - >
+      test -d "${CI_PROJECT_DIR}/helmfile/apps/${APP}"
+      || { echo "App '${APP}' does not exist on develop yet, skipping diff."; exit 0; }
+    - >
       pushd "${CI_PROJECT_DIR}/helmfile/apps/${APP}"
     - >
       node /app/opendesk-ci-cli/src/index.js generate-kyverno-env
       -d ${CI_PROJECT_DIR}/helmfile/environments
       -x ${CI_PROJECT_DIR}/.kyverno/_overwrite.yaml
     - "popd"
+    - >
+      printf 'apps:\n  notes:\n    enabled: true\n  neoboard:\n    enabled: true\n'
+      > "${CI_PROJECT_DIR}/helmfile/environments/test/apps.yaml.gotmpl"
     - >
       helmfile template
       -f "${CI_PROJECT_DIR}/helmfile/apps/${APP}/helmfile.yaml.gotmpl"
@@ -86,6 +102,7 @@ helmfile-template-diff:
     GIT_STRATEGY: "clone"
 
 lint-kyverno-required:
+  interruptible: true
   allow_failure: false
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
@@ -114,13 +131,21 @@ lint-kyverno-required:
       -t required
       -s manifest
       -f opendesk.yaml
-      --skip-tests true
+      --skip-tests
       ${APP}
+    - >
+      ! grep -q "^results: \[\]" kyverno-test.yaml
+      || { echo "ERROR: no Kyverno tests were generated for '${APP}'."; exit 1; }
     - "kyverno test ."
     - "popd"
 
-lint-kyverno-prefereable:
-  allow_failure: true
+# The "preferable" (optional) policy set runs in two jobs sharing this base:
+# apps that already satisfy the whole set are listed in
+# `lint-kyverno-prefereable-enforced` and hard-fail on regressions, the rest
+# stay in `lint-kyverno-prefereable` as non-blocking warnings. When an app's
+# warnings reach zero, move it from the warning matrix to the enforced one.
+.lint-kyverno-prefereable-base:
+  interruptible: true
   extends: ".lint-common"
   image: "${OPENDESK_LINT_IMAGE}"
   needs:
@@ -129,8 +154,6 @@ lint-kyverno-prefereable:
       parallel:
         matrix:
           - APP: ["$[[ matrix.APP ]]"]
-  parallel:
-    matrix: *matrix
   script:
     - >
       mv "${CI_PROJECT_DIR}/.kyverno/opendesk-${APP}.yaml" "${CI_PROJECT_DIR}/.kyverno/opendesk.yaml"
@@ -148,8 +171,40 @@ lint-kyverno-prefereable:
       -t optional
       -s manifest
       -f opendesk.yaml
-      --skip-tests true
+      --skip-tests
       ${APP}
+    - >
+      ! grep -q "^results: \[\]" kyverno-test.yaml
+      || { echo "ERROR: no Kyverno tests were generated for '${APP}'."; exit 1; }
     - "kyverno test ."
     - "popd"
+
+lint-kyverno-prefereable:
+  allow_failure: true
+  extends: ".lint-kyverno-prefereable-base"
+  parallel:
+    matrix:
+      - APP:
+          - "openproject"
+          - "services-external"
+
+lint-kyverno-prefereable-enforced:
+  allow_failure: false
+  extends: ".lint-kyverno-prefereable-base"
+  parallel:
+    matrix:
+      - APP:
+          - "collabora"
+          - "cryptpad"
+          - "element"
+          - "jitsi"
+          - "nextcloud"
+          - "notes"
+          - "nubus"
+          - "open-xchange"
+          - "opendesk-migrations-post"
+          - "opendesk-migrations-pre"
+          - "opendesk-openproject-bootstrap"
+          - "opendesk-services"
+          - "xwiki"
 ...

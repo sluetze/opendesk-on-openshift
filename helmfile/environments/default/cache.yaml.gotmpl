@@ -1,19 +1,36 @@
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
 # This file is the single place a cache and its credential are configured. A `password` carries the
 # full value/create/name/key convention documented on `cassandra.rootPassword` in
 # `secrets.yaml.gotmpl` only where something is handed the Secret rather than the value - the Redis
-# chart and the migrations. The rest are value-only: their charts inline the password, so there is
-# nothing to provision a Secret for and a `create`/`name`/`key` there would only suggest a Secret
-# reference that no consumer makes.
+# chart, Notes and the migrations. The rest are value-only: their charts inline the password, so
+# there is nothing to provision a Secret for and a `create`/`name`/`key` there would only suggest a
+# Secret reference that no consumer makes.
 #
-# The per-component `password.value` entries are empty by default: an empty entry means "the
-# bundled server's password", and every consumer falls back to `cache.redis.password.value` for it.
-# Overriding only `cache.redis.password.value` therefore changes the password for the server and
-# for every component using it. Pointing a component at an external cache means overriding its
-# `host`/`port`/`username`/`tls` **and** its `password.value`; a non-empty component entry wins
-# over the fallback in every consumer.
+# The openDesk bundled Redis and its consumers derive the same default password from MASTER_PASSWORD.
+# Each consumer uses its own password.value directly, including explicit empty strings.
+# When overriding the bundled Redis password, also override every consumer using it.
+# For an external cache, configure the component's host/port/username/tls and password.value.
+#
+# Redis database allocation on the bundled Redis (16 databases, 0-15):
+#
+#   DB  Consumer                            Key prefix
+#   0   OX App Suite core-mw and core-ui    `ui-service:`, `ox-cache:`, `ox-map:`
+#   0   Intercom Service                    `sess:`
+#   4   Nextcloud distributed cache         `<instance-id>/...`, shared with notify_push
+#   5   Nextcloud PHP sessions              `PHPREDIS_SESSION:`
+#   7   Notes cache and Django sessions     `:1:django.contrib.sessions...`
+#   8   Notes Celery broker                 `_kombu.binding...`
+#
+# Databases 1-3, 6 and 9-15 are unassigned.
+#
+# The index is not configured here. Each consumer pins it in its own values file or takes its
+# chart default, so this table is the only place the whole allocation is visible - keep it in
+# sync when adding a consumer or pointing one at an external cache.
+
+{{- $redisDefaultPassword := derivePassword 1 "long" (env "MASTER_PASSWORD") "redis" "password" | sha1sum }}
 
 cache:
   redis:
@@ -21,53 +38,83 @@ cache:
     password:
       # A non-empty MASTER_PASSWORD is enforced in `secrets.yaml.gotmpl`, which every helmfile run
       # renders alongside this file.
-      value: {{ derivePassword 1 "long" (env "MASTER_PASSWORD") "redis" "password" | sha1sum | quote }}
+      value: {{ $redisDefaultPassword | quote }}
       create: true
       name: "redis-password"
       key: "redis-password"
   intercomService:
+    # Uses DB 0 and so shares it with OX App Suite: the chart exposes no database option and the
+    # image takes no REDIS_DB, leaving it on the client default. Its `sess:` prefix (connect-redis)
+    # is what keeps the two sets of keys apart.
     host: "redis-headless"
     port: 6379
     # Username is currently being ignored by the Intercom Service Helm chart.
     # Ref.: https://forge.univention.org/bugzilla/show_bug.cgi?id=59490
     username: "default"
-    # Read as a Secret by the `flush_intercom_sessions` migration and as a literal by the Intercom
-    # Service chart, which has no `existingSecret` for it. The Secret below carries the *override*
-    # only: while `value` is empty, the migration mounts the server's `redis-password` Secret
-    # instead (see `opendesk-migrations-post/values.yaml.gotmpl`), so both stay a plain reflection
-    # of what this file states.
+    # The Intercom Service chart consumes the password as a literal.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
       create: true
       name: "cache-intercom-service-password"
       key: "password"
     tls: false
   nextcloud:
+    # Uses DB 4 for the distributed cache and DB 5 for the PHP sessions, from
+    # `configuration.cache.databaseIndex` and `.sessionIndex` in the `opendesk-nextcloud` and
+    # `opendesk-nextcloud-notifypush` charts. notify_push reads the same DB 4.
     host: "redis-headless"
     port: 6379
     username: "default"
     # Value-only: the Nextcloud charts inline the password into their configuration.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
     tls: false
   notes:
+    # Uses DB 7 for the cache and the Django sessions and DB 8 for the Celery broker, both pinned
+    # in `helmfile/apps/notes/values.yaml.gotmpl`.
     host: "redis-headless"
     port: 6379
     username: "default"
-    # Value-only: the Notes chart takes a connection URL with the password inlined.
+    # `create: false`: Supported
+    # Note: The secret has to be URL-safe or percent-encoded.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-notes-password"
+      key: "password"
+    tls: false
+  matrixRTC:
+    host: "redis-headless"
+    port: 6379
+    username: "default" # username not supported
+    password:
+      value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-matrix-rtc-password"
+      key: "password"
     tls: false
   openproject:
     host: "memcached"
     port: 11211
   oxAppSuite:
+    # Uses DB 0, shared with the Intercom Service. core-ui-middleware pins `redis.db: 0`, core-mw
+    # has no database option and stays on the client default.
     host: "redis-headless"
     port: 6379
     username: "default"
     # Value-only: OX App Suite inlines the password into its properties.
     password:
-      value: ""
+      value: {{ $redisDefaultPassword | quote }}
+    tls: false
+  synapse:
+    host: "redis-headless"
+    port: 6379
+    username: "default" # username not supported
+    password:
+      value: {{ $redisDefaultPassword | quote }}
+      create: true
+      name: "cache-synapse-password"
+      key: "password"
     tls: false
   umsSelfservice:
     host: "memcached"

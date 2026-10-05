@@ -1,11 +1,11 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-License-Identifier: Apache-2.0
 ---
 repositories:
   # openDesk Migrations
   # Source:
   - name: "openproject-migrations-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.migrations.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -14,7 +14,7 @@ repositories:
   # openDesk Secrets
   # Source:
   - name: "openproject-secrets-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.opendeskSecrets.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -29,7 +29,7 @@ releases:
   - name: "opendesk-secrets"
     chart: "openproject-secrets-repo/{{ .Values.charts.opendeskSecrets.name }}"
     installed: true
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskSecrets | default .Values.deployment.timeouts.default }}
     version: "{{ .Values.charts.opendeskSecrets.version }}"
     values:
       - "values-opendesk-secrets.yaml.gotmpl"

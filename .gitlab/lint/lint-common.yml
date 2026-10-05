@@ -10,12 +10,14 @@ include:
   stage: "lint"
 
 common-yaml-linter:
+  interruptible: true
   rules:
     - if: "$JOB_COMMON_YAML_LINTER_ENABLED == 'false' || $CI_PIPELINE_SOURCE =~ 'tags|web|merge_request_event'"
       when: "never"
     - when: "always"
 
 conventional-commits-linter:
+  interruptible: true
   rules:
     - if: >
           $RUN_RENOVATE == "yes" ||

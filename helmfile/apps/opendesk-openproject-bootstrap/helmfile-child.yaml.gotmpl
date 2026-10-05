@@ -5,7 +5,7 @@ repositories:
   # openDesk OpenProject Bootstrap
   # Source: Set when repo is managed on openCode
   - name: "openproject-bootstrap-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.openprojectBootstrap.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -24,7 +24,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ and .Values.apps.openproject.enabled .Values.apps.nextcloud.enabled }}
-    timeout: 900
+    timeout: {{ .Values.deployment.timeouts.releases.opendeskOpenprojectBootstrap | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "060-components"

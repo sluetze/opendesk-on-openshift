@@ -23,6 +23,10 @@ imagePullSecrets:
 hostUsers: {{ not .Values.technical.userNamespaces }}
 
 dovecot:
+  auth:
+    cache:
+      size: "16M"
+      ttl: {{ printf "%d secs" (int .Values.functional.authentication.realmSettings.accessTokenLifespan) | quote }}
   mailDomains: {{ toYaml (prepend .Values.global.additionalMailDomains (.Values.global.mailDomain | default .Values.global.domain) | uniq) | nindent 4 }}
   defaultMailDomain: {{ .Values.global.mailDomain | default .Values.global.domain | quote }}
   password:
@@ -48,7 +52,8 @@ dovecot:
       existingSecret:
         name: {{ .Values.secrets.keycloak.clientSecret.dovecot.name | quote }}
         key: {{ .Values.secrets.keycloak.clientSecret.dovecot.key | quote }}
-    host: {{ printf "%s.%s" .Values.global.hosts.keycloak .Values.global.domain | quote }}
+    scheme: "http"
+    host: "ums-keycloak.{{ .Values.apps.nubus.namespace | default .Release.Namespace }}.svc.{{ .Values.cluster.networking.domain }}:8080"
     introspectionPath: "/realms/{{ .Values.platform.realm }}/protocol/openid-connect/token/introspect"
     certsPath: "/realms/{{ .Values.platform.realm }}/protocol/openid-connect/certs"
     usernameAttribute: "opendesk_username"
@@ -104,47 +109,43 @@ dovecot:
 certificate:
   secretName: {{ .Values.ingress.tls.secretName | quote }}
 
-{{- if .Values.cluster.persistence.readWriteMany.enabled }}
-replicaCount: {{ .Values.replicas.dovecot }}
-{{- else }}
 replicaCount: 1
-{{- end }}
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
-      - "DAC_OVERRIDE"
-      - "KILL"
-      - "NET_BIND_SERVICE"
-      - "SETGID"
-      - "SETUID"
-      - "SYS_CHROOT"
   enabled: true
   privileged: false
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  # vmail is uid 1000 but gid 102 in the community image. Dovecot derives the group of its internal
+  # services from vmail's primary group and a non-root process cannot setgid() away from its own
+  # group, so the community edition must run as 1000:102. The enterprise overlay raises this to
+  # 1000:1000, matching the Pro image.
+  runAsGroup: 102
   seccompProfile:
     type: "RuntimeDefault"
   seLinuxOptions:
     {{ .Values.seLinuxOptions.dovecot | toYaml | nindent 4 }}
 
-# The init-dovecot container only renders config files, chmods them, and (Pro only) chowns the metacache
-# volume, so it needs far fewer capabilities than the main container.
 initDovecotSecurityContext:
   allowPrivilegeEscalation: false
   capabilities:
     drop:
       - "ALL"
-    add:
-      - "CHOWN"
   enabled: true
   privileged: false
   readOnlyRootFilesystem: true
-  runAsNonRoot: false
+  runAsNonRoot: true
+  runAsUser: 1000
+  # vmail is uid 1000 but gid 102 in the community image. Dovecot derives the group of its internal
+  # services from vmail's primary group and a non-root process cannot setgid() away from its own
+  # group, so the community edition must run as 1000:102. The enterprise overlay raises this to
+  # 1000:1000, matching the Pro image.
+  runAsGroup: 102
   seccompProfile:
     type: "RuntimeDefault"
   seLinuxOptions:
@@ -154,11 +155,11 @@ initDovecotSecurityContext:
 debug: true
 {{- end }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -170,7 +171,9 @@ extraVolumeMounts:
 
 podSecurityContext:
   enabled: true
-  fsGroup: 1000
+  # Must match `containerSecurityContext.runAsGroup` so the mail volume is writable; the enterprise
+  # overlay raises this to 1000.
+  fsGroup: 102
 
 persistence:
   {{- if .Values.cluster.persistence.readWriteMany.enabled }}

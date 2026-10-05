@@ -4,6 +4,10 @@
 ---
 .opendesk-env-ref-anchor: &opendesk_env_ref "env-v3"
 
+workflow:
+  auto_cancel:
+    on_new_commit: "conservative"
+
 include:
   - project: "bmi/opendesk/tooling/gitlab-config"
     ref: "v2.6.9"
@@ -155,6 +159,12 @@ variables:
     options:
       - "yes"
       - "no"
+  DEPLOY_NEOBOARD:
+    description: "Enable Neoboard deployment."
+    value: "no"
+    options:
+      - "yes"
+      - "no"
   DEPLOY_OX:
     description: "Enable OX AppSuite8 deployment."
     value: "no"
@@ -200,7 +210,9 @@ variables:
       - "yes"
       - "no"
   LINT_KYVERNO_STRICT:
-    description: "Set to 'true' to make Kyverno tests fail the pipeline when not strictly passing. Defaults to advisory-only."
+    description: >
+      Set to 'true' to make Kyverno tests fail the pipeline when not strictly passing.
+      Defaults to advisory-only.
     value: "false"
     options:
       - "true"
@@ -227,6 +239,12 @@ variables:
       runs (still grouped under the same TestOps launch, but clearly separated in time).
       Prefix a test set with `!` to abort execution if it fails within a run.
     value: "!K8s State;E2E"
+  TESTS_LAUNCH_TYPE:
+    description: "Maps to the Allure Testops environment variable `Launch Type`. Can be used to filter for specific types of launches."
+    value: "manual"
+    options:
+      - "manual"
+      - "nightly"
   TESTS_BROWSER:
     description: "Select the browser (engine) to use for the test run."
     value: "chromium"
@@ -255,6 +273,38 @@ variables:
   TESTS_PROJECT_URL:
     description: "Project url for e2e-tests (`<domain of gitlab>/api/v4/projects/<id>`)"
     value: "gitlab.opencode.de/api/v4/projects/1506"
+  TESTS_SCREENSHOT_TEST:
+    description: "Toggle screenshot capture for tests."
+    value: "on_fail"
+    options:
+      - "yes"
+      - "no"
+      - "on_fail"
+      - "on_success"
+  TESTS_SCREENSHOT_BEFORE_STEP:
+    description: "Toggle screenshot capture for tests: Before each step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+  TESTS_SCREENSHOT_AFTER_STEP:
+    description: "Toggle screenshot capture for tests: After each step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+  TESTS_SCREENSHOT_REDIRECT_STEP:
+    description: "Toggle screenshot capture for tests: For Redirect step."
+    value: "yes"
+    options:
+      - "yes"
+      - "no"
+  TESTS_LANGUAGES:
+    description: >
+      Space-separated list of languages to run the E2E-tests in when `RUN_TESTS` is `yes`.
+      Supported: `en`, `de`.
+    value: "en de"
+
   HELM_IMAGE_PIN:
     description: "The Helm image tag/checksum."
     value: "1.4.0@sha256:300e345cf6b0ca0909e55ba62e15028d85b06d4e02f907e04b01747512e74f36"
@@ -270,6 +320,7 @@ variables:
   extends: ".environments"
   environment:
     name: "${NAMESPACE}"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/helm:${HELM_IMAGE_PIN}"
   script:
     # MASTER_PASSWORD_WEB_VAR as precedence for MASTER_PASSWORD
@@ -307,8 +358,8 @@ variables:
 
 db-cleanup:
   extends: ".deploy-common"
-  image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-ci-toolbox:1.0.1\
-          @sha256:b80a477d6c9a2034b9d622895dead26b7714b4a4f021cf7dbd9d03adf463a5d7"
+  # yamllint disable-line rule:line-length
+  image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/opendesk-ci-toolbox:1.0.1@sha256:b80a477d6c9a2034b9d622895dead26b7714b4a4f021cf7dbd9d03adf463a5d7"
   needs:
     - job: "env-cleanup"
       optional: true
@@ -394,8 +445,8 @@ db-cleanup:
       fi;
     # Cleanup PostgreSQL
     - |
-      export DATABASES="keycloak keycloakExtension nextcloud notes openproject synapse umsGuardianManagementApi \
-      umsNotificationsApi umsSelfservice xwiki"
+      export DATABASES="keycloak keycloakExtension matrixAuthenticationService nextcloud notes openproject synapse \
+      umsGuardianManagementApi umsSelfservice xwiki"
       export PGDATABASE="postgres"
       export PGHOST=""
       export PGPORT=""
@@ -444,7 +495,7 @@ db-cleanup:
       done;
     # Cleanup Objectstore
     - |
-      export BUCKETS="migrations nextcloud openproject nubus notes openxchange dovecot"
+      export BUCKETS="migrations nextcloud openproject nubus notes openxchange dovecot synapse"
       export AWS_DEFAULT_REGION=""
       export AWS_ENDPOINT=""
       export AWS_ACCESS_KEY_ID=""
@@ -460,7 +511,8 @@ db-cleanup:
               AWS_BUCKET=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].bucket')
               AWS_ENDPOINT=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].endpoint')
               AWS_ACCESS_KEY_ID=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].username')
-              AWS_SECRET_ACCESS_KEY=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].secretKey.value')
+              AWS_SECRET_ACCESS_KEY=$(tail -n +1 $FILE | grep -v '{{' \
+                | yq '.objectstores.[env(ENV_BUCKET)].secretKey.value')
               AWS_DEFAULT_REGION=$(tail -n +1 $FILE | grep -v '{{' | yq '.objectstores.[env(ENV_BUCKET)].region')
             fi;
           fi;
@@ -482,27 +534,38 @@ env-cleanup:
     - |
       set -e
       export KUBECTL_TIMEOUT="300s"
-      echo "Cleaning up ${NAMESPACE} with OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED=${OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED}..."
-      if [ "${OPENDESK_SLEDGEHAMMER_DESTROY_ENABLED}" = "yes" ]; then
-        for OPENDESK_RELEASE in $(helm ls -n ${NAMESPACE} -q); do
+      echo "Cleaning up ${NAMESPACE} with OPENDESK_DESTROY=${OPENDESK_DESTROY}..."
+      if [ "${OPENDESK_DESTROY}" = "resources" ]; then
+        for OPENDESK_RELEASE in $(helm ls -n ${NAMESPACE} --all -q); do
           echo "Uninstalling release ${OPENDESK_RELEASE}"
-          helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} || true;
+          helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} || \
+            helm uninstall -n ${NAMESPACE} ${OPENDESK_RELEASE} --no-hooks || true;
         done
+        echo "Deleting remaining Helm release records..."
+        kubectl delete secrets -l owner=helm --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         # NOTE: if you update the section below, please also update the respective section in getting_started.md
         echo "Deleting PVCs (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete pvc --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete pvc --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         echo "Deleting Jobs (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete jobs --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
+        kubectl delete jobs --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
         echo "Deleting ConfigMaps (timeout: ${KUBECTL_TIMEOUT})..."
-        kubectl delete configmaps --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT};
-      else
+        kubectl delete configmaps --all --namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
+      elif [ "${OPENDESK_DESTROY}" = "helmfile" ]; then
         echo "Destroying namespace..."
         helmfile destroy --namespace ${NAMESPACE};
+      elif [ "${OPENDESK_DESTROY}" = "namespace" ]; then
+        echo "Deleting Namespace (timeout: ${KUBECTL_TIMEOUT})..."
+        kubectl delete namespace ${NAMESPACE} --timeout=${KUBECTL_TIMEOUT} --ignore-not-found;
+      else
+        echo "Unknown option for OPENDESK_DESTROY: ${OPENDESK_DESTROY}." \
+             "Please set it to 'resources', 'helmfile' or 'namespace'."
+        exit 1
       fi
   stage: "env-cleanup"
 
 env-start:
   extends: ".deploy-common"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/docker.io/alpine/k8s:1.35.2@sha256:9a87b09e1b6d887fa52c2dea1611d112d9e7d3d0271708588711a2fb2016e82c"
   rules:
     - if: >
@@ -748,6 +811,18 @@ element-deploy:
   variables:
     COMPONENT: "element"
 
+neoboard-deploy:
+  stage: "050-components"
+  extends: ".deploy-common"
+  rules:
+    - if: >
+          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ &&
+          $NAMESPACE =~ /.+/ &&
+          ($DEPLOY_ALL_COMPONENTS != "no" || $DEPLOY_NEOBOARD != "no")
+      when: "on_success"
+  variables:
+    COMPONENT: "neoboard"
+
 fetch-administrator-credentials:
   extends: ".deploy-common"
   stage: "post-prepare"
@@ -778,8 +853,11 @@ import-default-accounts:
     name: "${NAMESPACE}"
   rules:
     - if: >
-          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ && $NAMESPACE =~ /.+/ && $CREATE_DEFAULT_ACCOUNTS == "yes"
+          $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ &&
+          $NAMESPACE =~ /.+/ &&
+          $CREATE_DEFAULT_ACCOUNTS == "yes"
       when: "on_success"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/registry.opencode.de/bmi/opendesk/components/platform-development/images/user-import:3.9.0"
   script:
     - "echo \"Starting default account import for ${DOMAIN}\""
@@ -825,12 +903,14 @@ run-tests:
   rules:
     - if: >
           $CI_PIPELINE_SOURCE =~ /^(web|schedule|trigger|api)$/ && $NAMESPACE =~ /.+/ && $RUN_TESTS == "yes"
+          && $TESTS_LANGUAGES =~ $LANGUAGE_REGEX
       when: "on_success"
   parallel:
     matrix:
-      - LANGUAGE:
-          - "en"
-          - "de"
+      - LANGUAGE: "en"
+        LANGUAGE_REGEX: "/\\ben\\b/"
+      - LANGUAGE: "de"
+        LANGUAGE_REGEX: "/\\bde\\b/"
   script:
     - |
       if [ "${LANGUAGE}" = "de" ]; then
@@ -851,11 +931,12 @@ run-tests:
           \"browser\": \"${TESTS_BROWSER}\", \
           \"udm_api_username\": \"Administrator\", \
           \"udm_api_password\": \"${DEFAULT_ADMINISTRATOR_PASSWORD}\", \
-          \"screenshot_test\": \"yes\", \
-          \"screenshot_before_step\": \"yes\", \
-          \"screenshot_after_step\": \"yes\", \
-          \"screenshot_redirect_step\": \"yes\", \
+          \"screenshot_test\": \"${TESTS_SCREENSHOT_TEST}\", \
+          \"screenshot_before_step\": \"${TESTS_SCREENSHOT_BEFORE_STEP}\", \
+          \"screenshot_after_step\": \"${TESTS_SCREENSHOT_AFTER_STEP}\", \
+          \"screenshot_redirect_step\": \"${TESTS_SCREENSHOT_REDIRECT_STEP}\", \
           \"testsets\": \"${TESTS_TESTSETS}\", \
+          \"testlaunchtype\": \"${TESTS_LAUNCH_TYPE}\", \
           \"testprofile\": \"Namespace\", \
           \"OPENDESK_BRANCH\": \"${CI_COMMIT_REF_NAME}\", \
           \"OPENDESK_ENTERPRISE\": \"${OPENDESK_ENTERPRISE}\", \
@@ -878,9 +959,12 @@ avscan-prepare:
           $CI_PIPELINE_SOURCE =~ /^push|merge_request_event$/
       when: "always"
     - when: "never"
+  # yamllint disable-line rule:line-length
   image: "registry.open-de.sk/docker.io/mikefarah/yq:4.52.4@sha256:a4c2cafdf4674b2dc3c6ac457fe1486d55d7d93edb3ed4459637afda3c286af6"
   script:
-    - "echo \"Waiting for 180sec so the high number of scan jobs prepared here does not interfere with the actual release job\""
+    - >
+      echo "Waiting for 180sec so the high number of scan jobs prepared here
+      does not interfere with the actual release job"
     - "sleep 180"
     - |
       cat << 'EOF' > dynamic-scans.yml

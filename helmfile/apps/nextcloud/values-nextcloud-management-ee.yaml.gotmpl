@@ -7,6 +7,4 @@ configuration:
   enterprise:
     subscriptionKey:
       value: {{ if .Values.enterpriseKeys.nextcloud.subscriptionKey }}{{ .Values.enterpriseKeys.nextcloud.subscriptionKey | quote }}{{ end }}
-    subscriptionData:
-      value: {{ if .Values.enterpriseKeys.nextcloud.subscriptionData}}{{ .Values.enterpriseKeys.nextcloud.subscriptionData | quote }}{{ end }}
 ...

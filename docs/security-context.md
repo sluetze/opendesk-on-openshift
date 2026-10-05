@@ -147,19 +147,25 @@ This list gives you an overview of templated security settings and if they compl
 
 | process | status | allowPrivilegeEscalation | privileged | readOnlyRootFilesystem | runAsNonRoot | runAsUser | runAsGroup | seccompProfile | capabilities |
 | ------- | ------ | ------------------------ | ---------- | ---------------------- | ------------ | --------- | ---------- | -------------- | ------------ |
-| **collabora**/collabora-online | :x: | yes | no | no | yes | 1001 | 1001 | yes | no ["CHOWN","FOWNER","SYS_CHROOT"] |
-| **cryptpad**/cryptpad | :x: | no | no | no | yes | 4001 | 4001 | yes | yes |
+| **collabora**/collabora-online | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
+| **cryptpad**/cryptpad | :white_check_mark: | no | no | yes | yes | 4001 | 4001 | yes | yes |
+| **element**/element/deploymentMarkers | :x: | no | no | yes | n/a | n/a | n/a | yes | yes |
+| **element**/element/elementAdmin | :white_check_mark: | no | no | yes | yes | 10104 | 10104 | yes | yes |
+| **element**/element/haproxy | :white_check_mark: | no | no | yes | yes | 10001 | 10001 | yes | yes |
+| **element**/element/initSecrets | :white_check_mark: | no | no | yes | yes | 10010 | 10010 | yes | yes |
+| **element**/element/matrixAuthenticationService | :white_check_mark: | no | no | yes | yes | 10005 | 10005 | yes | yes |
+| **element**/element/matrixAuthenticationService/syn2mas | :x: | no | no | yes | n/a | n/a | n/a | yes | yes |
+| **element**/element/matrixRTC | :white_check_mark: | no | no | yes | yes | 10033 | 10033 | yes | yes |
+| **element**/element/matrixRTC/sfu | :white_check_mark: | no | no | yes | yes | 10030 | 10030 | yes | yes |
+| **element**/element/synapse | :white_check_mark: | no | no | yes | yes | 10091 | 10091 | yes | yes |
 | **element**/matrix-neoboard-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neochoice-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-bot | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-bot-bootstrap | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **element**/matrix-neodatefix-widget | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-element | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-matrix-user-verification-service | :x: | no | no | no | yes | 1000 | 1000 | yes | yes |
+| **element**/opendesk-element-customization | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
+| **element**/opendesk-matrix-user-verification-service | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **element**/opendesk-matrix-user-verification-service-bootstrap | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-synapse | :white_check_mark: | no | no | yes | yes | 10991 | 10991 | yes | yes |
-| **element**/opendesk-synapse-web | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
-| **element**/opendesk-well-known | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **jitsi**/jitsi | :white_check_mark: | no | no | yes | yes | 1993 | 1993 | yes | yes |
 | **jitsi**/jitsi/jitsi/jibri | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **jitsi**/jitsi/jitsi/jicofo | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
@@ -168,22 +174,24 @@ This list gives you an overview of templated security settings and if they compl
 | **jitsi**/jitsi/jitsi/prosody | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **jitsi**/jitsi/jitsi/web | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **jitsi**/jitsi/patchJVB | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
+| **neoboard**/matrix-neoboard-standalone | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **nextcloud**/opendesk-nextcloud-management | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **nextcloud**/opendesk-nextcloud-notifypush | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **nextcloud**/opendesk-nextcloud/aio | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
 | **nextcloud**/opendesk-nextcloud/exporter | :white_check_mark: | no | no | yes | yes | 65532 | 65532 | yes | yes |
 | **notes**/impress/backend | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
+| **notes**/impress/docspec | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **notes**/impress/frontend | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **notes**/impress/y-provider | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **nubus**/intercom-service | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/intercom-service/provisioning | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/opendesk-keycloak-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
+| **nubus**/opendesk-provisioning-synapse | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/keycloak | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusKeycloakBootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusKeycloakExtensions/handler | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusKeycloakExtensions/proxy | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusLdapNotifier | :white_check_mark: | no | no | yes | yes | 101 | 102 | yes | yes |
-| **nubus**/ums/nubusNotificationsApi | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusPortalConsumer | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **nubus**/ums/nubusPortalFrontend | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusPortalServer | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
@@ -195,24 +203,26 @@ This list gives you an overview of templated security settings and if they compl
 | **nubus**/ums/nubusUdmRestApi | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcGateway | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **nubus**/ums/nubusUmcServer | :white_check_mark: | no | no | yes | yes | 999 | 999 | yes | yes |
-| **open-xchange**/dovecot | :x: | no | no | yes | no | n/a | n/a | yes | no ["CHOWN","DAC_OVERRIDE","KILL","NET_BIND_SERVICE","SETGID","SETUID","SYS_CHROOT"] |
+| **open-xchange**/dovecot | :white_check_mark: | no | no | yes | yes | 1000 | 102 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-documentconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-guidedtours | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-imageconverter | :x: | no | no | no | yes | 987 | 1000 | yes | yes |
+| **open-xchange**/open-xchange/appsuite/core-mw | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-mw/gotenberg | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-ui-middleware | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/core-user-guide | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/appsuite/guard-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **open-xchange**/open-xchange/nextcloud-integration-ui | :x: | no | no | no | yes | 1000 | 1000 | yes | yes |
+| **open-xchange**/open-xchange/nextcloud-integration-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/open-xchange/public-sector-ui | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **open-xchange**/opendesk-open-xchange-bootstrap | :x: | no | n/a | yes | yes | 1000 | 1000 | yes | yes |
+| **open-xchange**/opendesk-open-xchange-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **open-xchange**/ox-connector | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **open-xchange**/postfix-ox | :x: | no | no | yes | no | 0 | 0 | yes | no ["CHOWN","DAC_OVERRIDE","FOWNER","SETGID","SETUID","KILL"] |
+| **open-xchange**/postfix-ox | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 | **opendesk-migrations-post**/opendesk-migrations-post | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **opendesk-migrations-pre**/opendesk-migrations-pre | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **opendesk-openproject-bootstrap**/opendesk-openproject-bootstrap | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **opendesk-services**/opendesk-static-files | :white_check_mark: | no | no | yes | yes | 101 | 101 | yes | yes |
+| **opendesk-services**/opendesk-trust | :x: | no | no | no | yes | 1000 | 1000 | yes | yes |
 | **openproject**/openproject | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **services-external**/cassandra | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/clamav | :x: | no | no | yes | no | 0 | 0 | yes | no |
@@ -225,13 +235,14 @@ This list gives you an overview of templated security settings and if they compl
 | **services-external**/memcached | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/minio | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/opendesk-dkimpy-milter | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **services-external**/postfix | :x: | no | no | yes | no | 0 | 0 | yes | no ["CHOWN","DAC_OVERRIDE","FOWNER","SETGID","SETUID","KILL"] |
+| **services-external**/postfix | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 | **services-external**/postgresql | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/redis/master | :white_check_mark: | no | no | yes | yes | 1001 | 1001 | yes | yes |
 | **services-external**/seaweedfs/admin | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **services-external**/seaweedfs/allInOne | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
+| **services-external**/seaweedfs/filer | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
 | **services-external**/seaweedfs/worker | :white_check_mark: | no | no | yes | yes | 1000 | 1000 | yes | yes |
-| **xwiki**/xwiki | :x: | no | no | no | yes | 100 | 101 | yes | yes |
+| **xwiki**/xwiki | :white_check_mark: | no | no | yes | yes | 100 | 101 | yes | yes |
 
 
 This file is auto-generated by [openDesk CI CLI](https://gitlab.opencode.de/bmi/opendesk/tooling/opendesk-ci-cli)

@@ -23,7 +23,7 @@ javaOpts:
 {{- if and (eq (env "OPENDESK_ENTERPRISE") "true") .Values.enterpriseKeys.xwiki.opendeskEnterpriseLicense .Values.enterpriseKeys.xwiki.proApplicationslicense }}
   - "-Dlicenses={{ .Values.enterpriseKeys.xwiki.opendeskEnterpriseLicense }},{{ .Values.enterpriseKeys.xwiki.proApplicationslicense }}"
 {{- end }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   - "-Djavax.net.ssl.trustStore=/etc/ssl/certs/truststore.jks"
   - "-Djavax.net.ssl.trustStoreType=jks"
 {{- end }}
@@ -34,7 +34,7 @@ javaOptsSecrets:
     secret:
       name: {{ .Values.secrets.postfix.opendeskSystemPassword.name | quote }}
       key: {{ .Values.secrets.postfix.opendeskSystemPassword.key | quote }}
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
   trustStorePassword:
     option: "-Djavax.net.ssl.trustStorePassword="
     secret:
@@ -57,6 +57,12 @@ externalDB:
 securityContext:
   enabled: true
   fsGroup: 101
+  fsGroupChangePolicy: "OnRootMismatch"
+
+initContainers:
+  supportReadonly:
+    enabled: true
+    as: jetty
 
 containerSecurityContext:
   allowPrivilegeEscalation: false
@@ -70,13 +76,16 @@ containerSecurityContext:
       - "ALL"
   seccompProfile:
     type: "RuntimeDefault"
-  readOnlyRootFilesystem: false
+  readOnlyRootFilesystem: true
   seLinuxOptions:
     {{ .Values.seLinuxOptions.xwiki | toYaml | nindent 4 }}
 
 customConfigs:
   xwiki.cfg:
     xwiki.url.protocol: "https"
+    {{- if eq .Values.databases.xwiki.type "postgresql" }}
+    xwiki.db: {{ .Values.databases.xwiki.schema | quote }}
+    {{- end }}
     ## Indicate the LDAP field defining the user UID
     xwiki.authentication.ldap.UID_attr: "uid"
     ## Indicate the LDAP field defining the user profile picture
@@ -159,7 +168,6 @@ ingress:
     haproxy-ingress.github.io/ssl-redirect: "true"
     haproxy-ingress.github.io/proxy-body-size: "{{ .Values.ingress.parameters.bodySize.xwiki }}"
     haproxy-ingress.github.io/timeout-server: "{{ .Values.ingress.parameters.bodyTimeout.xwiki }}s"
-    haproxy-ingress.github.io/timeout-client: "{{ .Values.ingress.parameters.bodyTimeout.xwiki }}s"
     haproxy-ingress.github.io/headers: "X-Forwarded-Host {{ .Values.global.hosts.xwiki }}.{{ .Values.global.domain }}"
     {{- with .Values.annotations.xwiki.ingress }}
     {{ . | toYaml | nindent 4 }}
@@ -264,13 +272,13 @@ serviceAccount:
     {{ .Values.annotations.xwiki.serviceAccount | toYaml | nindent 4 }}
 
 volumePermissions:
-  enabled: true
+  enabled: false
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "truststore.jks"
           path: "truststore.jks"

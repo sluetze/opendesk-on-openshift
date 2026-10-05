@@ -5,14 +5,14 @@ repositories:
   # Notes
   # Source: https://github.com/numerique-gouv/impress
   - name: "notes-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.notes.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
     oci: true
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDe .Values.global.helmRegistry | default .Values.charts.notes.registry }}/{{ .Values.charts.notes.repository }}"
   - name: "notes-customization-repo"
-    keyring: "../../files/gpg-pubkeys/opencode.gpg"
+    keyring: "../../files/gpg-pubkeys/opendesk.gpg"
     verify: {{ .Values.charts.notesCustomization.verify }}
     username: {{ env "OD_PRIVATE_REGISTRY_USERNAME" | quote }}
     password: {{ env "OD_PRIVATE_REGISTRY_PASSWORD" | quote }}
@@ -30,7 +30,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.notes.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.impress | default .Values.deployment.timeouts.default }}
   - name: "impress-customization"
     chart: "notes-customization-repo/{{ .Values.charts.notesCustomization.name }}"
     version: "{{ .Values.charts.notesCustomization.version }}"
@@ -41,7 +41,7 @@ releases:
       - {{ . }}
       {{- end }}
     installed: {{ .Values.apps.notes.enabled }}
-    timeout: 1800
+    timeout: {{ .Values.deployment.timeouts.releases.impressCustomization | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deploy-stage: "component-1"

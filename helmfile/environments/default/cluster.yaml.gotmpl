@@ -23,12 +23,12 @@ cluster:
     # for defined services.
     incomingCIDR: []
     # Ingress-gateway IP - only relevant for "NodePort" cluster services.
-    # When ingress and egress gateway use different ips, which results that pods can't self-discover their incoming ip,
-    # you need to provide the public (load-balanced) ingress gateways ip address.
+    # When ingress and egress gateway use different IPs, so that Pods can not self-discover their incoming IP,
+    # you need to provide the public (load-balanced) ingress gateways IP address.
     ingressGatewayIP: ""
     # LoadBalancer status field - only relevant for "LoadBalancer" cluster services.
     # The IP/DNS of your load-balancer will be fetched for some components from 'status' map of services.
-    # Most providers use '.status.loadBalancer.ingress[0].ip' to store public ip. You can modify the chosen field here.
+    # Most providers use '.status.loadBalancer.ingress[0].ip' to store public IP. You can modify the chosen field here.
     loadBalancerStatusField: "ip"
     # Network protocol options: "IPv4", "IPv6", "DualStack"
     ipFamilies: "DualStack"

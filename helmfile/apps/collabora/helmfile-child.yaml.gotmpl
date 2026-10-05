@@ -23,6 +23,19 @@ repositories:
     url: "{{ coalesce .Values.repositories.helm.registryOpencodeDeEnterprise .Values.global.helmRegistry | default .Values.charts.collaboraController.registry }}/{{ .Values.charts.collaboraController.repository }}"
 
 releases:
+  - name: "collabora-controller"
+    chart: "collabora-controller-repo/{{ .Values.charts.collaboraController.name }}"
+    version: "{{ .Values.charts.collaboraController.version }}"
+    values:
+      {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
+      - "values-coco-enterprise.yaml.gotmpl"
+      {{- end }}
+      {{- range .Values.customization.release.collaboraController }}
+      - {{ . }}
+      {{- end }}
+    wait: true
+    installed: {{ .Values.apps.collaboraController.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.collaboraController | default .Values.deployment.timeouts.default }}
   - name: "collabora-online"
     chart: "collabora-online-repo/{{ .Values.charts.collabora.name }}"
     version: "{{ .Values.charts.collabora.version }}"
@@ -34,18 +47,12 @@ releases:
       {{- range .Values.customization.release.collaboraOnline }}
       - {{ . }}
       {{- end }}
+    {{- if .Values.apps.collaboraController.enabled }}
+    needs:
+      - "collabora-controller"
+    {{- end }}
     installed: {{ .Values.apps.collabora.enabled }}
-  - name: "collabora-controller"
-    chart: "collabora-controller-repo/{{ .Values.charts.collaboraController.name }}"
-    version: "{{ .Values.charts.collaboraController.version }}"
-    values:
-      {{- if eq (env "OPENDESK_ENTERPRISE") "true" }}
-      - "values-coco-enterprise.yaml.gotmpl"
-      {{- end }}
-      {{- range .Values.customization.release.collaboraController }}
-      - {{ . }}
-      {{- end }}
-    installed: {{ .Values.apps.collaboraController.enabled }}
+    timeout: {{ .Values.deployment.timeouts.releases.collaboraOnline | default .Values.deployment.timeouts.default }}
 
 commonLabels:
   deployStage: "050-components"

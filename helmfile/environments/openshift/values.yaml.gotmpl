@@ -72,6 +72,9 @@ persistence:
     # coe-netapp-san is iSCSI/block (ontap-san-economy) -> RWO only, skip it.
     RWX: "coe-netapp-nas"
     RWO: "coe-netapp-nas"
+  storages:
+    synapse:
+      existingClaim: "media-opendesk-synapse-0"
 
 certificate:
   # Option 1 BYO (RH Internal CA). Chart flag name is misleading:
@@ -81,6 +84,12 @@ certificate:
   # Upstream Option 1: docs/enhanced-configuration/self-signed-certificates.md
   # ocp22 archive of Option 2a path: docs/openshift-legacy-selfsigned-ca/
   selfSigned: true
+
+# 1.19 opt-in: keep mounting existing BYO CA Secret (do not mint a chart CA).
+trust:
+  secret:
+    mount: true
+    name: "opendesk-certificates-ca-tls"
 
 # Public objectstorage HTTPS uses the BYO/RH CA. Migrations Python/OpenSSL
 # does not ship that issuer; same Secret/path as OpenProject.

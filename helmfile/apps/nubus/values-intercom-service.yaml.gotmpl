@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
+# SPDX-FileCopyrightText: 2024-2026 Zentrum für Digitale Souveränität der Öffentlichen Verwaltung (ZenDiS) GmbH
 # SPDX-FileCopyrightText: 2023 Bundesministerium des Innern und für Heimat, PG ZenDiS "Projektgruppe für Aufbau ZenDiS"
 # SPDX-License-Identifier: Apache-2.0
 ---
@@ -21,11 +21,11 @@ containerSecurityContext:
   seLinuxOptions:
     {{ .Values.seLinuxOptions.intercom | toYaml | nindent 4 }}
 
-{{- if .Values.certificate.selfSigned }}
+{{- if .Values.trust.secret.mount }}
 extraVolumes:
   - name: "trusted-cert-secret-volume"
     secret:
-      secretName: "opendesk-certificates-ca-tls"
+      secretName: {{ .Values.trust.secret.name | quote }}
       items:
         - key: "ca.crt"
           path: "ca-certificates.crt"
@@ -67,9 +67,13 @@ ics:
         clientSecret: {{ .Values.secrets.keycloak.clientSecret.intercom.key | quote }}
   matrix:
     subdomain: {{ .Values.global.hosts.synapse | quote }}
-    serverName: "{{ .Values.global.hosts.synapse }}.{{ .Values.global.domain }}"
+    serverName: {{ .Values.global.matrixDomain | default .Values.global.domain | quote }}
+    url: "https://{{ .Values.global.hosts.synapse }}.{{ .Values.global.domain }}"
     auth:
-      applicationServiceSecret: {{ .Values.secrets.intercom.synapseAsToken.value | quote }}
+      existingSecret:
+        name: {{ .Values.secrets.intercom.synapseAsToken.name | quote }}
+        keyMapping:
+          password: {{ .Values.secrets.intercom.synapseAsToken.key | quote }}
   nordeck:
     subdomain: {{ .Values.global.hosts.matrixNeoDateFixBot | quote }}
   portal:
@@ -80,7 +84,7 @@ ics:
     port: {{ .Values.cache.intercomService.port }}
     auth:
       username: {{ .Values.cache.intercomService.username }}
-      password: {{ .Values.cache.intercomService.password.value | default .Values.cache.redis.password.value | quote }}
+      password: {{ .Values.cache.intercomService.password.value | quote }}
     ssl:
       enabled: {{ .Values.cache.intercomService.tls }}
   openxchange:
@@ -143,7 +147,7 @@ provisioning:
   extraEnvVars:
     - name: "REDIS_USER"
       value: {{ .Values.cache.intercomService.username }}
-    {{- if .Values.certificate.selfSigned }}
+    {{- if .Values.trust.secret.mount }}
     - name: "NODE_EXTRA_CA_CERTS"
       value: "/etc/ssl/certs/ca-certificates.crt"
     {{- end }}
