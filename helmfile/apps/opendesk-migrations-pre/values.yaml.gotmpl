@@ -57,4 +57,18 @@ migrations:
         key: {{ .Values.objectstores.migrations.secretKey.key | quote }}
         optional: true
   {{- end }}
+
+{{- if .Values.certificate.selfSigned }}
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    secret:
+      secretName: "opendesk-certificates-ca-tls"
+      items:
+        - key: "ca.crt"
+          path: "ca-certificates.crt"
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
+{{- end }}
 ...
