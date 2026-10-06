@@ -1,0 +1,27 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via
+# `customization.release.opendeskKeycloakBootstrap` (see
+# helmfile/environments/default/customization.yaml.gotmpl). Deep-merged as an
+# extra values file for the `opendesk-keycloak-bootstrap` release only, on top of
+# helmfile/apps/nubus/values-opendesk-keycloak-bootstrap.yaml.gotmpl.
+#
+# Why (docs/openshift-errors.md failure #15):
+# Intercom Service proxies XWiki (newsfeed under /wiki/...) and runs XWiki's
+# OIDC code flow with clientId=opendesk-xwiki and
+# redirect_uri=https://ics.<domain>/oidc/authenticator/callback.
+# Upstream bootstrap only allowlists wiki.* and portal (nubus).* for that
+# client → Keycloak LOGIN_ERROR invalid_redirect_uri; ICS then logs
+# "Error fetching OIDC token for opendesk-xwiki".
+#
+# Helm list merge replaces the whole redirectUris array, so this file restates
+# the upstream wiki+portal entries and adds the ICS callback. No chart edit.
+---
+config:
+  opendesk:
+    clients:
+      opendesk-xwiki:
+        redirectUris:
+          - "https://{{ .Values.global.hosts.xwiki }}.{{ .Values.global.domain }}/*"
+          - "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/*"
+          - "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/oidc/authenticator/callback"

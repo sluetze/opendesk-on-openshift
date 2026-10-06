@@ -1,0 +1,11 @@
+# Never commit site TLS / cluster secrets
+**/.byo-redeploy-secrets
+**/certs/*
+!**/certs/.gitkeep
+**/*.pem
+**/*.key
+**/*.jks
+**/truststore.jks
+**/.kubeconfig
+.kubeconfig
+kubeconfig

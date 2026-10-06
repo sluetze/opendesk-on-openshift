@@ -1,0 +1,52 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# OpenShift SCC `opendesk-anyuid-seccomp` has requiredDropCapabilities: [ALL],
+# so containers only keep capabilities listed in securityContext.capabilities.add
+# (and allowed by the SCC). openDesk's jitsi.* securityContext sets
+# capabilities: {} → every cap dropped → s6-overlay / nginx fail:
+#   s6-applyuidgid: unable to set supplementary group list: Operation not permitted
+#   chown(...): Operation not permitted
+#   nginx: bind() to 0.0.0.0:80 failed (13: Permission denied)  # needs NET_BIND_SERVICE
+# Same class as Collabora/Dovecot (docs/openshift-errors.md failures #7/#10/#13/#14).
+# SCC already allows CHOWN/SETGID/SETUID/NET_BIND_SERVICE/DAC_OVERRIDE; pods just need to request them.
+#
+# Prosody also needs DAC_OVERRIDE: cont-init does
+#   mv /config/data/*.{crt,key} /config/certs/ || true
+# Keys are mode 0400 owned by prosody. After requiredDropCapabilities:[ALL], root has no
+# DAC_OVERRIDE → cannot read keys → /config/certs empty → "No TLS context available for c2s"
+# → Jicofo/JVB XMPP auth fails → meet join fails after start screen.
+---
+jitsi:
+  web:
+    securityContext:
+      capabilities:
+        add:
+          - CHOWN
+          - NET_BIND_SERVICE
+          - SETGID
+          - SETUID
+  prosody:
+    securityContext:
+      capabilities:
+        add:
+          - CHOWN
+          - DAC_OVERRIDE
+          - SETGID
+          - SETUID
+  jicofo:
+    securityContext:
+      capabilities:
+        add:
+          - CHOWN
+          - SETGID
+          - SETUID
+  jvb:
+    securityContext:
+      capabilities:
+        add:
+          - CHOWN
+          - SETGID
+          - SETUID
+  # jibri chart default enabled:false (recording off). When enabled, chart already
+  # requests SYS_ADMIN; SCC allowedCapabilities includes SYS_ADMIN
+  # (docs/openshift-manifests/base/opendesk-anyuid-seccomp-scc.yaml).

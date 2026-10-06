@@ -1,0 +1,260 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# OpenShift helmfile environment (tracked). Domain / StorageClass / IngressClass /
+# JVB advertise IP below are **one site's** filled-in example — adapt for your
+# cluster (see docs/openshift-deployment.md checklist). Failures/history:
+# docs/openshift-errors.md.
+---
+global:
+  # Example: opendesk.apps.<cluster-domain> from ingresses.config/cluster
+  domain: "opendesk.apps.ocp22.stormshift.coe.muc.redhat.com"
+
+cluster:
+  container:
+    engine: "cri-o"
+  service:
+    # No cloud LoadBalancer integration on this cluster; HTTP(S) is exposed via
+    # OpenShift Routes generated from Ingress objects, so ClusterIP is enough.
+    # Exception: Jitsi JVB media (UDP/10000) cannot ride Routes (TCP-only) —
+    # override via service.type.jitsiVideoBridge: NodePort below.
+    type: "ClusterIP"
+  networking:
+    # Node IP clients use for JVB UDP (NodePort on every node). patchJVB Job
+    # writes this into JVB_ADVERTISE_IPS when service.type.jitsiVideoBridge is
+    # NodePort. Corp LAN 10.32.105.193–195; pick one stable node. Off-LAN
+    # browsers still fail without VPN/TURN — see failure #16.
+    ingressGatewayIP: "10.32.105.193"
+
+service:
+  type:
+    # UDP media for Meet: ClusterIP is unreachable from browsers; OpenShift
+    # Routes are TCP-only; no in-cluster TURN wired. NodePort + advertise IP
+    # above; pin nodePort in jitsi-media-nodeport-fix.yaml (firewall docs).
+    jitsiVideoBridge: "NodePort"
+
+ingress:
+  ingressClassName: "openshift-default"
+
+# OpenShift HAProxy ignores nginx/haproxy-ingress rewrite annotations that the
+# OX App Suite chart stamps on each path Ingress. Ingress→Route copies custom
+# annotations onto the generated Route, so set the OpenShift-native rewrite
+# here via the chart's openxchangeAppsuiteIngress.* hooks (null in
+# environments/default/annotations.yaml.gotmpl). Spec.path prefix is replaced
+# with rewrite-target (no regex captures). See docs/openshift-errors.md
+# failure #17 (OX Guard / path rewrites).
+annotations:
+  openxchangeAppsuiteIngress:
+    guardApiRoute:
+      haproxy.router.openshift.io/rewrite-target: /oxguard
+    guardSupportApiRoute:
+      haproxy.router.openshift.io/rewrite-target: /guardsupport
+    guardPgpRoute:
+      haproxy.router.openshift.io/rewrite-target: /pgp
+    # Chart nginx rewrite targets /ui, but this core-ui image serves the SPA at /.
+    coreUiApiRoute:
+      haproxy.router.openshift.io/rewrite-target: /
+    coreHelpRoute:
+      haproxy.router.openshift.io/rewrite-target: /help
+    rt2Route:
+      haproxy.router.openshift.io/rewrite-target: /rt2
+    httpApiRoutesApi:
+      haproxy.router.openshift.io/rewrite-target: /appsuite/api
+    httpApiRoutesAjax:
+      haproxy.router.openshift.io/rewrite-target: /appsuite/api
+    officeWebRoute:
+      haproxy.router.openshift.io/rewrite-target: /appsuite
+    davRootRoute:
+      haproxy.router.openshift.io/rewrite-target: /servlet/dav
+
+persistence:
+  storageClassNames:
+    # coe-netapp-nas is NFS-backed (ontap-nas) -> supports both RWO and RWX.
+    # coe-netapp-san is iSCSI/block (ontap-san-economy) -> RWO only, skip it.
+    RWX: "coe-netapp-nas"
+    RWO: "coe-netapp-nas"
+  storages:
+    synapse:
+      existingClaim: "media-opendesk-synapse-0"
+
+certificate:
+  # Option 1 BYO (RH Internal CA). Chart flag name is misleading:
+  # selfSigned: true → mount opendesk-certificates-ca-tls (ca.crt + truststore.jks).
+  # Does NOT mint a self-signed CA. apps.certificates.enabled: false → Secrets
+  # from create-byo-certificate-secrets.sh; no issuerRef without the chart.
+  # Upstream Option 1: docs/enhanced-configuration/self-signed-certificates.md
+  # ocp22 archive of Option 2a path: docs/openshift-legacy-selfsigned-ca/
+  selfSigned: true
+
+# 1.19 opt-in: keep mounting existing BYO CA Secret (do not mint a chart CA).
+trust:
+  secret:
+    mount: true
+    name: "opendesk-certificates-ca-tls"
+
+# Public objectstorage HTTPS uses the BYO/RH CA. Migrations Python/OpenSSL
+# does not ship that issuer; same Secret/path as OpenProject.
+migrations:
+  objectStore:
+    caBundle: "/etc/ssl/certs/ca-certificates.crt"
+
+# 1.19 MAS finalized: syn2mas Job Complete, element-markers=syn2mas_migrated.
+# Keep enabled false / dryRun true for future deploys (delegated_auth).
+technical:
+  matrix:
+    migration:
+      enabled: false
+      dryRun: true
+
+secrets:
+  # Hard chart requirement: Java trustStorePassword (OX/XWiki) + Secret
+  # opendesk-certificates-keystore-jks. Must match whatever password was used
+  # for truststore.jks in the CA secret (charts do not invent it).
+  certificates:
+    password:
+      create: false
+      name: "opendesk-certificates-keystore-jks"
+      key: "password"
+      value: '{{ required "Set CERTIFICATES_JKS_PASSWORD to the truststore.jks password" (env "CERTIFICATES_JKS_PASSWORD") }}'
+
+customization:
+  # openDesk's own first-class extension point (see
+  # helmfile/environments/default/customization.yaml.gotmpl) for adding extra Helm
+  # values to a release without touching its values.yaml.gotmpl template. Used here
+  # instead of a chart edit for the OpenProject design-seed SSRF fix -- see
+  # docs/openshift-errors.md failure #8 and the referenced file's own header for
+  # the full rationale.
+  release:
+    openproject:
+      ssrfSafeDesignSeed: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/openproject-design-seed-fix.yaml'
+    openxchange:
+      # Points core-ui-middleware's Node.js server at the internal core-mw
+      # Service over plain HTTP instead of self-referencing the public HTTPS
+      # Route (Node TLS verify fails when the leaf CA is not in Node's trust
+      # store) -- see docs/openshift-errors.md failure #12.
+      coreServiceUrlFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/openxchange-core-ui-middleware-core-service-url-fix.yaml'
+      # OpenShift rewrite-target on OX path Ingresses (Guard, ui, ajax, …) —
+      # see docs/openshift-errors.md failure #17 and the file header.
+      # Targeted helm upgrade MUST also pass
+      # --post-renderer helmfile/apps/open-xchange/post-renderer-openxchange-HAPROXY.sh
+      # (same strip of chart "(.*)" path suffixes helmfile applies when
+      # ingress.controller=haproxy).
+      openshiftRewriteFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/openxchange-openshift-rewrite-fix.yaml'
+    jitsi:
+      # OpenShift SCC drops ALL caps; jitsi s6/nginx need
+      # CHOWN+SETGID+SETUID+NET_BIND_SERVICE on pods; prosody also needs
+      # DAC_OVERRIDE so cont-init can mv 0400 keys into /config/certs (SCC
+      # already allows these). See customization file / failures #13/#14.
+      capabilitiesFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/jitsi-capabilities-fix.yaml'
+      # Pin jitsi.jvb.nodePort=31000 for UDP media NodePort (failure #16).
+      mediaNodePortFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/jitsi-media-nodeport-fix.yaml'
+    opendeskKeycloakBootstrap:
+      # ICS proxies XWiki OIDC and needs the wiki client's Valid Redirect
+      # URIs to include https://ics.<domain>/oidc/authenticator/callback —
+      # see docs/openshift-errors.md failure #15 and the customization
+      # file header.
+      xwikiIcsRedirectFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/keycloak-xwiki-ics-redirect-fix.yaml.gotmpl'
+
+apps:
+  # --- Core: Nubus (IAM/portal) and its direct infra dependencies ---
+  nubus:
+    enabled: true
+  certificates:
+    # Option 1 BYO: chart off — Secrets from create-byo-certificate-secrets.sh
+    # (PEM + required truststore.jks; cert-manager JKS generation only when enabled).
+    enabled: false
+  migrations:
+    enabled: true
+  mariadb:
+    enabled: true
+  postgresql:
+    enabled: true
+  redis:
+    enabled: true
+  memcached:
+    enabled: true
+  home:
+    enabled: true
+  staticFiles:
+    enabled: true
+  seaweedfs:
+    # Not optional: Nubus's portal/UMS templates `fail` at render time with
+    # "No objectstorage endpoint for nubus found!" unless minio, seaweedfs, or an
+    # explicit objectstores.nubus.endpoint is configured. seaweedfs is openDesk's
+    # default object-storage backend, so it stays enabled even in the minimal set.
+    enabled: true
+  collabora:
+    # Added back explicitly as a module (docs/getting-started.md lists collabora
+    # `enabled: true` by default upstream; it was cut here during the initial
+    # minimalism pass, not because it's a hard Nubus dependency like seaweedfs).
+    enabled: true
+  nextcloud:
+    # Added back explicitly as a module, same treatment as collabora above
+    # (openDesk's own default is enabled: true; cut here only during the
+    # initial minimalism pass). Deployed clean under the existing SCC and uses
+    # the seaweedfs/S3 backend rather than its own PVC. It did surface one
+    # dependency gap post-deploy though: see clamavSimple below and
+    # docs/openshift-errors.md failure #9.
+    enabled: true
+  openproject:
+    # Added back explicitly as a module, same treatment as collabora/nextcloud
+    # above (openDesk's own default is enabled: true; cut here only during the
+    # initial minimalism pass). Needed no SCC/storage/ingress fix, but its
+    # one-shot db:seed Job hit an unrelated app-level SSRF gap fixed via the
+    # `customization` block above -- see docs/openshift-errors.md failure #8.
+    enabled: true
+  clamavSimple:
+    # NOT optional once nextcloud is on, despite being false-by-default
+    # everywhere else: opendesk-nextcloud-management's values-nextcloud-
+    # management.yaml.gotmpl hardcodes `antivirus.enabled: true` with no
+    # toggle, and only supplies a real ICAP host if clamavDistributed or
+    # clamavSimple is enabled -- with both off, every file write (including
+    # the first-login default-contact creation) 500s trying to reach a
+    # nonexistent "clamav-icap" host. Same class of hard-dependency miss as
+    # seaweedfs (failure #3). See docs/openshift-errors.md failure #9.
+    # It also happens to be OX App Suite's antivirus dependency (same
+    # unconditional wiring, values-openxchange.yaml.gotmpl) now that
+    # oxAppSuite is enabled below, so it stays required either way.
+    enabled: true
+  oxAppSuite:
+    # Added back explicitly as a module, same treatment as collabora/
+    # nextcloud/openproject above (openDesk's own default is enabled: true;
+    # cut here only during the initial minimalism pass). The groupware app
+    # itself; needs dovecot (IMAP backend) and postfix (SMTP) enabled
+    # alongside it -- see both below and docs/openshift-errors.md
+    # failures #10+ for what broke enabling all three together.
+    enabled: true
+  dovecot:
+    # OX App Suite's IMAP/mail-storage backend -- not optional once
+    # oxAppSuite is on (they're wired together via LMTP/OIDC, not
+    # independently toggleable modules). See docs/openshift-errors.md
+    # failures #10+.
+    enabled: true
+  postfix:
+    # SMTP submission/relay used by OX App Suite/Dovecot (LMTP handoff) and
+    # also by Nubus/OpenProject/Nextcloud/XWiki for outbound notification
+    # mail (see the `postfix.<namespace>.svc.<cluster domain>` references in
+    # their values files) -- not optional once oxAppSuite is on. Gates both
+    # the base "postfix" release (services-external) and the "postfix-ox"
+    # release (open-xchange). See docs/openshift-errors.md failures #10+.
+    enabled: true
+
+  # --- Collaboration / knowledge modules (default-on upstream; cut during
+  # the initial minimalism pass, now re-enabled). Cross-app integrations that
+  # flip automatically from these toggles — no extra functional.* flags needed:
+  #   cryptpad  → Nextcloud CryptPad plugin (values-nextcloud-management)
+  #   element   → Synapse + Matrix widgets + well-known; OX App Suite Element
+  #               conference capability; Keycloak Livecollaboration groups/clients
+  #   jitsi     → Element jitsi.html widget; Keycloak Videoconference client
+  #   xwiki     → portal newsfeed (functional.portal.newsfeed.enabled default);
+  #               Keycloak Knowledgemanagement groups/clients
+  # Skipped (enterprise / separate product): elementAdmin, elementGroupsync,
+  # notes, Matrix federation (functional.externalServices.matrix.federation).
+  cryptpad:
+    enabled: true
+  element:
+    enabled: true
+  jitsi:
+    enabled: true
+  xwiki:
+    enabled: true
+...

@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via the openDesk
+# `customization.release.openproject` extension point (see
+# helmfile/environments/default/customization.yaml.gotmpl for how that mechanism
+# works) -- NOT auto-loaded by the `environments/openshift/*.yaml.gotmpl` glob, since it
+# lives one directory deeper. This is deep-merged as an extra `-f` values file for
+# the `openproject` helm release only, on top of helmfile/apps/openproject/values.yaml.gotmpl.
+#
+# Why this file exists (docs/openshift-errors.md failure #8):
+# helmfile/apps/openproject/values.yaml.gotmpl points OPENPROJECT_SEED_DESIGN_LOGO
+# (and 6 sibling vars) at "https://<openproject-host>.<domain>/opendesk-static-files/...".
+# OpenProject's one-shot db:seed Job downloads these URLs via CarrierWave, which uses
+# the vendored `ssrf_filter` gem. That gem hard-codes a private-IP blacklist (10.0.0.0/8,
+# 172.16.0.0/12, 192.168.0.0/16, ...) with NO allowlist/override hook exposed to Helm
+# values or env vars -- unlike OPENPROJECT_SSRF__PROTECTION__IP__ALLOWLIST (line 85 of
+# the base values file), which only governs a *different*, OpenProject-native SSRF guard
+# used for integrations (SAML/Jira/etc.), not this CarrierWave download path.
+# On this on-prem cluster the openDesk domain always resolves to a private node/router
+# IP (verified: projects.<domain> -> 10.32.105.192), so the download is unconditionally
+# rejected with "Hostname '...' has no public ip addresses", and the seeder Job
+# CrashLoopBackOffs forever, which in turn makes `helm upgrade --install --wait-for-jobs`
+# (and therefore `helmfile apply`) hang until its 1800s timeout and fail.
+#
+# Fix: skip the HTTP(S) download path entirely by seeding inline base64 data URIs
+# instead of URLs -- an officially documented alternative form of these same
+# OPENPROJECT_SEED_DESIGN_* variables, see
+# https://www.openproject.org/docs/installation-and-operations/configuration/
+# ("Setting logos and icons through environment variables"). Purely cosmetic
+# (branding logo/favicon/export images), so a 1x1 transparent PNG placeholder is
+# fine for this minimal/evaluation deployment.
+environment:
+  OPENPROJECT_SEED_DESIGN_LOGO: &placeholderImage "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+  OPENPROJECT_SEED_DESIGN_LOGO__MOBILE: *placeholderImage
+  OPENPROJECT_SEED_DESIGN_FAVICON: *placeholderImage
+  OPENPROJECT_SEED_DESIGN_TOUCH__ICON: *placeholderImage
+  OPENPROJECT_SEED_DESIGN_EXPORT__LOGO: *placeholderImage
+  OPENPROJECT_SEED_DESIGN_EXPORT__COVER: *placeholderImage
+  OPENPROJECT_SEED_DESIGN_EXPORT__FOOTER: *placeholderImage
+...

@@ -1,0 +1,23 @@
+diff --git a/helmfile/apps/opendesk-migrations-pre/values.yaml.gotmpl b/helmfile/apps/opendesk-migrations-pre/values.yaml.gotmpl
+index 926aedbd..f484845e 100644
+--- a/helmfile/apps/opendesk-migrations-pre/values.yaml.gotmpl
++++ b/helmfile/apps/opendesk-migrations-pre/values.yaml.gotmpl
+@@ -57,4 +57,18 @@ migrations:
+         key: {{ .Values.objectstores.migrations.secretKey.key | quote }}
+         optional: true
+   {{- end }}
++
++{{- if .Values.certificate.selfSigned }}
++extraVolumes:
++  - name: "trusted-cert-secret-volume"
++    secret:
++      secretName: "opendesk-certificates-ca-tls"
++      items:
++        - key: "ca.crt"
++          path: "ca-certificates.crt"
++extraVolumeMounts:
++  - name: "trusted-cert-secret-volume"
++    mountPath: "/etc/ssl/certs/ca-certificates.crt"
++    subPath: "ca-certificates.crt"
++{{- end }}
+ ...

@@ -1,0 +1,54 @@
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: opendesk-anyuid-seccomp
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+# 1.19.0 PSS: Collabora no longer needs allowPrivilegeEscalation. Keep false
+# unless a remaining chart fails admission.
+allowPrivilegeEscalation: false
+allowPrivilegedContainer: false
+# 1.19.0 dropped Collabora CHOWN/FOWNER/SYS_CHROOT and Dovecot/Postfix extra
+# caps. KEEP Jitsi: CHOWN/SETGID/SETUID/NET_BIND_SERVICE/DAC_OVERRIDE (helm
+# jitsi-capabilities-fix) and SYS_ADMIN (jibri chart, default off).
+# UID/fsGroup still RunAsAny + seccomp runtime/default (OpenShift restricted-v2).
+allowedCapabilities:
+- CHOWN
+- DAC_OVERRIDE
+- NET_BIND_SERVICE
+- SETGID
+- SETUID
+- SYS_ADMIN
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- ALL
+runAsUser:
+  type: RunAsAny
+# 1.19 helmfile uses empty seLinuxOptions {} which MustRunAs rejects
+# (`level: ""`). RunAsAny matches the empty map; MCS still applied by default
+# when the pod omits seLinuxOptions.
+seLinuxContext:
+  type: RunAsAny
+seccompProfiles:
+- runtime/default
+supplementalGroups:
+  type: RunAsAny
+priority: 10
+groups:
+- system:serviceaccounts:placeholder
+users: []
+volumes:
+- configMap
+- csi
+- downwardAPI
+- emptyDir
+- ephemeral
+- persistentVolumeClaim
+- projected
+- secret

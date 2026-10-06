@@ -1,0 +1,6 @@
+tag: v1.18.2
+sha: eab2ee774187308f82307f0daaf1471dfe560f34
+remote: git@gitlab.opencode.de:bmi/opendesk/deployment/opendesk.git
+https: https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk.git
+extracted_from: cursor/opendesk-1.18.2 @ 2b6db6783055496d1f1c1ed48cd12e6a0e89fac1
+note: GitLab tag v1.18.2 points here. Local overlay clones may have moved v1.18.2; always clone this SHA or the GitLab tag.

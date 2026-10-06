@@ -1,0 +1,24 @@
+diff --git a/helmfile/environments/default/deployment.yaml.gotmpl b/helmfile/environments/default/deployment.yaml.gotmpl
+index e614851e..28d516e0 100644
+--- a/helmfile/environments/default/deployment.yaml.gotmpl
++++ b/helmfile/environments/default/deployment.yaml.gotmpl
+@@ -13,7 +13,8 @@ deployment:
+       # cryptpad
+       cryptpad: ~
+       # element
+-      element: ~
++      # Matrix stack pre-install hooks (MAS / syn2mas) exceeded 300s on ocp22.
++      element: 2400
+       matrixNeoboardWidget: ~
+       matrixNeochoiceWidget: ~
+       matrixNeodatefixBot: ~
+@@ -71,7 +72,8 @@ deployment:
+       postfix: ~
+       postgresql: ~
+       redis: ~
+-      seaweedfs: ~
++      # Bucket hook waits on master gRPC per identity (ocp22 ~34m for many buckets).
++      seaweedfs: 2400
+       seaweedfsConfig: ~
+       # xwiki
+       xwiki: 600

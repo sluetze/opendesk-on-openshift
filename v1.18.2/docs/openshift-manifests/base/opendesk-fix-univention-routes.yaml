@@ -1,0 +1,294 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Routes OpenShift's Ingress-to-Route converter never creates, because it silently
+# drops any Ingress rule with pathType: Exact (only Prefix/ImplementationSpecific
+# get converted). openDesk's nubusPortalFrontend/nubusPortalServer/UMC-gateway
+# charts use Exact for the portal root page and several JSON/JS bootstrap assets.
+# See docs/openshift-errors.md failures #5 and #6 for the full investigation.
+#
+# Each Route mirrors the backend Service+port the dropped Ingress rule already
+# specified. TLS uses Route.spec.tls.externalCertificate -> Secret
+# opendesk-certificates-tls (BYO Option 1) so the private key is never embedded
+# in this manifest. Requires the companion Role/RoleBinding that lets
+# openshift-ingress:router read that Secret (see opendesk-router-tls-secret-rbac.yaml).
+# Apply after the BYO TLS Secret exists (or re-apply once it does).
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-portal-root
+spec:
+  host: portal.example.invalid
+  path: /
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-frontend
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-languages-json
+spec:
+  host: portal.example.invalid
+  path: /univention/languages.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-login-dialog-js
+spec:
+  host: portal.example.invalid
+  path: /univention/login/dialog.js
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-login-i18n-main-json
+spec:
+  host: portal.example.invalid
+  path: /univention/login/i18n/en/main.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-login-logindialog-js
+spec:
+  host: portal.example.invalid
+  path: /univention/login/LoginDialog.js
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-login-main-js
+spec:
+  host: portal.example.invalid
+  path: /univention/login/main.js
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-meta-json
+spec:
+  host: portal.example.invalid
+  path: /univention/meta.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-portal-api-v1-me
+spec:
+  host: portal.example.invalid
+  path: /univention/portal/api/v1/me
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-portal-navigation-json
+spec:
+  host: portal.example.invalid
+  path: /univention/portal/navigation.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-portal-portal-json
+spec:
+  host: portal.example.invalid
+  path: /univention/portal/portal.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-selfservice-api-v1-me
+spec:
+  host: portal.example.invalid
+  path: /univention/selfservice/api/v1/me
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-selfservice-navigation-json
+spec:
+  host: portal.example.invalid
+  path: /univention/selfservice/navigation.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-selfservice-portal-json
+spec:
+  host: portal.example.invalid
+  path: /univention/selfservice/portal.json
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-portal-server
+    weight: 100
+  wildcardPolicy: None
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: opendesk-fix-univention-theme-css
+spec:
+  host: portal.example.invalid
+  path: /univention/theme.css
+  port:
+    targetPort: http
+  tls:
+    externalCertificate:
+      name: opendesk-certificates-tls
+    insecureEdgeTerminationPolicy: Redirect
+    termination: edge
+  to:
+    kind: Service
+    name: ums-umc-gateway
+    weight: 100
+  wildcardPolicy: None

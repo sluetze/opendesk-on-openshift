@@ -1,0 +1,23 @@
+diff --git a/helmfile/apps/opendesk-migrations-post/values.yaml.gotmpl b/helmfile/apps/opendesk-migrations-post/values.yaml.gotmpl
+index dddca6d0..564a885d 100644
+--- a/helmfile/apps/opendesk-migrations-post/values.yaml.gotmpl
++++ b/helmfile/apps/opendesk-migrations-post/values.yaml.gotmpl
+@@ -18,4 +18,17 @@ migrations:
+   stage: "POST"
+   # No post-stage action of this release needs a credential.
+   secretFiles: []
+-...
++
++{{- if .Values.certificate.selfSigned }}
++extraVolumes:
++  - name: "trusted-cert-secret-volume"
++    secret:
++      secretName: "opendesk-certificates-ca-tls"
++      items:
++        - key: "ca.crt"
++          path: "ca-certificates.crt"
++extraVolumeMounts:
++  - name: "trusted-cert-secret-volume"
++    mountPath: "/etc/ssl/certs/ca-certificates.crt"
++    subPath: "ca-certificates.crt"
++{{- end }}
