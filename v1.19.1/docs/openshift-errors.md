@@ -19,8 +19,9 @@ prefer the thinnest new fix.
 | --- | --- | --- | --- | --- |
 | 1 | OpenShift | `opendesk-migrations-pre` rejected by `restricted-v2` (UID/fsGroup 1000, empty seLinux, seccomp) | fixed (thin SCC) | `opendesk-uid-seccomp` — anyuid + seccomp + seLinux RunAsAny; **no** extra caps |
 | 2 | OpenShift | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | fixed | inject-trusted-cabundle CM + clamav helm customization — see below |
-| 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | open | Matrix token/bootstrap; not SCC |
-| 4 | Environment / app | `ums-stack-data-ums-1` pod Error (Job later Complete): UDM DELETE 500 on ox accessprofile | mitigated | Job completed on retry; stale Error pod left |
+| 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | open | Matrix token remint (bootstrap); not SCC / not Exact-drop |
+| 4 | OpenShift | Portal login/bootstrap broken: Exact Ingress rules never become Routes | fixed | 14 fix Routes + router TLS RBAC — see below |
+| 5 | Environment / app | `ums-stack-data-ums-1` pod Error (Job later Complete): UDM DELETE 500 on ox accessprofile | mitigated | Job completed on retry; stale Error pod left |
 
 **helmfile apply (restart with thin SCC):** settled. ~40 releases deployed;
 `opendesk-migrations-post` Complete. `opendesk-migrations-pre` helm release still
@@ -105,12 +106,66 @@ the BYO mount will hit the same SSL 60. Same inject CM can feed them later
 
 **Evidence:** Nest boot fails with `Error Code: M_UNKNOWN_TOKEN, Error: Token is
 not active`. Pod CrashLoopBackOff. Not an SCC admission error (pod schedules and
-runs).
+runs). Synapse `GET /_matrix/client/v3/account/whoami` with Secret
+`matrix-neodatefix-bot-account` key `access_token` returns the same
+`401 M_UNKNOWN_TOKEN` / `Token is not active`. Bootstrap Job
+`matrix-neodatefix-bot-bootstrap` (chart `opendesk-synapse-create-account`,
+user `meetings-bot`) completed once; Job pods deleted (`deletePodsOnSuccess`).
 
-**Class:** Environment / app bootstrap (Matrix access token inactive or race with
-MAS/Synapse). Not OpenShift-specific.
+**Class:** Environment / app bootstrap (Matrix access token inactive). Not
+OpenShift-specific; not fixed by Exact-path Routes.
 
-### 4. ums-stack-data-ums Job pod Error then Complete
+**OpenShift / helm overlay fix:** none clear. Remint requires operational
+re-run of bootstrap (delete/recreate account Secret + re-apply
+`matrix-neodatefix-bot-bootstrap`), not a static SCC/Route change. Left open.
+
+### 4. Portal Exact Ingress → no Routes (login/bootstrap)
+
+**Evidence** (before fix, ns `opendesk`, host
+`portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com`):
+
+- Ingress: **19** rules with `pathType: Exact` on portal host (frontend `/`,
+  portal-server `portal.json` / `navigation.json` / `api/v1/me` / selfservice
+  twins, umc-gateway `meta.json` / `languages.json` / `theme.css` / login JS).
+- Routes from OpenShift Ingress→Route converter: **0** of those Exact paths
+  (only Prefix / ImplementationSpecific converted).
+- External probes: `/univention/portal/` → `200` HTML; `/univention/portal/portal.json`
+  and `navigation.json` → `200` but **SPA HTML** (Prefix catch-all); 
+  `/univention/meta.json`, `languages.json`, login JS, `theme.css` → **503**.
+
+**Class:** OpenShift — Ingress→Route converter drops `pathType: Exact` (same
+class as 1.19.0 failures #5/#6).
+
+**Helm fix:** none — charts emit Exact rules; no values toggle to Prefix.
+
+**OpenShift fix (applied, reconstructible):** port of 1.19.0 manifests into
+kustomize base (thin SCC kept; fat SCC not reinstated):
+
+1. `docs/openshift-manifests/base/opendesk-00-router-tls-secret-rbac.yaml` —
+   Role/RoleBinding so `openshift-ingress:router` can read Secret
+   `opendesk-certificates-tls` for `tls.externalCertificate`.
+2. `docs/openshift-manifests/base/opendesk-fix-univention-routes.yaml` —
+   14 Routes mirroring dropped Exact backends (portal-frontend `/`,
+   portal-server JSON/XHR, umc-gateway bootstrap assets).
+3. Overlay `overlays/example` sets `portalHost` + SCC namespace group via
+   `configMapGenerator` / replacements.
+
+```bash
+oc apply -k docs/openshift-manifests/overlays/example
+```
+
+**Proven after apply:** all 14 fix Routes admitted (`True`); external probes
+return correct types (`portal.json` / `meta.json` / `languages.json` JSON;
+login JS / `theme.css` JS/CSS; `api/v1/me` JSON). TLS SAN
+`*.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com` from BYO Secret.
+
+**Residual Exact gaps (non-blocking):** `/favicon.ico`, `/univention`,
+`/univention/`, `/univention/portal`, `/univention/selfservice` still lack
+dedicated Routes; Prefix Routes already serve the HTML shells
+(`/univention/portal/`, `/univention/selfservice/`). Add only if a probe proves
+need.
+
+### 5. ums-stack-data-ums Job pod Error then Complete
 
 **Evidence:** first pod failed with UDM REST `DELETE .../oxmail/accessprofile/...`
 → HTTP 500 (`super(type, obj): obj must be an instance or subtype of type`).
