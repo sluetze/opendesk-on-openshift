@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
+# Start empty: use OpenShift default SCCs (restricted-v2). Add manifests
+# only after a failure is proven on 1.19.1 — do NOT reintroduce
+# opendesk-anyuid-seccomp from prior overlays.
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-resources:
-  - opendesk-anyuid-seccomp-scc.yaml
-# Add router RBAC + fix-routes only after Ingress→Route Exact failures appear on 1.19.1.
+resources: []

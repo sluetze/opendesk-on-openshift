@@ -11,8 +11,8 @@ oc create namespace opendesk
 export CERTIFICATES_JKS_PASSWORD='<jks password>'
 bash docs/openshift-manifests/create-byo-certificate-secrets.sh
 
-# Minimal manifests first (SCC). Expand when failures prove need.
-oc apply -k docs/openshift-manifests/overlays/example
+# Manifests start empty (default SCCs only). Apply after resources exist:
+# oc apply -k docs/openshift-manifests/overlays/example
 
 export MASTER_PASSWORD='<your passphrase>'
 helmfile apply -e openshift -n opendesk

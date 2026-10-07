@@ -1,8 +1,10 @@
 # OpenShift manifests (v1.19.1)
 
-Start minimal: SCC only. Add Route/RBAC YAMLs only when proven needed on this tag.
+Start with **default** OpenShift SCCs (`restricted-v2`). No custom SCC
+shipped here. Add Route/RBAC/SCC YAMLs only when proven needed on this tag.
 
 ```bash
+# optional once resources exist:
 oc apply -k docs/openshift-manifests/overlays/example
 ```
 

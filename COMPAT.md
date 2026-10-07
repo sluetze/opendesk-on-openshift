@@ -11,7 +11,7 @@ Cheap delta across overlay trees. Apply each onto its **own** upstream tag.
 | `trust.secret.mount` + name | not set | BYO CA Secret mount | yes (values) |
 | Matrix `technical.matrix.migration` | (defaults) | `enabled: false` | *not yet* |
 | Synapse `existingClaim` | unset | site PVC | *not yet* |
-| SCC | anyuid+seccomp | tightened caps | start same SCC; re-verify |
+| SCC | anyuid+seccomp | tightened caps | **none** — default `restricted-v2` only |
 | Route / rewrite customizations | full set | full set | *deferred* until Exact/rewrite fails |
 | customizations/*.yaml | full set | full set | empty until proven |
 

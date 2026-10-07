@@ -31,4 +31,5 @@ Patches vs upstream (grow as proven):
 | `helmfile-bases-environments.yaml.gotmpl.patch` | register `openshift` helmfile env |
 | `gitignore.patch` | ignore overlay certs / kubeconfig / PEMs |
 
+No custom SCC in this tree — OpenShift default `restricted-v2` only.
 Site values: `helmfile/environments/openshift/values.yaml.gotmpl`.
