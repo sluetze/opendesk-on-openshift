@@ -18,7 +18,7 @@ prefer the thinnest new fix.
 | # | Class | Symptom | Status | Fix (only if proven) |
 | --- | --- | --- | --- | --- |
 | 1 | OpenShift | `opendesk-migrations-pre` rejected by `restricted-v2` (UID/fsGroup 1000, empty seLinux, seccomp) | fixed (thin SCC) | `opendesk-uid-seccomp` — anyuid + seccomp + seLinux RunAsAny; **no** extra caps |
-| 2 | Environment | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | open | BYO CA mounted over `/etc/ssl/certs/ca-certificates.crt` — see below |
+| 2 | OpenShift | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | fixed | inject-trusted-cabundle CM + clamav helm customization — see below |
 | 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | open | Matrix token/bootstrap; not SCC |
 | 4 | Environment / app | `ums-stack-data-ums-1` pod Error (Job later Complete): UDM DELETE 500 on ox accessprofile | mitigated | Job completed on retry; stale Error pod left |
 
@@ -61,20 +61,45 @@ ERROR: Can't download daily.cvd from
 https://gitlab.opencode.de/bmi/opendesk/tooling/clamav-db-mirror/-/raw/main/daily.cvd
 ```
 
-**Root cause:** with Option 1 BYO + `certificate.selfSigned: true`, the chart
-mounts Secret `opendesk-certificates-ca-tls` key `ca.crt` onto
+**Root cause:** with Option 1 BYO + `certificate.selfSigned: true` /
+`trust.secret.mount: true`, `values-clamav-simple.yaml.gotmpl` mounts Secret
+`opendesk-certificates-ca-tls` key `ca.crt` onto
 `/etc/ssl/certs/ca-certificates.crt` (subPath). That **replaces** the image's
-system CA bundle with only the site RH Internal CA. freshclam then cannot verify
-gitlab.opencode.de's public cert. Same CVD URL returns HTTP 200 from
-`opendesk-static-files` (full system trust intact) — so not a network/DNS outage.
+system CA bundle with only the site RH Internal CA (~1 cert). freshclam then
+cannot verify gitlab.opencode.de's public cert.
 
-**Class:** Environment / BYO trust-mount side effect (not OpenShift SCC). Would
-hit any cluster using the same private-CA-as-system-bundle pattern on a fresh
-empty clamav PVC.
+**Class:** OpenShift — fix uses cluster-native CA injection (CNO
+`inject-trusted-cabundle`), not hand-concatenated PEMs. Triggered by BYO thin
+`ca.crt` mount pattern.
 
-**Fix candidates (not applied yet):** ship a concatenated trust bundle
-(public roots + RH CA) in `ca.crt`; or pre-seed the clamav PVC with CVD files;
-or chart-level opt-out of trust mount for clamav if upstream adds one.
+**Cluster trust (read-only check on ocp22):**
+- `proxy/cluster` `spec.trustedCA.name: redhat-current-it-root-cas` (2 RH CAs)
+- `image.config` has no `additionalTrustedCA`
+- Injected bundle includes those RH fingerprints **plus** system roots
+
+**Fix (applied, reconstructible):**
+
+1. Manifest
+   `docs/openshift-manifests/base/opendesk-trusted-ca-bundle.yaml` — empty
+   ConfigMap labeled `config.openshift.io/inject-trusted-cabundle: "true"`.
+   CNO fills `ca-bundle.crt` (~148 CAs / ~227 KiB on this cluster).
+2. Helm customization
+   `helmfile/environments/openshift/customizations/clamav-trusted-ca-inject.yaml`
+   remounts that ConfigMap at Debian path
+   `/etc/ssl/certs/ca-certificates.crt` (clamav/clamav image; not RHEL
+   `/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem`). Wired via
+   `customization.release.clamavSimple` in
+   `helmfile/environments/openshift/values.yaml.gotmpl`.
+
+**Proven:** after mount, freshclam downloads succeed (no SSL 60);
+`clamav-simple-0` `2/2 Running`; in-pod `ca-certificates.crt` ~227567 bytes /
+148 `BEGIN CERTIFICATE`.
+
+**Residual risk:** other releases still mount thin Secret `ca.crt` the same
+way (Nextcloud, Collabora, Matrix bots, OX, …). They talk mostly to in-cluster
+or RH-Internal-TLS endpoints today; any pod that needs **public** HTTPS with
+the BYO mount will hit the same SSL 60. Same inject CM can feed them later
+(per-release customization or sync `ca-bundle.crt` into Secret `ca.crt`).
 
 ### 3. matrix-neodatefix-bot `M_UNKNOWN_TOKEN`
 

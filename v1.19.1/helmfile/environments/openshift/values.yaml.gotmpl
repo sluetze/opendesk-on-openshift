@@ -92,3 +92,11 @@ apps:
     enabled: true
   xwiki:
     enabled: true
+
+# OpenShift inject-trusted-cabundle for clamav freshclam (see
+# docs/openshift-errors.md #2). Manifest:
+# docs/openshift-manifests/base/opendesk-trusted-ca-bundle.yaml
+customization:
+  release:
+    clamavSimple:
+      trustedCaInject: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/clamav-trusted-ca-inject.yaml'
