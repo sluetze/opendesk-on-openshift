@@ -9,3 +9,5 @@
 **/.kubeconfig
 .kubeconfig
 kubeconfig
+cert.pkcs7
+logs/
