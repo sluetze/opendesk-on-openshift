@@ -21,12 +21,26 @@ prefer the thinnest new fix.
 | 2 | OpenShift | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | fixed | inject-trusted-cabundle CM + clamav helm customization — see below |
 | 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | fixed (ops remint) | Re-install `matrix-neodatefix-bot-bootstrap` Job — see below |
 | 4 | OpenShift | Portal login/bootstrap broken: Exact Ingress rules never become Routes | fixed | 14 fix Routes + router TLS RBAC — see below |
-| 5 | Environment / app | `ums-stack-data-ums-1` pod Error (Job later Complete): UDM DELETE 500 on ox accessprofile | mitigated | Job completed on retry; stale Error pod left |
 
-**helmfile apply (restart with thin SCC):** settled. ~40 releases deployed;
-`opendesk-migrations-post` Complete. `opendesk-migrations-pre` helm release still
-`failed` (`context canceled` from first attempt before thin SCC) — needs clean
-re-apply. Fat SCC still absent; Jitsi ran without fat-SCC capability grants.
+**Removed from list:** former #5 (`ums-stack-data-ums` UDM DELETE 500 / Job pod
+Error then Complete) — no durable overlay fix; did **not** recur on ordered
+redeploy (Routes/SCC/CA/BYO before helmfile). Class was app/UDM race, not
+OpenShift ordering.
+
+**Ordered redeploy (fixes before helmfile):** destroy `opendesk` ns → create ns →
+BYO TLS secrets → `oc apply -k docs/openshift-manifests/overlays/example` →
+`helmfile apply -e openshift -n opendesk`. Log:
+`logs/helmfile-apply-1.19.1-retry.log`. Result: **40** releases `deployed`, **0**
+failed; migrations-pre/post Jobs Complete; fat SCC still absent; all pods
+Running/Completed after neodatefix remint. Portal Exact probes return JSON/JS/CSS
+with fix Routes present from the start.
+
+Hypothesis check (user suspected late Routes caused #3 and former #5):
+
+- **#3 recurred** despite Routes/SCC applied before helmfile → **not** caused by
+  late Routes. Still needs bootstrap remint.
+- **Former #5 did not recur** → removed (ordering artifact / flaky UDM, no fix
+  to keep).
 
 ### 1. migrations-pre rejected by restricted-v2 (UID / fsGroup / seLinux / seccomp)
 
@@ -50,6 +64,9 @@ Pod securityContext (observed): `runAsUser: 1000`, `runAsGroup: 1000`,
 **OpenShift fix (minimal, not the fat SCC):** apply
 `docs/openshift-manifests/base/opendesk-uid-seccomp-scc.yaml` via kustomize.
 Intentionally omits CHOWN/SYS_ADMIN/…; add those only if a later pod fails for caps.
+
+**Ordered redeploy:** thin SCC applied before helmfile; migrations-pre release
+`deployed`, Job Complete (no `context canceled` leftover).
 
 ### 2. clamav-simple freshclam SSL to public CVD mirror (BYO trust mount)
 
@@ -114,7 +131,10 @@ user `meetings-bot`) had completed once; Job pods deleted
 (`deletePodsOnSuccess`). Token prefix `mct_` = MAS compatibility token.
 
 **Class:** Environment / app bootstrap (Matrix access token inactive). Not
-OpenShift-specific; not fixed by Exact-path Routes or SCC.
+OpenShift-specific; **not** fixed by Exact-path Routes or SCC.
+
+**Ordered redeploy:** **recurred** with Routes/SCC/CA applied before helmfile →
+refutes “late Routes caused inactive token”. Remint still required after settle.
 
 **Intended remint path** (chart `opendesk-synapse-create-account` 6.2.7):
 
@@ -132,20 +152,15 @@ OpenShift-specific; not fixed by Exact-path Routes or SCC.
 helm uninstall matrix-neodatefix-bot-bootstrap -n opendesk
 # pre-delete removes Secret matrix-neodatefix-bot-account
 
-helm pull oci://registry.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-create-account \
-  --version 6.2.7 --untar
-helm install matrix-neodatefix-bot-bootstrap ./opendesk-synapse-create-account \
-  -n opendesk -f <values matching values-matrix-neodatefix-bot-bootstrap.yaml.gotmpl> \
-  --wait --timeout 10m
+helmfile -e openshift -n opendesk -l name=matrix-neodatefix-bot-bootstrap apply \
+  --skip-diff-on-install
 # post-install Job remints token into the Secret
 ```
 
-(`helmfile -e openshift -l name=matrix-neodatefix-bot-bootstrap apply` is the
-documented reconstruct path once env vars are set; direct `helm install` of the
-same chart/version used here when helmfile render was too slow.)
+(Direct `helm install` of chart 6.2.7 with matching values is an equivalent
+fallback if helmfile render is too slow.)
 
-**Proven:** Job Completed; Secret recreated; Synapse whoami → `200`
-`@meetings-bot:…` / `device_id: DEFAULT`; pod `matrix-neodatefix-bot` `1/1
+**Proven:** Job Completed; Secret recreated; pod `matrix-neodatefix-bot` `1/1
 Running`, logs `Bot is running as @meetings-bot:…` / Nest started.
 
 **No secrets in git.** No SCC/Route change.
@@ -185,6 +200,10 @@ kustomize base (thin SCC kept; fat SCC not reinstated):
 oc apply -k docs/openshift-manifests/overlays/example
 ```
 
+**Apply before helmfile** (with BYO TLS Secret present) so Routes using
+`externalCertificate` admit immediately; converter still drops Exact Ingress
+from charts, so these fix Routes remain required.
+
 **Proven after apply:** all 14 fix Routes admitted (`True`); external probes
 return correct types (`portal.json` / `meta.json` / `languages.json` JSON;
 login JS / `theme.css` JS/CSS; `api/v1/me` JSON). TLS SAN
@@ -195,11 +214,3 @@ login JS / `theme.css` JS/CSS; `api/v1/me` JSON). TLS SAN
 dedicated Routes; Prefix Routes already serve the HTML shells
 (`/univention/portal/`, `/univention/selfservice/`). Add only if a probe proves
 need.
-
-### 5. ums-stack-data-ums Job pod Error then Complete
-
-**Evidence:** first pod failed with UDM REST `DELETE .../oxmail/accessprofile/...`
-→ HTTP 500 (`super(type, obj): obj must be an instance or subtype of type`).
-Job `ums-stack-data-ums-1` later `Complete 1/1`; stale Error pod remains.
-
-**Class:** app/UDM (not OpenShift). No overlay fix required if Job Complete.
