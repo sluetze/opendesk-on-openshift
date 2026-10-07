@@ -21,9 +21,10 @@ prefer the thinnest new fix.
 | 2 | OpenShift | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | fixed | inject-trusted-cabundle CM + clamav helm customization — see below |
 | 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | fixed (ops remint) | Re-install `matrix-neodatefix-bot-bootstrap` Job — see below |
 | 4 | OpenShift | Portal login/bootstrap broken: Exact Ingress rules never become Routes | fixed | 14 fix Routes + router TLS RBAC — see below |
+| 5 | App / Keycloak client + XWiki OIDC | Portal newsfeed **VIEW ALL** → Keycloak `LOGOUT_ERROR` `invalid_redirect_uri` (`post_logout_redirect_uri=/bin/view/Main/`) | fixed | XWiki `oidc.afterLogoutURL` absolute + KC bootstrap ICS/`rootUrl` — see below |
 
-**Removed from list:** former #5 (`ums-stack-data-ums` UDM DELETE 500 / Job pod
-Error then Complete) — no durable overlay fix; did **not** recur on ordered
+**Removed from list:** former ums-stack-data-ums UDM DELETE 500 / Job pod
+Error then Complete — no durable overlay fix; did **not** recur on ordered
 redeploy (Routes/SCC/CA/BYO before helmfile). Class was app/UDM race, not
 OpenShift ordering.
 
@@ -214,3 +215,68 @@ login JS / `theme.css` JS/CSS; `api/v1/me` JSON). TLS SAN
 dedicated Routes; Prefix Routes already serve the HTML shells
 (`/univention/portal/`, `/univention/selfservice/`). Add only if a probe proves
 need.
+
+### 5. Portal VIEW ALL / XWiki OIDC logout `invalid_redirect_uri` (relative `post_logout_redirect_uri`)
+
+**Evidence** (`oc logs ums-keycloak-0`, realm `opendesk`):
+
+```
+type="LOGOUT_ERROR", clientId="opendesk-xwiki", error="invalid_redirect_uri",
+redirect_uri="/bin/view/Main/"
+```
+
+Failing browser URL (decoded):
+`…/protocol/openid-connect/logout?post_logout_redirect_uri=/bin/view/Main/&client_id=opendesk-xwiki`
+(`aud`/`azp` = `opendesk-xwiki`). Trigger: portal newsfeed **VIEW ALL** (XWiki via ICS).
+
+**Probes (before app-side fix):**
+
+| `post_logout_redirect_uri` | HTTP |
+| --- | --- |
+| `/bin/view/Main/` (relative) | **400** |
+| `https://wiki.<domain>/bin/view/Main/` | **302** |
+| `https://portal.<domain>/` | **302** |
+
+Upstream `opendesk-keycloak-bootstrap` already sets client attribute
+`post.logout.redirect.uris` to absolute `https://wiki.*/*##https://portal.*/*`.
+Allowlist was not missing the absolute wiki URL — Keycloak rejected the
+**relative** URI XWiki OIDC sent (`oidc.logoutMechanism=rpInitiated`).
+
+**Class:** app/config (Keycloak client + XWiki OIDC). Not OpenShift SCC/Route.
+
+**Fix (durable overlay, no chart edit):**
+
+1. **XWiki (preferred):** customization
+   `helmfile/environments/openshift/customizations/xwiki-oidc-after-logout-url-fix.yaml.gotmpl`
+   sets `customConfigs.xwiki.properties.oidc.afterLogoutURL` to
+   `https://wiki.<domain>/bin/view/Main/` so RP-initiated logout sends an
+   absolute `post_logout_redirect_uri` (XWiki OIDC Authenticator
+   `oidc.afterLogoutURL`). Wired via `customization.release.xwiki`.
+2. **Keycloak bootstrap:** customization
+   `helmfile/environments/openshift/customizations/keycloak-xwiki-ics-redirect-fix.yaml.gotmpl`
+   (same pattern as 1.19.0 ICS login fix) sets
+   - `rootUrl: https://wiki.<domain>` (relative redirect resolution against wiki)
+   - `redirectUris`: wiki + portal wildcards **plus**
+     `https://ics.<domain>/oidc/authenticator/callback` (ICS login allowlist;
+     related `LOGIN_ERROR` path from portal newsfeed).
+   Wired via `customization.release.opendeskKeycloakBootstrap`.
+
+**Apply:**
+
+```bash
+helmfile -e openshift -n opendesk -l name=opendesk-keycloak-bootstrap apply
+helmfile -e openshift -n opendesk -l name=xwiki apply
+```
+
+**Proven:**
+
+- Bootstrap Secret `opendesk-keycloak-bootstrap` values include `rootUrl` and ICS
+  callback on `opendesk-xwiki`; Job revision completed (`kcom.py` reconcile).
+- ICS auth probe with
+  `redirect_uri=https://ics…/oidc/authenticator/callback` → **200** login page;
+  `https://evil.example/callback` → **400**.
+- Absolute wiki logout probe → **302**; XWiki pod properties contain
+  `oidc.afterLogoutURL=https://wiki…/bin/view/Main/`.
+- Relative logout probe may still return **400** on this Keycloak build even with
+  `rootUrl` — that is why the XWiki absolute `afterLogoutURL` is required for
+  VIEW ALL. Absolute path matches existing Valid Post Logout Redirect URIs.

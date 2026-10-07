@@ -100,3 +100,12 @@ customization:
   release:
     clamavSimple:
       trustedCaInject: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/clamav-trusted-ca-inject.yaml'
+    opendeskKeycloakBootstrap:
+      # ICS XWiki OIDC callback + client rootUrl for relative post-logout
+      # redirects — see docs/openshift-errors.md failure #5 and customization
+      # file header.
+      xwikiOidcRedirectFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/keycloak-xwiki-ics-redirect-fix.yaml.gotmpl'
+    xwiki:
+      # Absolute oidc.afterLogoutURL so RP-initiated logout does not send
+      # relative post_logout_redirect_uri=/bin/view/Main/ — failure #5.
+      oidcAfterLogoutUrlFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/xwiki-oidc-after-logout-url-fix.yaml.gotmpl'

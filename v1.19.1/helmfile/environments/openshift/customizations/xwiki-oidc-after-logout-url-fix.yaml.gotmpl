@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via
+# `customization.release.xwiki`. Deep-merged into the `xwiki` release on top of
+# helmfile/apps/xwiki/values.yaml.gotmpl.
+#
+# Why (docs/openshift-errors.md): XWiki OIDC rpInitiated logout builds
+# post_logout_redirect_uri from the wiki home URL, which often serializes as
+# the relative path /bin/view/Main/ (especially via portal newsfeed / ICS).
+# Keycloak rejects that relative URI (LOGOUT_ERROR invalid_redirect_uri) even
+# though absolute https://wiki.<domain>/* is already on the client's Valid Post
+# Logout Redirect URIs. oidc.afterLogoutURL forces an absolute wiki Main URL
+# (XWiki OIDC Authenticator ≥2.31.2). Pair with keycloak-xwiki-ics-redirect-fix
+# rootUrl so any remaining relative post_logout_redirect_uri still resolve.
+---
+customConfigs:
+  xwiki.properties:
+    oidc.afterLogoutURL: "https://{{ .Values.global.hosts.xwiki }}.{{ .Values.global.domain }}/bin/view/Main/"
