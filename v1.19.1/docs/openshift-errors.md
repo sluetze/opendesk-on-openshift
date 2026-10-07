@@ -19,7 +19,7 @@ prefer the thinnest new fix.
 | --- | --- | --- | --- | --- |
 | 1 | OpenShift | `opendesk-migrations-pre` rejected by `restricted-v2` (UID/fsGroup 1000, empty seLinux, seccomp) | fixed (thin SCC) | `opendesk-uid-seccomp` — anyuid + seccomp + seLinux RunAsAny; **no** extra caps |
 | 2 | OpenShift | `clamav-simple-0` CrashLoop: freshclam SSL verify fail to gitlab.opencode.de CVD mirror | fixed | inject-trusted-cabundle CM + clamav helm customization — see below |
-| 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | open | Matrix token remint (bootstrap); not SCC / not Exact-drop |
+| 3 | Environment / app | `matrix-neodatefix-bot` CrashLoop: `M_UNKNOWN_TOKEN` / Token is not active | fixed (ops remint) | Re-install `matrix-neodatefix-bot-bootstrap` Job — see below |
 | 4 | OpenShift | Portal login/bootstrap broken: Exact Ingress rules never become Routes | fixed | 14 fix Routes + router TLS RBAC — see below |
 | 5 | Environment / app | `ums-stack-data-ums-1` pod Error (Job later Complete): UDM DELETE 500 on ox accessprofile | mitigated | Job completed on retry; stale Error pod left |
 
@@ -110,14 +110,45 @@ runs). Synapse `GET /_matrix/client/v3/account/whoami` with Secret
 `matrix-neodatefix-bot-account` key `access_token` returns the same
 `401 M_UNKNOWN_TOKEN` / `Token is not active`. Bootstrap Job
 `matrix-neodatefix-bot-bootstrap` (chart `opendesk-synapse-create-account`,
-user `meetings-bot`) completed once; Job pods deleted (`deletePodsOnSuccess`).
+user `meetings-bot`) had completed once; Job pods deleted
+(`deletePodsOnSuccess`). Token prefix `mct_` = MAS compatibility token.
 
 **Class:** Environment / app bootstrap (Matrix access token inactive). Not
-OpenShift-specific; not fixed by Exact-path Routes.
+OpenShift-specific; not fixed by Exact-path Routes or SCC.
 
-**OpenShift / helm overlay fix:** none clear. Remint requires operational
-re-run of bootstrap (delete/recreate account Secret + re-apply
-`matrix-neodatefix-bot-bootstrap`), not a static SCC/Route change. Left open.
+**Intended remint path** (chart `opendesk-synapse-create-account` 6.2.7):
+
+- Install hook Job (`helm.sh/hook: post-install`) registers `meetings-bot` via
+  `mas-cli manage register-user`, issues
+  `mas-cli manage issue-compatibility-token … DEFAULT`, writes Secret
+  `matrix-neodatefix-bot-account` (`access_token`).
+- If Secret already exists, Job exits 0 with
+  `secret … already exists (delete to recreate)` — no remint.
+- Uninstall hook (`pre-delete`) deletes that Secret.
+
+**Fix applied (operational, no overlay YAML):**
+
+```bash
+helm uninstall matrix-neodatefix-bot-bootstrap -n opendesk
+# pre-delete removes Secret matrix-neodatefix-bot-account
+
+helm pull oci://registry.opencode.de/bmi/opendesk/components/platform-development/charts/opendesk-element/opendesk-synapse-create-account \
+  --version 6.2.7 --untar
+helm install matrix-neodatefix-bot-bootstrap ./opendesk-synapse-create-account \
+  -n opendesk -f <values matching values-matrix-neodatefix-bot-bootstrap.yaml.gotmpl> \
+  --wait --timeout 10m
+# post-install Job remints token into the Secret
+```
+
+(`helmfile -e openshift -l name=matrix-neodatefix-bot-bootstrap apply` is the
+documented reconstruct path once env vars are set; direct `helm install` of the
+same chart/version used here when helmfile render was too slow.)
+
+**Proven:** Job Completed; Secret recreated; Synapse whoami → `200`
+`@meetings-bot:…` / `device_id: DEFAULT`; pod `matrix-neodatefix-bot` `1/1
+Running`, logs `Bot is running as @meetings-bot:…` / Nest started.
+
+**No secrets in git.** No SCC/Route change.
 
 ### 4. Portal Exact Ingress → no Routes (login/bootstrap)
 
