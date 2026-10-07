@@ -1,10 +1,10 @@
 # OpenShift manifests (v1.19.1)
 
-Start with **default** OpenShift SCCs (`restricted-v2`). No custom SCC
-shipped here. Add Route/RBAC/SCC YAMLs only when proven needed on this tag.
+Started on default `restricted-v2`. After proven UID/seccomp admission failure
+(#1), ship thin SCC `opendesk-uid-seccomp` only — **not** fat
+`opendesk-anyuid-seccomp` from prior overlays.
 
 ```bash
-# optional once resources exist:
 oc apply -k docs/openshift-manifests/overlays/example
 ```
 
