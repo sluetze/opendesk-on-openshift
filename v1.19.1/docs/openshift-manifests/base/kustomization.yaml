@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: Apache-2.0
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - opendesk-anyuid-seccomp-scc.yaml
+# Add router RBAC + fix-routes only after Ingress→Route Exact failures appear on 1.19.1.

@@ -1,20 +1,18 @@
-# Overlay compatibility: v1.18.2 vs v1.19.0
+# Overlay compatibility: v1.18.2 / v1.19.0 / v1.19.1
 
-Cheap delta from the two overlay trees. Apply each onto its **own** upstream tag.
+Cheap delta across overlay trees. Apply each onto its **own** upstream tag.
 
-| Area | v1.18.2 | v1.19.0 |
-| --- | --- | --- |
-| Upstream | `v1.18.2` `eab2ee77` | `v1.19.0` `1aacb0dd` |
-| helmfile env `openshift` | yes (bases patch) | yes |
-| migrations CA volume mounts | yes | yes |
-| `migrations.objectStore.caBundle` in overlay values | yes | yes |
-| default helm timeouts (element / seaweedfs) | unchanged | 2400s each (patch) |
-| `trust.secret.mount` + name | not set | BYO CA Secret mount |
-| Matrix `technical.matrix.migration` | (defaults) | `enabled: false`, `dryRun: true` |
-| Synapse `persistence.storages.synapse.existingClaim` | unset | `media-opendesk-synapse-0` (site) |
-| SCC `allowPrivilegeEscalation` | true (Collabora 1.18) | false |
-| SCC extra caps | FOWNER, KILL, SYS_CHROOT | dropped; keep Jitsi set |
-| SCC `seLinuxContext` | MustRunAs | RunAsAny (empty `seLinuxOptions`) |
-| customizations/*.yaml | same set of files | same set |
+| Area | v1.18.2 | v1.19.0 | v1.19.1 |
+| --- | --- | --- | --- |
+| Upstream | `v1.18.2` `eab2ee77` | `v1.19.0` `1aacb0dd` | `v1.19.1` `6c41d8e8` |
+| helmfile env `openshift` | yes (bases patch) | yes | yes (structural) |
+| migrations CA volume mounts | yes | yes | *not yet* — add only if proven |
+| default helm timeouts (element / seaweedfs) | unchanged | 2400s each | *not yet* |
+| `trust.secret.mount` + name | not set | BYO CA Secret mount | yes (values) |
+| Matrix `technical.matrix.migration` | (defaults) | `enabled: false` | *not yet* |
+| Synapse `existingClaim` | unset | site PVC | *not yet* |
+| SCC | anyuid+seccomp | tightened caps | start same SCC; re-verify |
+| Route / rewrite customizations | full set | full set | *deferred* until Exact/rewrite fails |
+| customizations/*.yaml | full set | full set | empty until proven |
 
-`diff -ru v1.18.2 v1.19.0` for the rest (docs, example overlay values).
+`diff -ru v1.19.0 v1.19.1` for the rest.

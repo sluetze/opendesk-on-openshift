@@ -1,0 +1,32 @@
+diff --git a/.gitignore b/.gitignore
+index 0f020494..a7729cc7 100755
+--- a/.gitignore
++++ b/.gitignore
+@@ -21,6 +21,14 @@ helmfile/environments/prod/*/
+ !helmfile/environments/test/sample.yaml.gotmpl
+ !helmfile/environments/prod/sample.yaml.gotmpl
+ 
++# OpenShift env: track values.yaml.gotmpl + customizations/; ignore secrets only
++helmfile/environments/openshift/certs/*
++!helmfile/environments/openshift/certs/.gitkeep
++helmfile/environments/openshift/.byo-redeploy-secrets
++helmfile/environments/openshift/**/*.jks
++helmfile/environments/openshift/**/*.key
++helmfile/environments/openshift/**/*.pem
++
+ # Ignore in CI generated files
+ .kyverno/opendesk.yaml
+ .kyverno/kyverno-test.yaml
+@@ -34,3 +42,12 @@ logs
+ 
+ # Ignore backup files, e.g. created by the script that eases the local chart development
+ *.bak
++
++# BYO TLS material at repo root (Option 1) — keep private keys out of git
++/cert.pem
++/cert-key.pem
++/intermediate.pem
++/root_ca.pem
++/cert.pkcs7
++/cert_and_intermediate*.pem
++/.kubeconfig
