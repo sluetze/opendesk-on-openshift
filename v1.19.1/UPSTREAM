@@ -1,0 +1,5 @@
+tag: v1.19.1
+sha: 6c41d8e898490915ca4f11792170aa750a2c4877
+remote: git@gitlab.opencode.de:bmi/opendesk/deployment/opendesk.git
+https: https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk.git
+note: Deploy worktree at /home/rhel/opencode/opendesk-1.19.1 on branch cursor/opendesk-1.19.1-deploy. Overlay workarounds only committed after proven on this deploy.

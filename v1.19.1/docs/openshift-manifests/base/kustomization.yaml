@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: Apache-2.0
+# Thin UID/seccomp SCC only (see opendesk-uid-seccomp-scc.yaml). Do NOT
+# reintroduce fat opendesk-anyuid-seccomp from 1.18.2/1.19.0.
+# Trusted CA inject CM: CNO fills ca-bundle.crt (system + proxy trustedCA).
+# Router TLS RBAC + Exact-path fix Routes: OpenShift drops pathType:Exact.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - opendesk-00-router-tls-secret-rbac.yaml
+  - opendesk-uid-seccomp-scc.yaml
+  - opendesk-trusted-ca-bundle.yaml
+  - opendesk-fix-univention-routes.yaml

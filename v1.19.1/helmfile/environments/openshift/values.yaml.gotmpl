@@ -1,0 +1,111 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# OpenShift helmfile environment for openDesk 1.19.1 (tracked).
+# Start lean: site knobs + BYO certs + full-ish app set matching prior deploy.
+# Customizations / Route manifests / extra patches added only after proven on
+# this tag — see docs/openshift-errors.md.
+---
+global:
+  domain: "opendesk.apps.ocp22.stormshift.coe.muc.redhat.com"
+
+cluster:
+  container:
+    engine: "cri-o"
+  service:
+    # No cloud LoadBalancer; HTTP(S) via OpenShift Routes from Ingress.
+    # Jitsi JVB UDP cannot ride Routes — NodePort override below (env class).
+    type: "ClusterIP"
+  networking:
+    # Node IP for JVB advertise when service.type.jitsiVideoBridge is NodePort.
+    ingressGatewayIP: "10.32.105.193"
+
+service:
+  type:
+    jitsiVideoBridge: "NodePort"
+
+ingress:
+  ingressClassName: "openshift-default"
+
+persistence:
+  storageClassNames:
+    RWX: "coe-netapp-nas"
+    RWO: "coe-netapp-nas"
+
+certificate:
+  # Option 1 BYO: selfSigned: true → mount CA trust bundle (not mint certs).
+  # apps.certificates.enabled: false → Secrets from create-byo script.
+  selfSigned: true
+
+trust:
+  secret:
+    mount: true
+    name: "opendesk-certificates-ca-tls"
+
+secrets:
+  certificates:
+    password:
+      create: false
+      name: "opendesk-certificates-keystore-jks"
+      key: "password"
+      value: '{{ required "Set CERTIFICATES_JKS_PASSWORD to the truststore.jks password" (env "CERTIFICATES_JKS_PASSWORD") }}'
+
+apps:
+  nubus:
+    enabled: true
+  certificates:
+    enabled: false
+  migrations:
+    enabled: true
+  mariadb:
+    enabled: true
+  postgresql:
+    enabled: true
+  redis:
+    enabled: true
+  memcached:
+    enabled: true
+  home:
+    enabled: true
+  staticFiles:
+    enabled: true
+  seaweedfs:
+    enabled: true
+  collabora:
+    enabled: true
+  nextcloud:
+    enabled: true
+  openproject:
+    enabled: true
+  clamavSimple:
+    enabled: true
+  oxAppSuite:
+    enabled: true
+  dovecot:
+    enabled: true
+  postfix:
+    enabled: true
+  cryptpad:
+    enabled: true
+  element:
+    enabled: true
+  jitsi:
+    enabled: true
+  xwiki:
+    enabled: true
+
+# OpenShift inject-trusted-cabundle for clamav freshclam (see
+# docs/openshift-errors.md #2). Manifest:
+# docs/openshift-manifests/base/opendesk-trusted-ca-bundle.yaml
+customization:
+  release:
+    clamavSimple:
+      trustedCaInject: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/clamav-trusted-ca-inject.yaml'
+    opendeskKeycloakBootstrap:
+      # ICS XWiki OIDC callback + client rootUrl for relative post-logout
+      # redirects — see docs/openshift-errors.md failure #5 and customization
+      # file header.
+      xwikiOidcRedirectFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/keycloak-xwiki-ics-redirect-fix.yaml.gotmpl'
+    xwiki:
+      # Absolute oidc.afterLogoutURL so RP-initiated logout does not send
+      # relative post_logout_redirect_uri=/bin/view/Main/ — failure #5.
+      oidcAfterLogoutUrlFix: '{{ env "PWD" }}/helmfile/environments/openshift/customizations/xwiki-oidc-after-logout-url-fix.yaml.gotmpl'

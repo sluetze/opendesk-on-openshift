@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: Apache-2.0
+# Minimal OpenShift SCC for openDesk 1.19.1 — NOT the fat 1.19.0
+# opendesk-anyuid-seccomp (no CHOWN/SYS_ADMIN/etc.).
+#
+# Proven need (deploy log #1): charts hardcode runAsUser/fsGroup (e.g. 1000)
+# + empty seLinuxOptions {} + seccompProfile RuntimeDefault. restricted-v2
+# rejects the UIDs; stock anyuid rejects seccomp; stock anyuid MustRunAs
+# rejects empty seLinuxOptions.level.
+#
+# This SCC = stock anyuid shape + seccompProfiles + seLinux RunAsAny only.
+# Add capabilities later only when a pod admission failure proves need.
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: opendesk-uid-seccomp
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: false
+allowedCapabilities: null
+defaultAddCapabilities: null
+fsGroup:
+  type: RunAsAny
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+- MKNOD
+runAsUser:
+  type: RunAsAny
+seLinuxContext:
+  type: RunAsAny
+seccompProfiles:
+- runtime/default
+supplementalGroups:
+  type: RunAsAny
+priority: 10
+groups:
+- system:serviceaccounts:opendesk
+users: []
+volumes:
+- configMap
+- csi
+- downwardAPI
+- emptyDir
+- ephemeral
+- persistentVolumeClaim
+- projected
+- secret
