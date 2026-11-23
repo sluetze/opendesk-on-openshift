@@ -5,7 +5,7 @@ get openDesk running on my OpenShift Cluster. Have documentation ready to recons
 # Method
 
 1. Clone Opendesk deployment repository from https://gitlab.opencode.de/bmi/opendesk/deployment/opendesk.git utilizing the tag (version) specified by the User on an OpenShift Cluster.
-2. inspect the deployed ressources and see where they fail (logs etc.)
+2. inspect the deployed ressources and see where they fail (logs etc.). If all components are up and running, continue by accessing the routes of the application.
 3. document the fails and begin with a fix-pipeline
 
 
@@ -27,6 +27,8 @@ DO NOT: change sourcecode or the program itself. I want you to solve this with o
 IF NO SOLUTION IS FOUND, DOCUMENT THIS TOO.
 
 If the failure is likely caused by the Demo-SetUp (e.g. Loadbalancer is not configured, so NodePort has to be used or Timeouts need to be changed, because of the slow storage), explicitly classify it as a environment issue and not as an general OpenShift incompatability.
+
+If errors disappear without a fix applied, remove them from the errors-list
 
 ## DONT
 - dont access other clusters but ocp22
