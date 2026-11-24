@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via
+# customization.release.clamavSimple — NOT auto-loaded by the openshift
+# values glob (lives one directory deeper).
+#
+# Why: with Option 1 BYO + trust.secret.mount, values-clamav-simple.yaml.gotmpl
+# mounts Secret opendesk-certificates-ca-tls ca.crt over
+# /etc/ssl/certs/ca-certificates.crt. That file is only the site RH Internal
+# CA, so freshclam cannot verify public gitlab.opencode.de CVD mirrors (SSL 60).
+#
+# Fix (OpenShift-native): remount ConfigMap opendesk-trusted-ca-bundle
+# (label config.openshift.io/inject-trusted-cabundle=true; CNO fills
+# ca-bundle.crt = system roots + proxy trustedCA). ClamAV image is Debian-
+# based, so path stays /etc/ssl/certs/ca-certificates.crt (not RHEL
+# tls-ca-bundle.pem). Same volume name as the chart so this replaces the
+# Secret mount rather than stacking a second one.
+extraVolumes:
+  - name: "trusted-cert-secret-volume"
+    configMap:
+      name: "opendesk-trusted-ca-bundle"
+      items:
+        - key: "ca-bundle.crt"
+          path: "ca-certificates.crt"
+extraVolumeMounts:
+  - name: "trusted-cert-secret-volume"
+    mountPath: "/etc/ssl/certs/ca-certificates.crt"
+    subPath: "ca-certificates.crt"
