@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+# OpenShift-native cluster trust: CNO injects merged system CAs + proxy
+# trustedCA (ie. Company CA) into ca-bundle.crt. Mount this instead of thin
+# BYO ca.crt when a container needs public HTTPS (e.g. clamav freshclam).
+# Docs: certificate-injection-using-operators (OpenShift).
+# Empty data {} is required — CNO owns the data after the label is set.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: opendesk-trusted-ca-bundle
+  namespace: opendesk
+  labels:
+    config.openshift.io/inject-trusted-cabundle: "true"
+data: {}

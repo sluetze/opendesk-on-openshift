@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# Referenced from helmfile/environments/openshift/values.yaml.gotmpl via
+# `customization.release.opendeskKeycloakBootstrap` (see
+# helmfile/environments/default/customization.yaml.gotmpl). Deep-merged as an
+# extra values file for the `opendesk-keycloak-bootstrap` release only, on top of
+# helmfile/apps/nubus/values-opendesk-keycloak-bootstrap.yaml.gotmpl.
+#
+# Why (docs/openshift-errors.md):
+# 1) ICS proxies XWiki (newsfeed under /wiki/...) and runs XWiki's OIDC code
+#    flow with clientId=opendesk-xwiki and
+#    redirect_uri=https://ics.<domain>/oidc/authenticator/callback.
+#    Upstream bootstrap only allowlists wiki.* and portal (nubus).* → LOGIN_ERROR
+#    invalid_redirect_uri.
+# 2) Portal VIEW ALL / XWiki RP-initiated logout often sends
+#    post_logout_redirect_uri=/bin/view/Main/ (relative). Upstream sets absolute
+#    post.logout.redirect.uris for wiki+portal but no client rootUrl → Keycloak
+#    cannot resolve the relative URI against wiki → LOGOUT_ERROR
+#    invalid_redirect_uri. rootUrl makes relative post-logout URIs resolve to
+#    https://wiki.<domain>/… and match the existing wiki/* allowlist.
+#
+# Helm list merge replaces the whole redirectUris array, so this file restates
+# the upstream wiki+portal entries and adds the ICS callback. No chart edit.
+---
+config:
+  opendesk:
+    clients:
+      opendesk-xwiki:
+        rootUrl: "https://{{ .Values.global.hosts.xwiki }}.{{ .Values.global.domain }}"
+        redirectUris:
+          - "https://{{ .Values.global.hosts.xwiki }}.{{ .Values.global.domain }}/*"
+          - "https://{{ .Values.global.hosts.nubus }}.{{ .Values.global.domain }}/*"
+          - "https://{{ .Values.global.hosts.intercomService }}.{{ .Values.global.domain }}/oidc/authenticator/callback"

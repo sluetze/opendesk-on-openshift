@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: Apache-2.0
+# Site overlay. portalHost = portal.<global.domain> from
+# helmfile/environments/openshift/values.yaml.gotmpl
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: opendesk
+resources:
+  - ../../base
+configMapGenerator:
+  - name: opendesk-site-config
+    literals:
+      - portalHost=portal.opendesk.apps.ocp22.stormshift.coe.muc.redhat.com
+      - namespace=opendesk
+    options:
+      disableNameSuffixHash: true
+replacements:
+  - source:
+      kind: ConfigMap
+      name: opendesk-site-config
+      fieldPath: data.portalHost
+    targets:
+      - select:
+          kind: Route
+        fieldPaths:
+          - spec.host
+  - source:
+      kind: ConfigMap
+      name: opendesk-site-config
+      fieldPath: data.namespace
+    targets:
+      - select:
+          kind: SecurityContextConstraints
+          name: opendesk-uid-seccomp
+        fieldPaths:
+          - groups.0
+        options:
+          delimiter: ":"
+          index: 2

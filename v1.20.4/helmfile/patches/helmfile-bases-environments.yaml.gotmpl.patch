@@ -1,0 +1,14 @@
+diff --git a/helmfile/bases/environments.yaml.gotmpl b/helmfile/bases/environments.yaml.gotmpl
+index 813f7707..38188a7c 100644
+--- a/helmfile/bases/environments.yaml.gotmpl
++++ b/helmfile/bases/environments.yaml.gotmpl
+@@ -5,6 +5,9 @@ environments:
+   dev:
+     values:
+       - "{{ requiredEnv "PWD" }}/helmfile/environments/dev/*.yaml.gotmpl"
++  openshift:
++    values:
++      - "{{ requiredEnv "PWD" }}/helmfile/environments/openshift/*.yaml.gotmpl"
+   test:
+     values:
+       - "{{ requiredEnv "PWD" }}/helmfile/environments/test/*.yaml.gotmpl"
